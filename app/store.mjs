@@ -41,11 +41,12 @@ export async function openStore({url=process.env.DATABASE_URL,local=process.env.
     });
   }
   async function spend(client,bucket,limit,code){const r=await client.query('INSERT INTO w07_public_limits(bucket,used) VALUES($1,1) ON CONFLICT(bucket) DO UPDATE SET used=w07_public_limits.used+1 WHERE w07_public_limits.used<$2 RETURNING used',[bucket,limit]);must(r.rows.length,code,'공개 체험의 일일 한도에 도달했습니다. 다음 날 다시 이용하세요.',429);}
-  async function createTrial(tokenHash){return transaction(async client=>{
+  async function createTrial(tokenHash,userId='intake',anchorHash){return transaction(async client=>{
     await spend(client,`start:${now().slice(0,10)}`,100,'DEMO_LIMIT');
-    const id=uid('trial'),s=initialState(source);s.publicDemo={createdAt:now(),expiresAt:new Date(Date.now()+2*60*60*1000).toISOString(),aiUsed:0,aiLimit:3};
+    const id=uid('trial'),s=initialState(source);s.publicDemo={authVersion:2,createdAt:now(),expiresAt:new Date(Date.now()+2*60*60*1000).toISOString(),aiUsed:0,aiLimit:3};
     await client.query('INSERT INTO w07_workspaces(id,state,validation) VALUES($1,$2,false)',[id,JSON.stringify(s)]);
-    await client.query("INSERT INTO w07_sessions(token_hash,user_id,expires_at,public_workspace) VALUES($1,'intake',$2,$3)",[tokenHash,s.publicDemo.expiresAt,id]);return {workspace:id,expiresAt:s.publicDemo.expiresAt};
+    await client.query('INSERT INTO w07_sessions(token_hash,user_id,expires_at,public_workspace) VALUES($1,$2,$3,$4)',[tokenHash,userId,s.publicDemo.expiresAt,id]);
+    if(anchorHash)await client.query('INSERT INTO w07_sessions(token_hash,user_id,expires_at,public_workspace) VALUES($1,$2,$3,$4)',[anchorHash,userId,s.publicDemo.expiresAt,id]);return {workspace:id,expiresAt:s.publicDemo.expiresAt};
   });}
   async function reserveNim(workspace){return transaction(async client=>{
     const r=await client.query('SELECT state FROM w07_workspaces WHERE id=$1 FOR UPDATE',[workspace]);const s=r.rows[0]?.state;if(!s?.publicDemo)return;

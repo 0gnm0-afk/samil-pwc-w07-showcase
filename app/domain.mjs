@@ -6,18 +6,26 @@ export const hash = value => createHash('sha256').update(typeof value==='string'
 export const now = () => new Date().toISOString();
 export const uid = prefix => `${prefix}-${randomUUID()}`;
 export const users = [
-  {id:'intake',name:'영업지원 접수',role:'intake'},
-  {id:'reviewer',name:'회계 검토',role:'reviewer'},
-  {id:'sales',name:'영업지원 전결',role:'sales'},
-  {id:'executive',name:'영업임원',role:'executive'},
-  {id:'alternate',name:'위임 영업 대체 승인',role:'alternate'},
-  {id:'finance',name:'독립 재무 승인',role:'finance'},
-  {id:'treasury',name:'자금팀',role:'treasury'},
-  {id:'reconciler',name:'회계 대사',role:'reconciler'},
-  {id:'admin',name:'시연 관리자',role:'admin'}
+  {id:'intake',name:'영업지원 · 접수 담당',role:'sales',capabilities:['intake']},
+  {id:'reviewer',name:'회계팀',role:'accounting',capabilities:['reviewer','reconciler']},
+  {id:'sales',name:'영업지원 · 전결 담당',role:'sales',capabilities:['sales']},
+  {id:'executive',name:'영업 임원',role:'executive',capabilities:['executive']},
+  {id:'alternate',name:'영업 임원 · 위임 대체자',role:'executive',capabilities:['alternate']},
+  {id:'finance',name:'재무 임원',role:'finance',capabilities:['finance']},
+  {id:'treasury',name:'자금팀',role:'treasury',capabilities:['treasury']},
+  {id:'reconciler',name:'회계팀',role:'accounting',capabilities:['reviewer','reconciler']},
+  {id:'admin',name:'시연 관리자',role:'admin',capabilities:['admin']}
+];
+export const businessRoles = [
+  {id:'sales',name:'영업지원',description:'요청 접수 · 증빙 보완 · 전결',members:[{id:'intake',name:'접수 담당'},{id:'sales',name:'전결 담당 (접수자와 다른 사람)'}]},
+  {id:'accounting',name:'회계팀',description:'증빙 검토 · 결재 상신 · 전표 대사',members:[{id:'reviewer',name:'회계 담당'}]},
+  {id:'executive',name:'영업 임원',description:'사업상 타당성 검토 · 승인',members:[{id:'executive',name:'본 승인자'},{id:'alternate',name:'사전 위임된 대체 승인자'}]},
+  {id:'finance',name:'재무 임원',description:'예외 지급 조건 · 독립 승인',members:[{id:'finance',name:'재무 임원'}]},
+  {id:'treasury',name:'자금팀',description:'승인 조건 확인 · 모의 지급 · 회신',members:[{id:'treasury',name:'자금 담당'}]}
 ];
 export const actorFor = id => {const u=users.find(u=>u.id===id);must(u,'AUTH','로그인이 필요합니다.',401);return u;};
-const role = (actor,...roles)=>must(roles.includes(actor.role),'FORBIDDEN','이 역할에는 처리 권한이 없습니다.',403);
+export const can = (actor,capability)=>users.find(u=>u.id===actor.id)?.capabilities.includes(capability)??false;
+const role = (actor,...roles)=>must(roles.some(r=>can(actor,r)),'FORBIDDEN','이 역할에는 처리 권한이 없습니다.',403);
 const money = n => must(Number.isSafeInteger(n)&&n>=0,'AMOUNT','금액은 0 이상의 원 단위 정수여야 합니다.',400);
 const date = d => must(typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&!Number.isNaN(Date.parse(d))&&new Date(d).toISOString().slice(0,10)===d,'DATE','유효한 지급 날짜가 필요합니다.',400);
 const text = (s,min=1,max=12000)=>must(typeof s==='string'&&s.trim().length>=min&&s.length<=max,'INPUT','필수 설명 또는 입력 길이를 확인하세요.',400);
@@ -150,7 +158,7 @@ export function command(s,actor,type,p={}) {
     task(s,c,'initial','reviewer','원본·합산·수취계좌와 명의 증빙 검토');result={caseId:c.id};
   } else if(type==='documents') {
     role(actor,'intake','reviewer','reconciler');mutable(c);c.revision++;addDocuments(s,c,actor,p.docs);
-    for(const t of Object.values(s.tasks))if(t.caseId===c.id&&t.owner===actor.role&&t.status==='open'&&!t.key?.startsWith('hold:')){t.status='responded';t.response={docIds:p.docs.map(d=>d.id),actor:actor.id,at:now()};}
+    for(const t of Object.values(s.tasks))if(t.caseId===c.id&&can(actor,t.owner)&&t.status==='open'&&!t.key?.startsWith('hold:')){t.status='responded';t.response={docIds:p.docs.map(d=>d.id),actor:actor.id,at:now()};}
   } else if(type==='change') {
     role(actor,'intake');mutable(c);const plan=s.plans[p.paymentId];must(plan&&c.paymentIds.includes(plan.id)&&!s.instructions[plan.id],'ISSUED','이미 지시한 지급 조건은 변경할 수 없습니다.');
     text(p.account,4,100);text(p.owner,1,100);if(p.date)date(p.date);
@@ -224,7 +232,7 @@ export function command(s,actor,type,p={}) {
   if(c)queueAI(s,c,e);return {...result,caseId:c?.id??null,eventId:e.id};
 }
 export function publicState(s,actor) {
-  const visible=Object.values(s.cases).filter(c=>actor.role!=='intake'||c.creator===actor.id);
+  const visible=Object.values(s.cases).filter(c=>!can(actor,'intake')||c.creator===actor.id);
   const ids=new Set(visible.map(c=>c.id));
   const result={epoch:s.epoch,fixture:s.fixture,fixtureVersion:s.fixtureVersion,createdAt:s.createdAt,publicDemo:s.publicDemo??null,source:s.source.sources,
     agencies:s.source.agencies,plans:Object.values(s.plans),cases:visible,tasks:Object.values(s.tasks).filter(t=>ids.has(t.caseId)),notifications:Object.values(s.notifications).filter(n=>ids.has(n.caseId)),

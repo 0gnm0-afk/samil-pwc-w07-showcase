@@ -27,13 +27,13 @@
         <bpmn:flowNodeRef>W07I_Rejected</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>W07I_Prepay</bpmn:flowNodeRef>
       </bpmn:lane>
-      <bpmn:lane id="W07I_LaneSales" name="영업 승인권자">
+      <bpmn:lane id="W07I_LaneSales" name="영업 임원">
         <bpmn:flowNodeRef>W07I_Regular</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>W07I_Business</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>W07I_BusinessStop</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>W07I_BusinessMerge</bpmn:flowNodeRef>
       </bpmn:lane>
-      <bpmn:lane id="W07I_LaneFinance" name="재무 승인권자">
+      <bpmn:lane id="W07I_LaneFinance" name="재무 임원">
         <bpmn:flowNodeRef>W07I_FinanceVote</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>W07I_FinanceStop</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>W07I_FinanceMerge</bpmn:flowNodeRef>
@@ -46,7 +46,7 @@
       <bpmn:outgoing>W07I_Flow01</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:userTask id="W07I_Receive" name="요청 접수·원본 보관">
-      <bpmn:documentation>요청서와 소명 원본을 건 ID에 연결한다. 접수자가 제출한 이해상충·예외 표시를 영업 승인권자가 해제할 수 없다.</bpmn:documentation>
+      <bpmn:documentation>요청서와 소명 원본을 건 ID에 연결한다. 접수자가 제출한 이해상충·예외 표시를 영업 임원이 해제할 수 없다.</bpmn:documentation>
       <bpmn:incoming>W07I_Flow01</bpmn:incoming>
       <bpmn:outgoing>W07I_Flow02</bpmn:outgoing>
     </bpmn:userTask>
@@ -62,7 +62,7 @@
       <bpmn:outgoing>W07I_Flow04</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:serviceTask id="W07I_Route" name="승인권자 결정 근거 버전 확정">
-      <bpmn:documentation>일반 건은 월 합산액 200만 원 이하이면 영업지원 전결, 초과하면 영업임원 결재다. 이해상충이 신고되거나 확인된 영업 승인권자는 회피 처리하고 사전 위임된 비이해관계 영업 승인권자에게 배정한다. 대체자가 없으면 지급을 보류한다.</bpmn:documentation>
+      <bpmn:documentation>일반 건은 월 합산액 200만 원 이하이면 영업지원 전결, 초과하면 영업 임원 결재다. 이해상충이 신고되거나 확인된 영업 임원은 회피 처리하고 사전 위임된 비이해관계 영업 임원에게 배정한다. 대체자가 없으면 지급을 보류한다.</bpmn:documentation>
       <bpmn:incoming>W07I_Flow04</bpmn:incoming>
       <bpmn:outgoing>W07I_Flow05</bpmn:outgoing>
     </bpmn:serviceTask>
@@ -73,7 +73,7 @@
       <bpmn:outgoing>W07I_Flow07</bpmn:outgoing>
       <bpmn:outgoing>W07I_Flow27</bpmn:outgoing>
     </bpmn:exclusiveGateway>
-    <bpmn:userTask id="W07I_Regular" name="전결 또는 영업임원 결재">
+    <bpmn:userTask id="W07I_Regular" name="전결 또는 영업 임원 결재">
       <bpmn:documentation>200만 원 이하 전결권자는 접수자와 다른 사람이어야 한다. 승인, 보완 요청, 반려를 기록한다.</bpmn:documentation>
       <bpmn:incoming>W07I_Flow06</bpmn:incoming>
       <bpmn:outgoing>W07I_Flow18</bpmn:outgoing>
@@ -89,12 +89,12 @@
       <bpmn:outgoing>W07I_Flow10</bpmn:outgoing>
     </bpmn:parallelGateway>
     <bpmn:userTask id="W07I_Business" name="사업상 타당성 결재">
-      <bpmn:documentation>영업 승인권자는 해당 버전의 사업상 타당성을 독립적으로 검토한다. 이해상충 당사자는 결재할 수 없다.</bpmn:documentation>
+      <bpmn:documentation>영업 임원은 해당 버전의 사업상 타당성을 독립적으로 검토한다. 이해상충 당사자는 결재할 수 없다.</bpmn:documentation>
       <bpmn:incoming>W07I_Flow09</bpmn:incoming>
       <bpmn:outgoing>W07I_Flow11</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:userTask id="W07I_FinanceVote" name="합산·증빙·지급 조건 결재">
-      <bpmn:documentation>재무 승인권자는 영업부문과 독립적으로 합산·증빙·수취계좌를 확인하고 승인·보완 요청·반려를 결정한다.</bpmn:documentation>
+      <bpmn:documentation>재무 임원은 영업부문과 독립적으로 합산·증빙·수취계좌를 확인하고 승인·보완 요청·반려를 결정한다.</bpmn:documentation>
       <bpmn:incoming>W07I_Flow10</bpmn:incoming>
       <bpmn:outgoing>W07I_Flow13</bpmn:outgoing>
     </bpmn:userTask>

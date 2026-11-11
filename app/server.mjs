@@ -3,8 +3,8 @@ import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { openStore } from './store.mjs';
-import { initAccounts, login, authenticate, sessionToken, startTrial, switchTrialRole } from './auth.mjs';
-import { command, publicState, users, must, hash, now, RuleError } from './domain.mjs';
+import { initAccounts, login, loginRole, authenticate, sessionToken, workspaceToken } from './auth.mjs';
+import { command, publicState, businessRoles, can, must, hash, now, RuleError } from './domain.mjs';
 import { processOne } from './ai.mjs';
 const instanceId=randomUUID();
 export async function startServer({store,hashes,port=Number(process.env.PORT||8080),worker=true,secure=process.env.NODE_ENV==='production'}={}) {
@@ -25,28 +25,26 @@ export async function startServer({store,hashes,port=Number(process.env.PORT||80
       if(['GET','HEAD'].includes(req.method)&&['/','/app.js','/style.css'].includes(url.pathname)){
         const path=url.pathname==='/'?'index.html':url.pathname.slice(1);const content=await readFile(new URL(`./public/${path}`,import.meta.url));res.writeHead(200,{'content-type':path.endsWith('.html')?'text/html; charset=utf-8':path.endsWith('.css')?'text/css; charset=utf-8':'text/javascript; charset=utf-8','cache-control':'no-cache'});return res.end(req.method==='HEAD'?undefined:content);
       }
-      if(url.pathname==='/api/roles'&&req.method==='GET')return json(res,200,users);
+      if(url.pathname==='/api/roles'&&req.method==='GET')return json(res,200,businessRoles);
+      if(['/api/demo/start','/api/demo/role'].includes(url.pathname))return json(res,410,{code:'LOGIN_REQUIRED',message:'역할별 비밀번호 로그인으로 변경되었습니다.'});
       if(req.method!=='GET'){
         must(req.headers['content-type']?.startsWith('application/json'),'CONTENT_TYPE','JSON 요청만 허용합니다.',415);
         const origin=req.headers.origin;
         if(origin){const expectedHost=req.headers['x-forwarded-host']||req.headers.host;must(new URL(origin).host===expectedHost,'ORIGIN','다른 사이트의 요청은 허용하지 않습니다.',403);}
       }
       if(url.pathname==='/api/login'&&req.method==='POST'){
-        const p=await body(req);const key=`${req.socket.remoteAddress}:${p.userId}`;const entry=attempts.get(key)??{count:0,since:Date.now()};if(Date.now()-entry.since>60000){entry.count=0;entry.since=Date.now();}entry.count++;attempts.set(key,entry);must(entry.count<=15,'RATE_LIMIT','잠시 후 다시 로그인하세요.',429);
-        const result=await login(store,p.userId,p.password);attempts.delete(key);res.setHeader('set-cookie',`w07_session=${result.token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800${secure?'; Secure':''}`);return json(res,200,{user:result.user});
-      }
-      if(url.pathname==='/api/demo/start'&&req.method==='POST'){
-        const result=await startTrial(store);res.setHeader('set-cookie',`w07_session=${result.token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=7200${secure?'; Secure':''}`);
-        return json(res,200,{workspace:result.workspace,expiresAt:result.expiresAt});
+        const p=await body(req);const key=req.socket.remoteAddress;const entry=attempts.get(key)??{count:0,since:Date.now()};if(Date.now()-entry.since>60000){entry.count=0;entry.since=Date.now();}entry.count++;attempts.set(key,entry);must(entry.count<=15,'RATE_LIMIT','잠시 후 다시 로그인하세요.',429);
+        const result=p.roleId?await loginRole(store,p,workspaceToken(req)):await login(store,p.userId,p.password);attempts.delete(key);
+        const attrs=`; HttpOnly; SameSite=Strict; Path=/; Max-Age=${p.roleId?7200:28800}${secure?'; Secure':''}`;
+        const cookies=[`w07_session=${result.token}${attrs}`];if(result.spaceToken)cookies.push(`w07_space=${result.spaceToken}${attrs}`);
+        if(sessionToken(req))await store.query('DELETE FROM w07_sessions WHERE token_hash=$1',[hash(sessionToken(req))]);
+        res.setHeader('set-cookie',cookies);return json(res,200,{user:result.user,workspace:result.workspace||'demo',expiresAt:result.expiresAt});
       }
       const actor=await authenticate(store,req);
       if(url.pathname==='/api/me')return json(res,200,{user:actor,version:'1.2.0'});
       if(url.pathname==='/api/logout'&&req.method==='POST'){await store.query('DELETE FROM w07_sessions WHERE token_hash=$1',[hash(sessionToken(req))]);res.setHeader('set-cookie',`w07_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${secure?'; Secure':''}`);return json(res,200,{ok:true});}
       const workspace=url.searchParams.get('workspace')||actor.workspace||'demo';must(/^(demo|qa-[a-z0-9-]{1,70}|trial-[a-f0-9-]{36})$/.test(workspace),'WORKSPACE','작업공간 오류',400);
       if(actor.publicDemo)must(workspace===actor.workspace,'FORBIDDEN','내 체험 공간에만 접근할 수 있습니다.',403);
-      if(url.pathname==='/api/demo/role'&&req.method==='POST'){
-        must(actor.publicDemo,'FORBIDDEN','공개 체험 세션만 역할을 전환할 수 있습니다.',403);const p=await body(req);const user=await switchTrialRole(store,sessionToken(req),p.userId);return json(res,200,{user});
-      }
       if(url.pathname==='/api/state'&&req.method==='GET'){const s=await store.read(workspace);return json(res,200,{user:actor,workspace,state:publicState(s,actor)});}
       if(url.pathname==='/api/admin/workspace'&&req.method==='POST'){
         must(actor.role==='admin','FORBIDDEN','시연 관리자만 초기화할 수 있습니다.',403);const p=await body(req);must(p.confirm==='RESET_DEMO','CONFIRM','전용 시연 초기화 확인이 필요합니다.',400);await store.create(workspace,p.fixture||'demo',{reset:true,validation:workspace.startsWith('qa-')});return json(res,200,{ok:true,workspace});
@@ -57,7 +55,7 @@ export async function startServer({store,hashes,port=Number(process.env.PORT||80
       }
       if(url.pathname==='/api/command'&&req.method==='POST'){
         const p=await body(req);const result=await store.tx(workspace,(s,meta)=>{
-          if(actor.role==='intake'&&p.payload?.caseId)must(s.cases[p.payload.caseId]?.creator===actor.id,'FORBIDDEN','자기 접수 건만 처리할 수 있습니다.',403);
+          if(can(actor,'intake')&&p.payload?.caseId)must(s.cases[p.payload.caseId]?.creator===actor.id,'FORBIDDEN','자기 접수 건만 처리할 수 있습니다.',403);
           if(actor.publicDemo)must(s.events.length<300&&Object.keys(s.cases).length<15&&Object.values(s.cases).reduce((n,c)=>n+c.docs.reduce((m,d)=>m+d.text.length,0),0)<80000,'DEMO_LIMIT','이 공간의 체험 입력 한도에 도달했습니다.',429);
           const prior=new Set(Object.keys(s.jobs));const result=command(s,actor,p.type,p.payload);
           if(meta.validation&&s.nextFault){for(const j of Object.values(s.jobs))if(!prior.has(j.id)){j.fault=s.nextFault;delete s.nextFault;break;}}

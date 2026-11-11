@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="2354" height="1062" viewBox="0 0 2354 1062" role="img" aria-labelledby="title desc">
   <title id="title">W07 판매장려금 지급 개선 BPMN</title>
-  <desc id="desc">회계가 지급 근거를 검토한다. 이해상충 또는 예외가 표시되면 영업과 재무 승인권자가 동시에 통지되고 같은 근거로 각각 결재한다. 자금팀이 승인 조건에 따라 지급하고 회계팀이 대사한다.</desc>
+  <desc id="desc">회계가 지급 근거를 검토한다. 이해상충 또는 예외가 표시되면 영업과 재무 임원이 동시에 통지되고 같은 근거로 각각 결재한다. 자금팀이 승인 조건에 따라 지급하고 회계팀이 대사한다.</desc>
   <defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M 0 0 L 9 4.5 L 0 9 z" fill="#425773"/></marker></defs>
   <style>text{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;fill:#172941}.title{font-size:29px;font-weight:700}.subtitle{font-size:16px;fill:#445970}.role{font-size:15px;font-weight:700;text-anchor:middle}.task{font-size:15px;font-weight:600;text-anchor:middle}.small{font-size:13px;text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:6px;stroke-linejoin:round}.wire{fill:none;stroke:#425773;stroke-width:1.7;marker-end:url(#arrow)}</style>
   <rect width="2354" height="1062" fill="#fff"/>
@@ -17,10 +17,10 @@
   <text x="80" y="492" class="role"><tspan x="80" dy="0">시스템</tspan></text>
   <rect x="22" y="614" width="2310" height="160" fill="#f8fafc" stroke="#bdcad9"/>
   <rect x="22" y="614" width="116" height="160" fill="#edf2f8" stroke="#bdcad9"/>
-  <text x="80" y="699" class="role"><tspan x="80" dy="0">영업 승인권자</tspan></text>
+  <text x="80" y="699" class="role"><tspan x="80" dy="0">영업 임원</tspan></text>
   <rect x="22" y="774" width="2310" height="125" fill="#fff" stroke="#bdcad9"/>
   <rect x="22" y="774" width="116" height="125" fill="#edf2f8" stroke="#bdcad9"/>
-  <text x="80" y="841.5" class="role"><tspan x="80" dy="0">재무 승인권자</tspan></text>
+  <text x="80" y="841.5" class="role"><tspan x="80" dy="0">재무 임원</tspan></text>
   <rect x="22" y="899" width="2310" height="139" fill="#f8fafc" stroke="#bdcad9"/>
   <rect x="22" y="899" width="116" height="139" fill="#edf2f8" stroke="#bdcad9"/>
   <text x="80" y="973.5" class="role"><tspan x="80" dy="0">자금팀</tspan></text>
@@ -65,7 +65,7 @@
   <path d="M854,417l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M847,431l14,14 M847,445l14,-14" fill="none" stroke="#795715" stroke-width="2"/>
   <text x="800" y="475" class="small"><tspan x="800" dy="0">예외·이해상충?</tspan></text>
   <rect x="972" y="628" width="166" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
-  <text x="1055" y="651" class="task"><tspan x="1055" dy="0">전결 또는</tspan><tspan x="1055" dy="19">영업임원 결재</tspan></text>
+  <text x="1055" y="651" class="task"><tspan x="1055" dy="0">전결 또는</tspan><tspan x="1055" dy="19">영업 임원 결재</tspan></text>
   <rect x="912" y="513" width="166" height="54" rx="8" fill="#deeeff" stroke="#2463aa" stroke-width="2"/>
   <text x="995" y="545" class="task"><tspan x="995" dy="0">두 결재 요청 동시 발행</tspan></text>
   <path d="M1135,519l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M1125,540h20 M1135,530v20" fill="none" stroke="#795715" stroke-width="2"/>
