@@ -27,13 +27,13 @@ export async function nimCall(job,{apiKey=process.env.NVIDIA_API_KEY,fetcher=fet
   must(apiKey,'AI_AUTH','NIM 서버 키가 설정되지 않았습니다.');
   const input=promptFor(job);
   let response;
-  try {response=await fetcher('https://integrate.api.nvidia.com/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json',Authorization:`Bearer ${apiKey}`},signal:AbortSignal.timeout(timeoutMs),body:JSON.stringify({model:MODEL,messages:[{role:'system',content:instruction},{role:'user',content:JSON.stringify(input)}],stream:false,temperature:0.15,max_tokens:4096,chat_template_kwargs:{enable_thinking:false}})});
+  try {response=await fetcher('https://integrate.api.nvidia.com/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json',Authorization:`Bearer ${apiKey}`},signal:AbortSignal.timeout(timeoutMs),body:JSON.stringify({model:MODEL,messages:[{role:'system',content:instruction},{role:'user',content:JSON.stringify(input)}],stream:false,temperature:0.15,max_tokens:4096,response_format:{type:'json_object'},chat_template_kwargs:{enable_thinking:false}})});
   }catch(error){throw Object.assign(Error('NIM 네트워크 또는 시간 제한'),{code:error.name==='TimeoutError'||error.name==='AbortError'?'AI_TIMEOUT':'AI_NETWORK'});}
   must(response.ok,response.status===401||response.status===403?'AI_AUTH':response.status===429?'AI_RATE_LIMIT':'AI_HTTP',`NIM HTTP ${response.status}`);
   const body=await response.json();const content=body.choices?.[0]?.message?.content;
+  const metadata={providerCallId:body.id||response.headers.get('x-request-id')||null,model:body.model||MODEL,httpStatus:response.status,finishReason:body.choices?.[0]?.finish_reason??null,usage:body.usage??null};
   must(typeof content==='string','AI_SCHEMA','NIM 응답 본문이 없습니다.');
-  let parsed;try{parsed=JSON.parse(content.replace(/^\s*```(?:json)?\s*/,'').replace(/\s*```\s*$/,''));}catch{throw Object.assign(Error('NIM JSON 파싱 실패'),{code:'AI_SCHEMA'});}
-  const metadata={providerCallId:body.id||response.headers.get('x-request-id')||null,model:body.model||MODEL,httpStatus:response.status,usage:body.usage??null};
+  let parsed;try{parsed=JSON.parse(content.replace(/^\s*```(?:json)?\s*/,'').replace(/\s*```\s*$/,''));}catch{throw Object.assign(Error('NIM JSON 파싱 실패'),{code:'AI_SCHEMA',metadata});}
   try{return {decision:validateDecision(parsed,job),...metadata};}
   catch(error){error.metadata={...metadata,validationDetail:{scope:parsed.scope,action:parsed.action,owner:parsed.owner,caseId:parsed.caseId,inputRevision:parsed.inputRevision}};throw error;}
 }
