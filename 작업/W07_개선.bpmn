@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="W07I_Definitions" targetNamespace="https://ax-challenge.local/bpmn/w07-improved">
+  <bpmn:collaboration id="W07I_Collaboration">
+    <bpmn:participant id="W07I_Pool" name="Corevia 판매장려금 지급 검토" processRef="W07I_Process"/>
+  </bpmn:collaboration>
+  <bpmn:process id="W07I_Process" name="W07 판매장려금 지급 개선 흐름" isExecutable="false">
+    <bpmn:documentation>설계 기준은 작업/W07_문제정리.md 22.12절. 결재 요청과 지급 권한은 동일한 근거 버전으로 관리한다.</bpmn:documentation>
+    <bpmn:laneSet id="W07I_Lanes">
+      <bpmn:lane id="W07I_LaneIntake" name="영업지원">
+        <bpmn:flowNodeRef>W07I_Start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_Receive</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="W07I_LaneAccounting" name="회계팀">
+        <bpmn:flowNodeRef>W07I_Review</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_Rework</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_Reconcile</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_Finish</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="W07I_LaneSystem" name="시스템">
+        <bpmn:flowNodeRef>W07I_EarlyAlert</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_Route</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_Risk</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_OpenBoth</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_Fork</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_Join</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_Outcome</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_Rejected</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_Prepay</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="W07I_LaneSales" name="영업 승인권자">
+        <bpmn:flowNodeRef>W07I_Regular</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_Business</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_BusinessStop</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_BusinessMerge</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="W07I_LaneFinance" name="재무 승인권자">
+        <bpmn:flowNodeRef>W07I_FinanceVote</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_FinanceStop</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_FinanceMerge</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="W07I_LaneTreasury" name="자금팀">
+        <bpmn:flowNodeRef>W07I_Pay</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="W07I_Start" name="정산 요청">
+      <bpmn:outgoing>W07I_Flow01</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="W07I_Receive" name="요청 접수·원본 보관">
+      <bpmn:documentation>요청서와 소명 원본을 건 ID에 연결한다. 접수자가 제출한 이해상충·예외 표시를 영업 승인권자가 해제할 수 없다.</bpmn:documentation>
+      <bpmn:incoming>W07I_Flow01</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow02</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="W07I_EarlyAlert" name="접수 등록 위험 표시 시 동시 알림">
+      <bpmn:documentation>접수 정보에서 위험을 확인하면 해당 건을 영업·재무 승인함에 같은 시점에 등록하고 양쪽에 동시에 알린다. 이때는 열람만 가능하다.</bpmn:documentation>
+      <bpmn:incoming>W07I_Flow02</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow03</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="W07I_Review" name="증빙 취합·합산 지급 근거 검토">
+      <bpmn:documentation>회계가 관련 거래처와 월 합산액, 지급 근거, 이해상충 및 예외를 확인한다. 접수 이후 위험을 새로 식별하면 해당 시점에 양쪽에 알린다.</bpmn:documentation>
+      <bpmn:incoming>W07I_Flow03</bpmn:incoming>
+      <bpmn:incoming>W07I_Flow22</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow04</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="W07I_Route" name="승인권자 결정 근거 버전 확정">
+      <bpmn:documentation>일반 건은 월 합산액 200만 원 이하이면 영업지원 전결, 초과하면 영업임원 결재다. 이해상충이 신고되거나 확인된 영업 승인권자는 회피 처리하고 사전 위임된 비이해관계 영업 승인권자에게 배정한다. 대체자가 없으면 지급을 보류한다.</bpmn:documentation>
+      <bpmn:incoming>W07I_Flow04</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow05</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="W07I_Risk" name="예외·이해상충?">
+      <bpmn:documentation>이해상충, 정상 정책을 벗어난 지급 요청, 관련자 합산 예외 또는 수취계좌 변경을 포함한다. 예외로 등록된 건은 소명 후에도 이번 검토 건의 이중승인을 유지한다.</bpmn:documentation>
+      <bpmn:incoming>W07I_Flow05</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow06</bpmn:outgoing>
+      <bpmn:outgoing>W07I_Flow07</bpmn:outgoing>
+      <bpmn:outgoing>W07I_Flow27</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="W07I_Regular" name="전결 또는 영업임원 결재">
+      <bpmn:documentation>200만 원 이하 전결권자는 접수자와 다른 사람이어야 한다. 승인, 보완 요청, 반려를 기록한다.</bpmn:documentation>
+      <bpmn:incoming>W07I_Flow06</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow18</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="W07I_OpenBoth" name="두 결재 요청 동시 발행">
+      <bpmn:documentation>동일한 검토 버전으로 영업과 재무 양쪽 승인함에 결재 요청을 함께 발행한 뒤 두 결재를 활성화한다. 한쪽 발행이 실패하면 두 결재 모두 활성화하지 않고 재처리한다.</bpmn:documentation>
+      <bpmn:incoming>W07I_Flow07</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow08</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:parallelGateway id="W07I_Fork">
+      <bpmn:incoming>W07I_Flow08</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow09</bpmn:outgoing>
+      <bpmn:outgoing>W07I_Flow10</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:userTask id="W07I_Business" name="사업상 타당성 결재">
+      <bpmn:documentation>영업 승인권자는 해당 버전의 사업상 타당성을 독립적으로 검토한다. 이해상충 당사자는 결재할 수 없다.</bpmn:documentation>
+      <bpmn:incoming>W07I_Flow09</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow11</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="W07I_FinanceVote" name="합산·증빙·지급 조건 결재">
+      <bpmn:documentation>재무 승인권자는 영업부문과 독립적으로 합산·증빙·수취계좌를 확인하고 승인·보완 요청·반려를 결정한다.</bpmn:documentation>
+      <bpmn:incoming>W07I_Flow10</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow13</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:boundaryEvent id="W07I_BusinessStop" attachedToRef="W07I_Business" cancelActivity="true">
+      <bpmn:documentation>재무 측 보완·반려 또는 승인 근거 변경으로 이 결재가 중단된다.</bpmn:documentation>
+      <bpmn:outgoing>W07I_Flow12</bpmn:outgoing>
+      <bpmn:conditionalEventDefinition id="W07I_BusinessStopCondition">
+        <bpmn:condition xsi:type="bpmn:tFormalExpression">재무 측 보완·반려 또는 승인 근거 변경으로 이 결재가 중단된다.</bpmn:condition>
+      </bpmn:conditionalEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="W07I_FinanceStop" attachedToRef="W07I_FinanceVote" cancelActivity="true">
+      <bpmn:documentation>영업 측 보완·반려 또는 승인 근거 변경으로 이 결재가 중단된다.</bpmn:documentation>
+      <bpmn:outgoing>W07I_Flow14</bpmn:outgoing>
+      <bpmn:conditionalEventDefinition id="W07I_FinanceStopCondition">
+        <bpmn:condition xsi:type="bpmn:tFormalExpression">영업 측 보완·반려 또는 승인 근거 변경으로 이 결재가 중단된다.</bpmn:condition>
+      </bpmn:conditionalEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:exclusiveGateway id="W07I_BusinessMerge">
+      <bpmn:incoming>W07I_Flow11</bpmn:incoming>
+      <bpmn:incoming>W07I_Flow12</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow15</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="W07I_FinanceMerge">
+      <bpmn:incoming>W07I_Flow13</bpmn:incoming>
+      <bpmn:incoming>W07I_Flow14</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow16</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:parallelGateway id="W07I_Join">
+      <bpmn:incoming>W07I_Flow15</bpmn:incoming>
+      <bpmn:incoming>W07I_Flow16</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow17</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:exclusiveGateway id="W07I_Outcome" name="결재 결과">
+      <bpmn:documentation>현재 버전에 필요한 모든 결재가 승인인 경우에만 지급 전 확인으로 간다. 한쪽의 보완 요청이나 반려는 즉시 지급 차단 상태를 기록하고 상대 미결 결재를 닫는다.</bpmn:documentation>
+      <bpmn:incoming>W07I_Flow17</bpmn:incoming>
+      <bpmn:incoming>W07I_Flow18</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow19</bpmn:outgoing>
+      <bpmn:outgoing>W07I_Flow20</bpmn:outgoing>
+      <bpmn:outgoing>W07I_Flow21</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="W07I_Rework" name="지급 보류·보완 확인">
+      <bpmn:documentation>회계가 사유를 기록하고 필요한 소명을 영업지원에 요청한다. 증빙 또는 권한 배정이 해결된 뒤 새 검토 버전으로 재검토한다.</bpmn:documentation>
+      <bpmn:incoming>W07I_Flow20</bpmn:incoming>
+      <bpmn:incoming>W07I_Flow23</bpmn:incoming>
+      <bpmn:incoming>W07I_Flow27</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow22</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="W07I_Rejected" name="반려 종료">
+      <bpmn:incoming>W07I_Flow21</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="W07I_Prepay" name="승인 근거 유효?">
+      <bpmn:documentation>지급 직전에 동일한 승인 버전과 결재 완료를 확인한다. 지급 대상, 금액, 수취계좌, 적용 월, 관련자 그룹·한도 판단 또는 예외 판정이 달라지면 기존 승인을 무효화하고 미집행 지급을 보류한다.</bpmn:documentation>
+      <bpmn:incoming>W07I_Flow19</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow23</bpmn:outgoing>
+      <bpmn:outgoing>W07I_Flow24</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="W07I_Pay" name="승인 조건대로 지급 지시">
+      <bpmn:documentation>지급 지시를 기록하는 시점에 승인 버전과 지급 조건을 함께 확인한다. MVP에서는 모의 지급 지시를 생성하고 은행 회신은 별도 입력으로 받는다.</bpmn:documentation>
+      <bpmn:incoming>W07I_Flow24</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow25</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="W07I_Reconcile" name="은행 회신·전표 대사">
+      <bpmn:documentation>회계가 승인 내역·지급 지시·은행 결과·전표를 건별로 확인한다. 일치하면 대사 완료, 차이가 있으면 차이와 후속 확인 작업을 기록한다. 모의 은행 회신이 없으면 회신 대기를 유지한다.</bpmn:documentation>
+      <bpmn:incoming>W07I_Flow25</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow26</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="W07I_Finish" name="대사 결과 기록">
+      <bpmn:incoming>W07I_Flow26</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="W07I_Flow01" sourceRef="W07I_Start" targetRef="W07I_Receive"/>
+    <bpmn:sequenceFlow id="W07I_Flow02" sourceRef="W07I_Receive" targetRef="W07I_EarlyAlert"/>
+    <bpmn:sequenceFlow id="W07I_Flow03" sourceRef="W07I_EarlyAlert" targetRef="W07I_Review"/>
+    <bpmn:sequenceFlow id="W07I_Flow04" sourceRef="W07I_Review" targetRef="W07I_Route"/>
+    <bpmn:sequenceFlow id="W07I_Flow05" sourceRef="W07I_Route" targetRef="W07I_Risk"/>
+    <bpmn:sequenceFlow id="W07I_Flow06" sourceRef="W07I_Risk" targetRef="W07I_Regular" name="일반">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">통제 예외가 없고 적격한 승인권자가 배정됨</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="W07I_Flow07" sourceRef="W07I_Risk" targetRef="W07I_OpenBoth" name="예외">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">이해상충 또는 예외 지급 플래그가 있고 적격한 승인권자가 배정됨</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="W07I_Flow08" sourceRef="W07I_OpenBoth" targetRef="W07I_Fork"/>
+    <bpmn:sequenceFlow id="W07I_Flow09" sourceRef="W07I_Fork" targetRef="W07I_Business"/>
+    <bpmn:sequenceFlow id="W07I_Flow10" sourceRef="W07I_Fork" targetRef="W07I_FinanceVote"/>
+    <bpmn:sequenceFlow id="W07I_Flow11" sourceRef="W07I_Business" targetRef="W07I_BusinessMerge"/>
+    <bpmn:sequenceFlow id="W07I_Flow12" sourceRef="W07I_BusinessStop" targetRef="W07I_BusinessMerge"/>
+    <bpmn:sequenceFlow id="W07I_Flow13" sourceRef="W07I_FinanceVote" targetRef="W07I_FinanceMerge"/>
+    <bpmn:sequenceFlow id="W07I_Flow14" sourceRef="W07I_FinanceStop" targetRef="W07I_FinanceMerge"/>
+    <bpmn:sequenceFlow id="W07I_Flow15" sourceRef="W07I_BusinessMerge" targetRef="W07I_Join"/>
+    <bpmn:sequenceFlow id="W07I_Flow16" sourceRef="W07I_FinanceMerge" targetRef="W07I_Join"/>
+    <bpmn:sequenceFlow id="W07I_Flow17" sourceRef="W07I_Join" targetRef="W07I_Outcome"/>
+    <bpmn:sequenceFlow id="W07I_Flow18" sourceRef="W07I_Regular" targetRef="W07I_Outcome"/>
+    <bpmn:sequenceFlow id="W07I_Flow19" sourceRef="W07I_Outcome" targetRef="W07I_Prepay" name="필요 결재 모두 승인">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">같은 버전에 필요한 모든 결재가 승인됨</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="W07I_Flow20" sourceRef="W07I_Outcome" targetRef="W07I_Rework" name="보완·근거 변경">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">보완 요청 또는 승인 근거 변경</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="W07I_Flow21" sourceRef="W07I_Outcome" targetRef="W07I_Rejected" name="반려">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">반려 결정</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="W07I_Flow22" sourceRef="W07I_Rework" targetRef="W07I_Review" name="증빙 확보 후 재검토"/>
+    <bpmn:sequenceFlow id="W07I_Flow23" sourceRef="W07I_Prepay" targetRef="W07I_Rework" name="변경 발견">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">필수 결재 또는 승인 근거 버전 불일치</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="W07I_Flow24" sourceRef="W07I_Prepay" targetRef="W07I_Pay" name="유효">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">모든 지급 조건 유효</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="W07I_Flow25" sourceRef="W07I_Pay" targetRef="W07I_Reconcile"/>
+    <bpmn:sequenceFlow id="W07I_Flow26" sourceRef="W07I_Reconcile" targetRef="W07I_Finish"/>
+    <bpmn:sequenceFlow id="W07I_Flow27" sourceRef="W07I_Risk" targetRef="W07I_Rework" name="권한자 미배정">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">적격 승인권자가 배정되지 않음</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="W07I_Diagram">
+    <bpmndi:BPMNPlane id="W07I_Plane" bpmnElement="W07I_Collaboration">
+      <bpmndi:BPMNShape id="W07I_PoolDI" bpmnElement="W07I_Pool" isHorizontal="true"><dc:Bounds x="22" y="90" width="2310" height="948"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_LaneIntakeDI" bpmnElement="W07I_LaneIntake" isHorizontal="true"><dc:Bounds x="52" y="90" width="2280" height="118"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_LaneAccountingDI" bpmnElement="W07I_LaneAccounting" isHorizontal="true"><dc:Bounds x="52" y="208" width="2280" height="152"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_LaneSystemDI" bpmnElement="W07I_LaneSystem" isHorizontal="true"><dc:Bounds x="52" y="360" width="2280" height="254"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_LaneSalesDI" bpmnElement="W07I_LaneSales" isHorizontal="true"><dc:Bounds x="52" y="614" width="2280" height="160"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_LaneFinanceDI" bpmnElement="W07I_LaneFinance" isHorizontal="true"><dc:Bounds x="52" y="774" width="2280" height="125"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_LaneTreasuryDI" bpmnElement="W07I_LaneTreasury" isHorizontal="true"><dc:Bounds x="52" y="899" width="2280" height="139"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_StartDI" bpmnElement="W07I_Start"><dc:Bounds x="152" y="128" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="113" y="166" width="114" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_ReceiveDI" bpmnElement="W07I_Receive"><dc:Bounds x="202" y="119" width="166" height="54"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_EarlyAlertDI" bpmnElement="W07I_EarlyAlert"><dc:Bounds x="332" y="411" width="166" height="54"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_ReviewDI" bpmnElement="W07I_Review"><dc:Bounds x="472" y="255" width="166" height="54"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_RouteDI" bpmnElement="W07I_Route"><dc:Bounds x="623" y="411" width="166" height="54"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_RiskDI" bpmnElement="W07I_Risk" isMarkerVisible="true"><dc:Bounds x="833" y="417" width="42" height="42"/><bpmndi:BPMNLabel><dc:Bounds x="732" y="461" width="136" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_RegularDI" bpmnElement="W07I_Regular"><dc:Bounds x="972" y="628" width="166" height="54"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_OpenBothDI" bpmnElement="W07I_OpenBoth"><dc:Bounds x="912" y="513" width="166" height="54"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_ForkDI" bpmnElement="W07I_Fork"><dc:Bounds x="1114" y="519" width="42" height="42"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_BusinessDI" bpmnElement="W07I_Business"><dc:Bounds x="1167" y="703" width="166" height="54"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_FinanceVoteDI" bpmnElement="W07I_FinanceVote"><dc:Bounds x="1167" y="805" width="166" height="54"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_BusinessStopDI" bpmnElement="W07I_BusinessStop"><dc:Bounds x="1278" y="743" width="28" height="28"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_FinanceStopDI" bpmnElement="W07I_FinanceStop"><dc:Bounds x="1278" y="845" width="28" height="28"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_BusinessMergeDI" bpmnElement="W07I_BusinessMerge" isMarkerVisible="true"><dc:Bounds x="1359" y="709" width="42" height="42"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_FinanceMergeDI" bpmnElement="W07I_FinanceMerge" isMarkerVisible="true"><dc:Bounds x="1359" y="811" width="42" height="42"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_JoinDI" bpmnElement="W07I_Join"><dc:Bounds x="1449" y="519" width="42" height="42"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_OutcomeDI" bpmnElement="W07I_Outcome" isMarkerVisible="true"><dc:Bounds x="1559" y="417" width="42" height="42"/><bpmndi:BPMNLabel><dc:Bounds x="1562" y="461" width="136" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_ReworkDI" bpmnElement="W07I_Rework"><dc:Bounds x="1497" y="255" width="166" height="54"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_RejectedDI" bpmnElement="W07I_Rejected"><dc:Bounds x="1562" y="522" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="1523" y="560" width="114" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_PrepayDI" bpmnElement="W07I_Prepay" isMarkerVisible="true"><dc:Bounds x="1744" y="417" width="42" height="42"/><bpmndi:BPMNLabel><dc:Bounds x="1697" y="461" width="136" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_PayDI" bpmnElement="W07I_Pay"><dc:Bounds x="1847" y="937" width="166" height="54"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_ReconcileDI" bpmnElement="W07I_Reconcile"><dc:Bounds x="2017" y="255" width="166" height="54"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_FinishDI" bpmnElement="W07I_Finish"><dc:Bounds x="2242" y="264" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="2203" y="302" width="114" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="W07I_Flow01DI" bpmnElement="W07I_Flow01"><di:waypoint x="188" y="146"/><di:waypoint x="202" y="146"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow02DI" bpmnElement="W07I_Flow02"><di:waypoint x="368" y="146"/><di:waypoint x="415" y="146"/><di:waypoint x="415" y="411"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow03DI" bpmnElement="W07I_Flow03"><di:waypoint x="498" y="438"/><di:waypoint x="555" y="438"/><di:waypoint x="555" y="309"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow04DI" bpmnElement="W07I_Flow04"><di:waypoint x="638" y="282"/><di:waypoint x="706" y="282"/><di:waypoint x="706" y="411"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow05DI" bpmnElement="W07I_Flow05"><di:waypoint x="789" y="438"/><di:waypoint x="833" y="438"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow06DI" bpmnElement="W07I_Flow06"><di:waypoint x="875" y="438"/><di:waypoint x="1055" y="438"/><di:waypoint x="1055" y="628"/><bpmndi:BPMNLabel><dc:Bounds x="870" y="413" width="150" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow07DI" bpmnElement="W07I_Flow07"><di:waypoint x="854" y="459"/><di:waypoint x="854" y="540"/><di:waypoint x="912" y="540"/><bpmndi:BPMNLabel><dc:Bounds x="803" y="513" width="150" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow08DI" bpmnElement="W07I_Flow08"><di:waypoint x="1078" y="540"/><di:waypoint x="1114" y="540"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow09DI" bpmnElement="W07I_Flow09"><di:waypoint x="1135" y="561"/><di:waypoint x="1135" y="730"/><di:waypoint x="1167" y="730"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow10DI" bpmnElement="W07I_Flow10"><di:waypoint x="1156" y="540"/><di:waypoint x="1160" y="540"/><di:waypoint x="1160" y="832"/><di:waypoint x="1167" y="832"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow11DI" bpmnElement="W07I_Flow11"><di:waypoint x="1333" y="730"/><di:waypoint x="1359" y="730"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow12DI" bpmnElement="W07I_Flow12"><di:waypoint x="1306" y="757"/><di:waypoint x="1380" y="757"/><di:waypoint x="1380" y="751"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow13DI" bpmnElement="W07I_Flow13"><di:waypoint x="1333" y="832"/><di:waypoint x="1359" y="832"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow14DI" bpmnElement="W07I_Flow14"><di:waypoint x="1306" y="859"/><di:waypoint x="1380" y="859"/><di:waypoint x="1380" y="853"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow15DI" bpmnElement="W07I_Flow15"><di:waypoint x="1401" y="730"/><di:waypoint x="1446" y="730"/><di:waypoint x="1446" y="540"/><di:waypoint x="1449" y="540"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow16DI" bpmnElement="W07I_Flow16"><di:waypoint x="1401" y="832"/><di:waypoint x="1470" y="832"/><di:waypoint x="1470" y="561"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow17DI" bpmnElement="W07I_Flow17"><di:waypoint x="1491" y="540"/><di:waypoint x="1525" y="540"/><di:waypoint x="1525" y="438"/><di:waypoint x="1559" y="438"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow18DI" bpmnElement="W07I_Flow18"><di:waypoint x="1055" y="682"/><di:waypoint x="1055" y="704"/><di:waypoint x="1096" y="704"/><di:waypoint x="1096" y="383"/><di:waypoint x="1570" y="383"/><di:waypoint x="1570" y="427"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow19DI" bpmnElement="W07I_Flow19"><di:waypoint x="1601" y="438"/><di:waypoint x="1744" y="438"/><bpmndi:BPMNLabel><dc:Bounds x="1598" y="413" width="150" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow20DI" bpmnElement="W07I_Flow20"><di:waypoint x="1580" y="417"/><di:waypoint x="1580" y="309"/><bpmndi:BPMNLabel><dc:Bounds x="1450" y="347" width="150" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow21DI" bpmnElement="W07I_Flow21"><di:waypoint x="1580" y="459"/><di:waypoint x="1580" y="522"/><bpmndi:BPMNLabel><dc:Bounds x="1538" y="486" width="150" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow22DI" bpmnElement="W07I_Flow22"><di:waypoint x="1497" y="282"/><di:waypoint x="1450" y="282"/><di:waypoint x="1450" y="235"/><di:waypoint x="555" y="235"/><di:waypoint x="555" y="255"/><bpmndi:BPMNLabel><dc:Bounds x="940" y="211" width="150" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow23DI" bpmnElement="W07I_Flow23"><di:waypoint x="1765" y="417"/><di:waypoint x="1765" y="282"/><di:waypoint x="1663" y="282"/><bpmndi:BPMNLabel><dc:Bounds x="1646" y="256" width="150" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow24DI" bpmnElement="W07I_Flow24"><di:waypoint x="1786" y="438"/><di:waypoint x="1930" y="438"/><di:waypoint x="1930" y="937"/><bpmndi:BPMNLabel><dc:Bounds x="1779" y="413" width="150" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow25DI" bpmnElement="W07I_Flow25"><di:waypoint x="2013" y="964"/><di:waypoint x="2100" y="964"/><di:waypoint x="2100" y="309"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow26DI" bpmnElement="W07I_Flow26"><di:waypoint x="2183" y="282"/><di:waypoint x="2242" y="282"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow27DI" bpmnElement="W07I_Flow27"><di:waypoint x="854" y="417"/><di:waypoint x="854" y="325"/><di:waypoint x="1490" y="325"/><di:waypoint x="1490" y="300"/><di:waypoint x="1497" y="300"/><bpmndi:BPMNLabel><dc:Bounds x="1065" y="301" width="150" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
