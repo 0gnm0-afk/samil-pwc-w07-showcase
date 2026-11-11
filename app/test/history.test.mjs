@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {source} from '../store.mjs';
+import {initialState,command,actorFor,openHolds} from '../domain.mjs';
+test('변경 전후·보류 해제·확인 실적 이력 보존과 해결된 충돌 재입력 멱등성',()=>{
+ const s=initialState(source),act=(u,t,p)=>command(s,actorFor(u),t,p);
+ const ids=['RB-00054','RB-00120','RB-00180'];
+ const id=act('intake','intake',{paymentIds:ids,docs:[{id:'A',kind:'account',text:'모의 명의 확인'}]}).caseId;
+ act('reviewer','review',{caseId:id,confirmPaymentIds:ids,docIds:['A'],reason:'명의·계좌 확인'});
+ assert.equal(s.cases[id].holdHistory.length,3);
+ act('reviewer','submit',{caseId:id});act('executive','decide',{caseId:id,version:1,decision:'approve',reason:'원본 근거 승인'});
+ const i=act('treasury','pay',{caseId:id,version:1,paymentId:ids[0]}).instruction;
+ const r={instructionId:i.id,receiptId:'FIRST',date:i.date,amount:i.amount,outcome:'success'};
+ act('treasury','bank',r);const conflict={...r,receiptId:'LATER',outcome:'failed'};act('treasury','bank',conflict);
+ act('intake','documents',{caseId:id,docs:[{id:'BANK-FACT',kind:'bank',text:'모의 은행 확인: 최초 성공 회신의 금액·처리일이 실제 실적입니다.'}]});
+ act('reconciler','reconcile',{instructionId:i.id,voucherId:'V',amount:i.amount});
+ act('reconciler','confirmActual',{instructionId:i.id,amount:i.amount,date:i.date,docIds:['BANK-FACT'],reason:'은행 확인 및 전표 일치'});
+ assert.equal(i.confirmationHistory.length,1);assert.equal(act('treasury','bank',conflict).duplicate,true);assert.equal(i.actualUnresolved,false);assert.equal(i.reconciliation,'confirmed_difference');assert.equal(openHolds(s.cases[id]).length,0);
+ const before=s.plans[ids[1]].accountLabel;act('intake','change',{caseId:id,paymentId:ids[1],account:'TEST-NEW-0120',owner:s.plans[ids[1]].owner,docs:[]});
+ const event=s.events.at(-1);assert.equal(event.detail.before.accountLabel,before);assert.equal(event.detail.after.accountLabel,'모의 ****0120');assert.equal(s.cases[id].snapshots[0].version,1);
+});

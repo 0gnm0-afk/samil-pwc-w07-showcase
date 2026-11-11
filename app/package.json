@@ -1,0 +1,11 @@
+{
+  "name": "w07-payment-review", "version": "1.2.0", "private": true, "type": "module",
+  "engines": {"node": ">=24"},
+  "scripts": {
+    "start": "node server.mjs", "dev": "node --env-file-if-exists=.env.local server.mjs",
+    "build": "node scripts/check.mjs", "seed": "node scripts/import-source.mjs",
+    "test": "node --test test/*.test.mjs", "acceptance": "node scripts/acceptance.mjs"
+  },
+  "dependencies": {"pg": "8.16.3"},
+  "devDependencies": {"@electric-sql/pglite": "0.3.14"}
+}

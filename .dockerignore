@@ -1,0 +1,8 @@
+**
+!app/
+!app/**
+app/node_modules
+app/.local
+app/.env*
+app/test
+!Dockerfile
