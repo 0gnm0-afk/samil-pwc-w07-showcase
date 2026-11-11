@@ -6,7 +6,7 @@ const labels={open:'진행 중',responded:'회신 접수',review:'회계 검토'
 const roles={intake:'영업지원 접수',reviewer:'회계 검토',sales:'영업지원 전결',executive:'영업임원',alternate:'위임 대체 승인',finance:'독립 재무 승인',treasury:'자금팀',reconciler:'회계 대사',admin:'시연 관리자'};
 let user=null,state=null,selected=null,search='',page=0,newCase=false,busy=false;
 let workspace=new URL(location.href).searchParams.get('workspace')||'';
-const pill=s=>`<span class="pill ${esc(s)}">${esc(labels[s]||s)}</span>`;
+const pill=s=>`<span class="pill ${esc(s)}">${esc(s==='failed'?'처리 실패':labels[s]||s)}</span>`;
 async function api(path,data){const res=await fetch(path+(path.includes('?')?'&':'?')+'workspace='+encodeURIComponent(workspace),{method:data===undefined?'GET':'POST',headers:data===undefined?{}:{'content-type':'application/json'},body:data===undefined?undefined:JSON.stringify(data)});const value=await res.json();if(!res.ok)throw Object.assign(Error(value.message||'요청 처리 실패'),{status:res.status});return value;}
 function toast(message){const el=$('#toast');el.textContent=message;el.style.display='block';setTimeout(()=>el.style.display='none',5500);}
 async function load(){try{const r=await api('/api/state');user=r.user;workspace=r.workspace;state=r.state;if(user.publicDemo)history.replaceState(null,"","/?workspace="+encodeURIComponent(workspace));render();}catch(e){if(e.status===401){user=null;loginView();}else root.innerHTML=`<div class="loading"><p class="error">${esc(e.message)}</p><button id="reload">다시 불러오기</button></div>`;if($('#reload'))$('#reload').onclick=load;}}
