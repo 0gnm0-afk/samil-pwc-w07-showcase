@@ -21,7 +21,7 @@ export async function startServer({store,hashes,port=Number(process.env.PORT||80
   interval?.unref();
   await store.cleanupTrials();
   const cleanup=setInterval(()=>{void store.cleanupTrials().catch(()=>{});},3600000);cleanup.unref();
-  const json=(res,status,body)=>{res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});res.end(JSON.stringify(body));};
+  const json=(res,status,body)=>{res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});res.end(JSON.stringify(body,(key,value)=>['accountKey','passwordHash','registrationFingerprint'].includes(key)?undefined:value));};
   async function body(req){let data='';for await(const part of req){data+=part;must(Buffer.byteLength(data)<=150000,'SIZE','입력은 150KB 이하여야 합니다.',413);}try{return JSON.parse(data||'{}');}catch{throw new RuleError('JSON','JSON 형식 오류',400);}}
   const server=createServer(async(req,res)=>{
     res.setHeader('x-content-type-options','nosniff');res.setHeader('referrer-policy','same-origin');res.setHeader('content-security-policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");

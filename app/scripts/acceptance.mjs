@@ -9,7 +9,7 @@ mkdirSync(output,{recursive:true});
 const cookies={},checks=[],actions=[];let workspace=runId;
 async function request(user,path,payload,expected=200){
  const response=await fetch(`${base}${path}${path.includes('?')?'&':'?'}workspace=${workspace}`,{method:payload===undefined?'GET':'POST',headers:{...(payload===undefined?{}:{'content-type':'application/json'}),...(cookies[user]?{cookie:cookies[user]}:{})},body:payload===undefined?undefined:JSON.stringify(payload)});
- const body=await response.json();const cookie=response.headers.get('set-cookie');if(cookie)cookies[user]=cookie.split(';')[0];
+ const body=await response.json();assert(!JSON.stringify(body).includes('"accountKey":'),'서버 전용 계좌 비교키가 API 응답에 포함됨');const cookie=response.headers.get('set-cookie');if(cookie)cookies[user]=cookie.split(';')[0];
  if(path!=='/api/login')actions.push({at:new Date().toISOString(),workspace,user,path,type:payload?.type,status:response.status,result:path==='/api/state'?{cases:body.state?.cases.map(c=>({id:c.id,version:c.version,revision:c.revision,status:c.status,canPay:c.canPay,canSubmit:c.canSubmit})),instructions:body.state?.instructions.length,jobs:body.state?.jobs.map(j=>({id:j.id,status:j.status,providerCallId:j.providerCallId}))}:body});
  assert.equal(response.status,expected,`${user} ${path} ${payload?.type||''}: ${JSON.stringify(body)}`);return body;
 }

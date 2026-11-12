@@ -1,13 +1,30 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {source,openStore} from '../store.mjs';
-import {initialState,command,actorFor,publicState,previewSchedule,hash} from '../domain.mjs';
+import {initialState,command,actorFor,publicState,previewSchedule,hash,users,businessRoles} from '../domain.mjs';
+import {startServer} from '../server.mjs';
+import {passwordHash} from '../auth.mjs';
 import {assessSettlement} from '../evidence.mjs';
 import {guidanceContext,createGuidanceService,validateGuidance} from '../guidance.mjs';
 import {koreaToday} from '../public/schedule.js';
 const act=(s,user,type,p)=>command(s,actorFor(user),type,p);
 const proof=(id='PROOF',fields={})=>({id,kind:'account',text:'예금주: 검증상사\n계좌번호: S-ACCOUNT\n작성일: 2026-07-01',fields});
 const receive=(s,docs=[proof()])=>act(s,'intake','intake',{paymentIds:['S-BOUNDARY'],docs}).caseId;
+test('지급·회신 실행 응답도 계좌 비교키를 제거하고 서버 내부 대조는 유지한다',async()=>{
+ const store=await openStore({local:'memory'}),password='showcase-test-only';
+ const hashes=Object.fromEntries([...users.map(u=>u.id),...businessRoles.map(r=>`role:${r.id}`)].map(id=>[id,passwordHash(password)]));
+ const app=await startServer({store,hashes,port:0,worker:false,secure:false});const base=`http://127.0.0.1:${app.port}`;let cookie='',id;
+ const post=async(path,body)=>{const r=await fetch(base+path,{method:'POST',headers:{'content-type':'application/json',cookie},body:JSON.stringify(body)});assert.equal(r.status,200);const text=await r.text();assert(!text.includes('"accountKey"'));return {r,data:JSON.parse(text)};};
+ try{
+  await store.create('qa-response','boundary',{validation:true});await store.tx('qa-response',s=>{id=receive(s);act(s,'reviewer','submit',{caseId:id});act(s,'sales','decide',{caseId:id,version:1,decision:'approve',reason:'독립 확인'});});
+  const login=await post('/api/login',{userId:'treasury',password});cookie=login.r.headers.get('set-cookie').split(';')[0];
+  const issue={type:'pay',payload:{caseId:id,paymentId:'S-BOUNDARY',version:1}};
+  const {data:{instruction:i}}=await post('/api/command?workspace=qa-response',issue);assert(i.accountLabel);assert.equal((await post('/api/command?workspace=qa-response',issue)).data.instruction.id,i.id);
+  const bank={type:'bank',payload:{instructionId:i.id,receiptId:'BANK-RESPONSE',amount:i.amount,date:i.date,outcome:'success'}};
+  await post('/api/command?workspace=qa-response',bank);await post('/api/command?workspace=qa-response',bank);
+  const s=await store.read('qa-response');assert.equal(Object.values(s.instructions).find(v=>v.id===i.id).accountKey,hash('S-ACCOUNT'));assert.equal(Object.values(s.receipts).find(v=>v.id==='BANK-RESPONSE').accountKey,hash('S-ACCOUNT'));
+ }finally{await app.close();}
+});
 test('필수 원자료 자동 검토는 NIM 0회이며 상신·독립 결재·지급을 대신하지 않는다',async()=>{
  const store=await openStore({local:'memory'});try{await store.create('qa-proof','boundary',{validation:true});let id;await store.tx('qa-proof',s=>{id=receive(s);});
  const s=await store.read('qa-proof'),c=s.cases[id];assert.equal(c.evidenceAssessment.status,'pass');assert.equal(c.confirmations['S-BOUNDARY'].actor,'rules');assert.equal(c.canSubmit,true);assert.equal(c.canPay,false);assert.equal(c.version,0);assert.equal(c.approvals.length,0);assert.equal(Object.keys(s.jobs).length,0);
