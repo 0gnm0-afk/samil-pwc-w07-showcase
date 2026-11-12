@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { readRequestCsv } from './request-csv.mjs';
 import { projectWorkflow } from './workflow.mjs';
+import { recommendDate, koreaToday, scheduleVersion, scheduleRule } from './public/schedule.js';
 export class RuleError extends Error { constructor(code, message, status=409) { super(message); this.code=code; this.status=status; } }
 export const must = (condition, code, message, status) => { if(!condition) throw new RuleError(code,message,status); };
 const canonical = value => Array.isArray(value)?value.map(canonical):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,canonical(value[k])])):value;
@@ -157,7 +158,13 @@ function queueAI(s,c,e) {
     if(!focus.length)focus.push(factId);
   }
   const mode=assigneeBlocked?'assignee':novel?'uncertain':'documents';
-  s.jobs[id]={id,caseId:c.id,epoch:s.epoch,revision:c.revision,version:c.version,eventId:e.id,status:'pending',createdAt:now(),docs,mode,focus,reasons:uncertain.map(h=>({key:h.key,reason:h.reason})),basis:{month:c.currentBasis.month,total:c.currentBasis.total,members:c.currentBasis.members}};
+  const progress={status:c.status,version:c.version,revision:c.revision,requiredApprovers:c.currentBasis.required,
+    approvals:c.approvals.filter(a=>a.version===c.version),confirmations:c.confirmations,
+    paymentEvidence:c.paymentIds.map(id=>({paymentId:id,evidenceAfterRevision:s.plans[id].evidenceAfterRevision||0,confirmed:!!c.confirmations[id]})),
+    responseLinks:Object.values(s.tasks).filter(t=>t.caseId===c.id&&t.responseTo).map(t=>({id:t.id,responseTo:t.responseTo,docIds:s.tasks[t.responseTo]?.response?.docIds||[],status:t.status})),
+    history:s.events.filter(e=>e.caseId===c.id).slice(-12).map(e=>({type:e.type,at:e.at,revision:e.revision})),
+    effects:{request_supplement:'영업지원 직원에게 보완 작업이 도착합니다. 회신하면 회계팀이 다시 검토하며 지급보류는 자동 해제되지 않습니다.',request_review:'회계팀이 근거와 영향 범위를 확인합니다. 확인 결과를 저장한 뒤 상신 요건을 다시 검사합니다.',hold_for_review:'지급보류를 유지하고 회계팀이 예외 사유와 상위 판단을 확인합니다.',recheck:'새 근거를 회계팀이 현재 지급 조건과 다시 대조합니다.'}};
+  s.jobs[id]={id,caseId:c.id,epoch:s.epoch,revision:c.revision,version:c.version,eventId:e.id,status:'pending',createdAt:now(),docs,mode,focus,progress,reasons:uncertain.map(h=>({key:h.key,reason:h.reason})),basis:{month:c.currentBasis.month,total:c.currentBasis.total,members:c.currentBasis.members}};
 }
 
 export function upgradeWorkflow(s) {
@@ -233,6 +240,7 @@ export function command(s,actor,type,p={}) {
     audit={registered:result.registered,existing:result.existing};
   } else if(type==='schedule') {
     role(actor,'intake');must(Array.isArray(p.items)&&p.items.length>0&&p.items.length<=50,'INPUT','지급 계획을 확인하세요.',400);
+    if(Object.hasOwn(p,'stateEventId'))must(p.stateEventId===(s.events.at(-1)?.id||null),'SCHEDULE_CHANGED','업무 상태가 바뀌었습니다. 예상 합산과 승인 담당자를 다시 확인하세요.');
     audit.changes=[];for(const item of p.items){date(item.date);const plan=s.plans[item.id];must(plan&&plan.status==='planned'&&!s.instructions[item.id],'CLOSED','미집행 요청만 지급 계획을 입력할 수 있습니다.');if(p.unassignedOnly)must(!plan.caseId&&!plan.plannedDate,'SCHEDULE_CHANGED','이미 예정일이 정해졌습니다. 새로고침하세요.');audit.changes.push({paymentId:plan.id,before:plan.plannedDate,after:item.date});plan.plannedDate=item.date;
       if(plan.caseId){const other=s.cases[plan.caseId];other.revision++;hold(s,other,'schedule','지급예정일 변경에 대한 회계 확인 필요');invalidate(s,other,'지급예정일 변경');}}
   } else if(type==='intake') {
@@ -353,6 +361,22 @@ export function command(s,actor,type,p={}) {
   refresh(s);const e=event(s,c,actor,type,{...audit,docIds:p.docs?.map(d=>d.id)??audit.docIds,paymentId:p.paymentId??audit.paymentId??null,result:result.denied?'denied':'saved',reason:p.reason?redact(p.reason):undefined});
   if(c&&!(type==='documents'&&p.taskId))queueAI(s,c,e);return {...result,caseId:c?.id??null,eventId:e.id};
 }
+export function previewSchedule(s,actor,items) {
+  role(actor,'intake');
+  must(Array.isArray(items)&&items.length>0&&items.length<=50&&new Set(items.map(i=>i?.id)).size===items.length,'INPUT','예정일을 확인할 요청을 1~50건 선택하세요.',400);
+  const projected=structuredClone(s);
+  for(const item of items){
+    date(item.date);const p=projected.plans[item.id];
+    must(p&&p.status==='planned'&&!p.caseId&&!p.plannedDate&&!projected.instructions[item.id],'SCHEDULE_CHANGED','미접수·예정일 미정 요청만 추천일을 적용할 수 있습니다.');
+    p.plannedDate=item.date;
+  }
+  const selected=new Set(items.map(i=>i.id));
+  return {source:'rules',saved:false,stateEventId:s.events.at(-1)?.id||null,items,
+    groups:intakeGroups(projected).filter(g=>g.paymentIds.some(id=>selected.has(id))).map(g=>{
+      const ids=g.paymentIds.filter(id=>selected.has(id)),b=basis(projected,{paymentIds:ids,exceptions:{}});
+      return {id:g.id,month:g.month,members:g.members,paymentIds:ids,selectedTotal:b.selectedTotal,total:b.total,missing:b.missing,required:b.required};
+    })};
+}
 function intakeGroups(s) {
   const graph=groups(s.source.agencies);
   const batches=new Map();
@@ -406,8 +430,11 @@ function assignedWork(s,actor,cases) {
 export function publicState(s,actor) {
   const visible=Object.values(s.cases).filter(c=>!can(actor,'intake')||c.creator===actor.id);
   const ids=new Set(visible.map(c=>c.id));
-  const result={epoch:s.epoch,fixture:s.fixture,fixtureVersion:s.fixtureVersion,createdAt:s.createdAt,publicDemo:s.publicDemo??null,source:s.source.sources,
-    agencies:s.source.agencies,plans:Object.values(s.plans),cases:visible,tasks:Object.values(s.tasks).filter(t=>ids.has(t.caseId)),notifications:Object.values(s.notifications).filter(n=>ids.has(n.caseId)),
+  const today=koreaToday();
+  const result={epoch:s.epoch,fixture:s.fixture,fixtureVersion:s.fixtureVersion,createdAt:s.createdAt,
+    publicDemo:s.publicDemo?{...s.publicDemo,aiLimit:null,guidanceLimit:null}:null,source:s.source.sources,
+    schedulePolicy:{version:scheduleVersion,today,rule:scheduleRule},
+    agencies:s.source.agencies,plans:Object.values(s.plans).map(p=>({...p,...(p.status==='planned'&&!p.plannedDate?{scheduleRecommendation:recommendDate(p.period,today)}:{})})),cases:visible,tasks:Object.values(s.tasks).filter(t=>ids.has(t.caseId)),notifications:Object.values(s.notifications).filter(n=>ids.has(n.caseId)),
     instructions:Object.values(s.instructions).filter(i=>ids.has(i.caseId)),receipts:Object.values(s.receipts).filter(r=>Object.values(s.instructions).some(i=>ids.has(i.caseId)&&i.id===r.instructionId)),
     jobs:Object.values(s.jobs).filter(j=>ids.has(j.caseId)).map(({docs,...j})=>j),events:s.events.filter(e=>!e.caseId||ids.has(e.caseId)),conflicts:s.conflicts,
     workItems:assignedWork(s,actor,visible),intakeGroups:can(actor,'intake')?intakeGroups(s):[]};

@@ -45,9 +45,9 @@ test('5개 역할 비밀번호 로그인: 우회 차단·작업 유지·회계 �
   // Legacy anonymous sessions are not accepted after the login rollout.
   await store.tx(wb,s=>{delete s.publicDemo.authVersion;});await req(b,'/api/state',undefined,401);
   await store.tx(wb,s=>{s.publicDemo.authVersion=2;});
-  await Promise.all([store.reserveNim(wb),store.reserveNim(wb),store.reserveNim(wb)]);await assert.rejects(store.reserveNim(wb),{code:'AI_DEMO_LIMIT'});
+  await Promise.all([store.reserveNim(wb),store.reserveNim(wb),store.reserveNim(wb)]);await store.reserveNim(wb);assert.equal((await store.read(wb)).publicDemo.aiUsed,4);
   const bid=(await req(b,'/api/command',{type:'intake',payload:{paymentIds:ids,docs:[{id:'LIMIT-DOC',kind:'narrative',text:'모의 서술 증빙의 명의가 불명확하여 확인이 필요합니다.'}]}})).caseId;
-  let called=false;await processOne(store,wb,{call:async()=>{called=true;throw Error('한도 차단 실패');}});assert.equal(called,false);assert.equal((await store.read(wb)).cases[bid].canPay,false);
+  let called=false;await processOne(store,wb,{call:async()=>{called=true;throw Error('검증용 응답 실패');}});assert.equal(called,true);assert.equal((await store.read(wb)).cases[bid].canPay,false);
   // Workspace anchor is not an authenticated session token.
   const forged=client();forged.jar.set('w07_session',a.jar.get('w07_space'));await req(forged,'/api/state',undefined,401);
   await store.query("UPDATE w07_sessions SET expires_at=now()-interval '1 second' WHERE public_workspace=$1",[wa]);await req(a,'/api/state',undefined,401);

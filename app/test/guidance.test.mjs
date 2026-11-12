@@ -28,7 +28,7 @@ test('NIM 권고는 전체 BPMN 문맥으로 생성하고 확정 사실은 서�
     const body=JSON.parse(options.body),sent=JSON.parse(body.messages[1].content);
     assert.equal(sent.process.flows.length,33);assert.equal(sent.module.node,'W07I_FinanceVote');
     assert(!body.messages[1].content.includes('accountKey'));
-    return {ok:true,status:200,json:async()=>({id:'mock-transport',choices:[{message:{content:JSON.stringify({summary:'양쪽 승인이 완료되었습니다.',nextStep:'곧 지급하세요.',recommendations:[{actionId:'approve',reason:'제출된 근거와 담당 지급 조건을 검토한 뒤 승인 여부를 결정하세요.',refs:['R-APPROVAL']}],checks:[]})}}]})};
+    return {ok:true,status:200,json:async()=>({id:'mock-transport',choices:[{message:{content:JSON.stringify({summary:'양쪽 승인이 완료되었습니다.',nextStep:'곧 지급하세요.',recommendations:[{actionId:'approve',reason:'제출된 근거와 담당 지급 조건을 검토한 뒤 승인 여부를 결정하세요.',beforeAction:['현재 자료와 지급 조건을 확인하세요.'],howTo:['화면의 해당 버튼을 확인하세요.'],refs:['R-APPROVAL']}],checks:[]})}}]})};
   }});
   assert.match(answer.summary,/재무 임원: 대기/);
   assert.match(answer.nextStep,/필수 승인 모두 완료/);
@@ -47,7 +47,7 @@ test('접수 전 부분 선택·월 합산·승인 경로·다음 단계를 서�
   assert.match(context.outputContract.nextText,/지급 근거 검토 · 회계팀/);
   assert.equal(context.outputContract.workflowState.nextStageId,group.workflow.next.id);
   const raw={summary:context.outputContract.statusText,nextStep:context.outputContract.nextText,workflowState:context.outputContract.workflowState,
-    recommendations:[{actionId:'intake',reason:'제출할 증빙의 내용과 선택한 지급 요청이 일치하는지 확인한 뒤 접수하세요.',refs:['R-AGGREGATE']}],checks:[]};
+    recommendations:[{actionId:'intake',reason:'제출할 증빙의 내용과 선택한 지급 요청이 일치하는지 확인한 뒤 접수하세요.',beforeAction:['현재 자료와 지급 조건을 확인하세요.'],howTo:['화면의 해당 버튼을 확인하세요.'],refs:['R-AGGREGATE']}],checks:[]};
   assert.equal(validateGuidance(raw,context).recommendations.length,1);
   for(const reason of ['선택된 요청은 3건입니다.','388만원은 200만원 이하로 전결입니다.','영업지원팀장 승인 경로로 진행합니다.','선택한 요청 1건을 접수하고 증빙 확인을 완료했습니다.']){
     assert.throws(()=>validateGuidance({...raw,recommendations:[{...raw.recommendations[0],reason}]},context),{code:'AI_STATE'});
@@ -64,7 +64,7 @@ test('병렬 승인·역할 권한·저장 전 입력·실행 조건과 안내 �
   assert.equal(before.context.draft.saved,false);
   assert(!JSON.stringify(before).includes('숨김'));
   assert.equal(before.context.process.flows.length,33);
-  const raw={workflowState:before.context.outputContract.workflowState,summary:before.context.outputContract.statusText,nextStep:'자금팀 지급 준비',checks:[],recommendations:[{actionId:'approve',reason:'현재 버전의 필수 결재입니다.',refs:['R-APPROVAL']}]};
+  const raw={workflowState:before.context.outputContract.workflowState,summary:before.context.outputContract.statusText,nextStep:'자금팀 지급 준비',checks:[],recommendations:[{actionId:'approve',reason:'현재 버전의 필수 결재입니다.',beforeAction:['현재 자료와 지급 조건을 확인하세요.'],howTo:['화면의 해당 버튼을 확인하세요.'],refs:['R-APPROVAL']}]};
   assert.equal(validateGuidance(raw,before.context).recommendations[0].label,'승인');
   assert.throws(()=>validateGuidance({...raw,recommendations:[{...raw.recommendations[0],actionId:'pay'}]},before.context),{code:'AI_SCOPE'});
   assert.throws(()=>validateGuidance({...raw,workflowState:{currentStageId:'W07I_Finish',nextStageId:null}},before.context),{code:'AI_STATE'});
@@ -119,7 +119,7 @@ test('차이 확정 후에는 최신 전표·확정 실적을 문맥에 제공�
   const facts=context.progressFacts.accountingFacts[0];
   assert.equal(facts.currentVoucher.id,'FINAL');assert.equal(facts.confirmedActual.amount,2000001);assert.equal(facts.unresolved,false);
   const raw={summary:context.outputContract.statusText,nextStep:context.outputContract.nextText,workflowState:context.outputContract.workflowState,
-    recommendations:[{actionId:'open',reason:'최종 처리 이력을 확인하세요.',refs:['CURRENT']}],checks:[]};
+    recommendations:[{actionId:'open',reason:'최종 처리 이력을 확인하세요.',beforeAction:['현재 자료와 지급 조건을 확인하세요.'],howTo:['화면의 해당 버튼을 확인하세요.'],refs:['CURRENT']}],checks:[]};
   assert.equal(validateGuidance(raw,context).recommendations.length,1);
   for(const checks of [['전표(2,000,000원)의 1원 차이를 확인하세요.'],['전표 2000000원과 회신 차이 확인']]){
     assert.throws(()=>validateGuidance({...raw,checks},context),{code:'AI_STATE'});
@@ -160,7 +160,7 @@ test('안내 API는 인증·공간·역할·입력 형식과 화면 상태 식�
     const cached=await post('/api/guidance',{moduleId:'inbox'},200);assert.equal(cached.body.cached,true);assert.equal(calls,1);
   }finally{await app.close();}
 });
-test('안내 캐시·동시 요청·공간 격리·실패 대체·한도와 오래된 응답',async()=>{
+test('안내 캐시·동시 요청·공간 격리·실패 대체·기존 누적 제한 해제와 오래된 응답',async()=>{
   const store=await openStore({local:'memory'});
   try{
     await store.create('qa-guidance','boundary',{validation:true});
@@ -168,27 +168,28 @@ test('안내 캐시·동시 요청·공간 격리·실패 대체·한도와 오�
     let count=0,release;
     const gate=new Promise(resolve=>{release=resolve;});
     const call=async()=>{count++;await gate;return {summary:'근거 확인',nextStep:'지급',recommendations:[],checks:[]};};
-    const guide=createGuidanceService(store,{call,spaceLimit:2});
+    const guide=createGuidanceService(store,{call});
     const input={moduleId:'approval',caseId},actor=actorFor('finance');
     const a=guide('qa-guidance',actor,input),b=guide('qa-guidance',actor,input);
     // Wait for the independent database claim without assuming Promise scheduling order.
     while(!count)await new Promise(resolve=>setTimeout(resolve,5));
     assert.equal(count,1);
-    const anotherProcess=createGuidanceService(store,{call,spaceLimit:2});
+    const anotherProcess=createGuidanceService(store,{call});
     assert.equal((await anotherProcess('qa-guidance',actor,input)).status,'pending');
     assert.equal(count,1);release();
     const results=await Promise.all([a,b]);assert(results.every(r=>r.status==='ready'));
     assert.equal((await guide('qa-guidance',actor,input)).cached,true);
     const saved=await store.read('qa-guidance');assert.equal(saved.publicDemo.guidanceUsed,1);assert.equal(saved.publicDemo.aiUsed,0);
-    const failed=createGuidanceService(store,{call:async()=>{throw Error('timeout');},spaceLimit:2});
+    const failed=createGuidanceService(store,{call:async()=>{throw Error('timeout');}});
     assert.equal((await failed('qa-guidance',actor,{...input,draft:{decision:'reject'}})).status,'fallback');
-    const limited=await guide('qa-guidance',actor,{...input,draft:{decision:'supplement'}});assert.equal(limited.status,'fallback');assert.match(limited.message,/한도/);
+    await store.tx('qa-guidance',s=>{s.publicDemo.guidanceUsed=300;s.publicDemo.guidanceLimit=30;});
+    const unlimited=await guide('qa-guidance',actor,{...input,draft:{decision:'supplement'}});assert.equal(unlimited.status,'ready');assert.equal((await store.read('qa-guidance')).publicDemo.guidanceUsed,301);
     await store.create('qa-daily','boundary',{validation:true});
     await store.tx('qa-daily',s=>{s.publicDemo={expiresAt:new Date(Date.now()+3600000).toISOString(),aiUsed:0,aiLimit:3};});
-    const daily=createGuidanceService(store,{call,dailyLimit:2});
+    const daily=createGuidanceService(store,{call});
     const dayLimit=await daily('qa-daily',actorFor('intake'),{moduleId:'inbox'});
-    assert.equal(dayLimit.status,'fallback');assert.match(dayLimit.message,/일일 한도/);
-    assert.equal((await store.read('qa-daily')).publicDemo.guidanceUsed,undefined);
+    assert.equal(dayLimit.status,'ready');
+    assert.equal((await store.read('qa-daily')).publicDemo.guidanceUsed,1);
     await store.create('qa-stale','boundary',{validation:true});let second;await store.tx('qa-stale',s=>{second=pending(s);});
     const stale=createGuidanceService(store,{call:async()=>{await store.tx('qa-stale',s=>act(s,'executive','decide',{caseId:second,version:1,decision:'approve',reason:'독립 승인'}));return {};}});
     assert.equal((await stale('qa-stale',actor,{...input,caseId:second})).status,'stale');

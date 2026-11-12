@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { openStore } from './store.mjs';
 import { initAccounts, login, loginRole, authenticate, sessionToken, workspaceToken, verifyPassword } from './auth.mjs';
-import { command, publicState, businessRoles, can, must, hash, now, RuleError, upgradeWorkflow } from './domain.mjs';
+import { command, publicState, previewSchedule, businessRoles, can, must, hash, now, RuleError, upgradeWorkflow } from './domain.mjs';
 import { processOne } from './ai.mjs';
 import { createGuidanceService } from './guidance.mjs';
 const instanceId=randomUUID();
@@ -28,7 +28,7 @@ export async function startServer({store,hashes,port=Number(process.env.PORT||80
     try{
       const url=new URL(req.url,'http://localhost');
       if(url.pathname==='/healthz')return json(res,200,{ok:true,version:'1.2.0',instanceId});
-      if(['GET','HEAD'].includes(req.method)&&['/','/app.js','/style.css','/catalog.js','/guidance-ui.js'].includes(url.pathname)){
+      if(['GET','HEAD'].includes(req.method)&&['/','/app.js','/style.css','/catalog.js','/guidance-ui.js','/schedule.js'].includes(url.pathname)){
         const path=url.pathname==='/'?'index.html':url.pathname.slice(1);const content=await readFile(new URL(`./public/${path}`,import.meta.url));res.writeHead(200,{'content-type':path.endsWith('.html')?'text/html; charset=utf-8':path.endsWith('.css')?'text/css; charset=utf-8':'text/javascript; charset=utf-8','cache-control':'no-cache'});return res.end(req.method==='HEAD'?undefined:content);
       }
       if(url.pathname==='/api/roles'&&req.method==='GET')return json(res,200,publicRoles);
@@ -52,6 +52,7 @@ export async function startServer({store,hashes,port=Number(process.env.PORT||80
       const workspace=url.searchParams.get('workspace')||actor.workspace||'demo';must(/^(demo|qa-[a-z0-9-]{1,70}|trial-[a-f0-9-]{36})$/.test(workspace),'WORKSPACE','작업공간 오류',400);
       if(actor.publicDemo)must(workspace===actor.workspace,'FORBIDDEN','내 체험 공간에만 접근할 수 있습니다.',403);
       if(url.pathname==='/api/guidance'&&req.method==='POST')return json(res,200,await guide(workspace,actor,await body(req)));
+      if(url.pathname==='/api/schedule/preview'&&req.method==='POST')return json(res,200,previewSchedule(await store.read(workspace),actor,(await body(req)).items));
       if(url.pathname==='/api/state'&&req.method==='GET'){
         let s=await store.read(workspace);
         if(s.workflowVersion!==2){s=await store.tx(workspace,current=>{upgradeWorkflow(current);return current;});void kick(workspace);}

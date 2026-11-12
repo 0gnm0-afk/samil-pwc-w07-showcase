@@ -24,4 +24,17 @@ h1,h2,h3,.login-story p{word-break:keep-all}
 .work-panel legend{font-weight:600;padding:0 6px}.work-panel #submit{margin-bottom:16px}
 .field-grid{align-items:start}.field-grid>*{min-width:0}.table-wrap table{min-width:520px}.table-wrap .checkbox{padding:0}
 #toast{pointer-events:none}
+:root{--source-rule-bg:#f3f5f7;--source-rule-border:#b9c3cf;--source-ai-bg:#fff8e4;--source-ai-border:#c89b32}
+.source-box{display:block;padding:16px 18px;margin:12px 0;border:1px solid;border-radius:7px;overflow-wrap:anywhere;line-height:1.65}
+.source-rules{background:var(--source-rule-bg);border-color:var(--source-rule-border);color:#263849}
+.source-ai{background:var(--source-ai-bg);border-color:var(--source-ai-border);color:#44330e}
+.source-label{display:block;font-size:12px;font-weight:700;margin-bottom:7px;letter-spacing:.02em}
+.source-box[data-source-label]:before{content:attr(data-source-label);display:block;font-size:12px;font-weight:700;margin-bottom:6px}
+.source-box p:last-child{margin-bottom:0}.source-box h4{margin:14px 0 6px;font-size:15px}.source-box ul,.source-box ol{margin:8px 0;padding-left:23px}.source-box li{margin:7px 0}
+.source-box .source-box{margin:14px 0}.work-module>.module-purpose{margin:18px 24px;padding:16px 18px;max-width:none}
+.module-guidance{background:#fff;border-top:1px solid var(--line)}.recommendation{padding:18px;margin:14px 0}.recommendation>strong{color:#57400a;font-size:18px}
+.reason-preview:not(:empty),textarea[readonly],select,.preset-text{background:var(--source-rule-bg);border-color:var(--source-rule-border);color:#263849}
+.reason-preview:empty{display:none}.decision-band.source-rules{display:block}.ai-card blockquote{background:var(--source-rule-bg);border:1px solid var(--source-rule-border);padding:12px;color:#263849}
+.scheduled-highlight{background:#edf7ef}.source-box button{margin-top:8px}input[data-plan-date]{min-width:155px}
+@media(max-width:767px){.work-module>.module-purpose{margin:14px 16px;padding:14px}.source-box{padding:13px}.recommendation>strong{font-size:16px}}
 @media(max-width:767px){.demo-codes{margin-top:20px}.login-shell{min-height:0}.decision-band{padding:12px}}
