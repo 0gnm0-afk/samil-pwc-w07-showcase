@@ -30,7 +30,7 @@ export function reviewSummary(s,c){
     status:c.canSubmit?'ready':awaiting?'analyzing':job?.status==='failed'?'failed':decision?'opinion':'needs_review',
     source:c.canSubmit?(Object.values(c.confirmations).some(v=>v.actor!=='rules')?'person':'rules'):decision?'ai':'rules',
     recipients,issues,blockers:[...hardIssues.map(i=>i.message),...fixedHolds.map(h=>h.reason)],
-    holds:holds.filter(h=>!/^evidence:|^auto-evidence:/.test(h.key)).map(h=>({key:h.key,reason:h.reason})),
+    holds:holds.filter(h=>!/^evidence:|^auto-evidence:/.test(h.key)).map(h=>({key:h.key,reason:h.key.startsWith('document:')?'추가로 등록된 설명자료의 사실관계와 지급 조건을 확인해야 합니다.':h.key.startsWith('month:')?'지급예정월을 정하지 않은 관련 요청이 있어 월 합산을 확정할 수 없습니다. 영업직원이 해당 요청의 지급예정월을 정해야 합니다.':h.reason})),
     opinion:decision?{action:decision.action,reason:decision.reason,unknowns:decision.unknowns,facts:decision.facts}:null,
     acceptedOpinion:c.reviewRecord?.jobId?s.jobs[c.reviewRecord.jobId]?.decision??null:null,
     requestedSupplement:supplement?{id:supplement.id,reason:supplement.reason}:null,

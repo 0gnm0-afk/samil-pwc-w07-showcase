@@ -5,6 +5,7 @@ import {source,openStore} from '../store.mjs';
 import {initialState,command,actorFor,publicState} from '../domain.mjs';
 import {previewIntake} from '../batch-intake.mjs';
 import {processOne,promptFor,validateDecision} from '../ai.mjs';
+import {approvalFormHTML} from '../public/review-ui.js';
 const act=(s,u,t,p)=>command(s,actorFor(u),t,p);
 function setup(){const s=initialState(source);act(s,'intake','batchIntake',{...previewIntake(s,actorFor('intake'),{paymentIds:Object.values(s.plans).filter(p=>p.status==='planned').map(p=>p.id),plannedMonth:'2026-07'}),requestId:randomUUID()});return s;}
 const request=(c,action,extra={})=>({caseId:c.id,revision:c.revision,requestId:randomUUID(),action,...extra});
@@ -48,11 +49,13 @@ test('통합 처리 도중 상신 실패는 확인·작업·승인 변경 전체
 test('예외 사전 알림은 두 임원에게 열람 작업이며 회계 상신 뒤 독립 결재로 바뀜',()=>{
  const s=setup(),c=Object.values(s.cases).find(c=>c.canSubmit);
  act(s,'reviewer','flag',{caseId:c.id,reason:'모의 검증: 계약 외 예외 지급의 사업상 근거 확인 필요',policy:true});
+ assert(publicState(s,actorFor('reviewer')).cases.find(x=>x.id===c.id).reviewSummary.holds.every(h=>!h.reason.includes('CONCERN-')));
  for(const who of ['executive','finance']){const state=publicState(s,actorFor(who));assert(state.workItems.some(w=>w.caseId===c.id&&w.kind==='notice'));assert(!state.workItems.some(w=>w.caseId===c.id&&w.kind==='approval'));}
  const job=Object.values(s.jobs).find(j=>j.caseId===c.id);job.status='failed';
  act(s,'reviewer','reviewAction',request(s.cases[c.id],'confirm',{jobId:job.id,reason:'예외 지급 요청의 계약 및 사업상 사유를 확인하고 독립된 두 임원에게 결재를 요청합니다.'}));
  for(const who of ['executive','finance'])assert(publicState(s,actorFor(who)).workItems.some(w=>w.caseId===c.id&&w.kind==='approval'));
  act(s,'executive','decide',{caseId:c.id,version:1,decision:'approve',reason:'사업상 사유 확인'});assert.equal(s.cases[c.id].canPay,false);
+ assert.match(approvalFormHTML(publicState(s,actorFor('finance')).cases.find(x=>x.id===c.id),actorFor('finance')),/승인하면 두 임원의 결재가 모두 완료/);
  act(s,'finance','decide',{caseId:c.id,version:1,decision:'approve',reason:'독립된 지급 조건 확인'});assert.equal(s.cases[c.id].canPay,true);
 });
 test('보완 회신 저장 뒤 새 자료만으로 AI를 다시 판단하고 화면 조회는 추가 호출하지 않음',async()=>{
