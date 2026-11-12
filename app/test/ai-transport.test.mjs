@@ -26,3 +26,8 @@ test('NIM JSON 모드에서도 잘못된 응답은 거부하고 호출 증거만
  });
  assert.deepEqual(sent.response_format,{type:'json_object'});assert.equal(sent.stream,false);
 });
+test('새 충돌 문서만 인용 후보로 제공하고 양쪽 근거 누락을 거부한다',()=>{
+ const job={caseId:'CASE-FOCUS',revision:3,basis:{members:['D-011']},focus:['A','B'],progress:{confirmations:{P:{docIds:['OLD'],actor:'reviewer'}}},docs:[{id:'OLD',text:'이미 수동 확인한 계좌 자료.'},{id:'A',text:'공동 정산 명의는 동림입니다.'},{id:'B',text:'공동 정산 명의는 서림입니다.'}]};
+ const input=promptFor(job);assert.deepEqual(input.citationChoices.map(q=>q.docId),['A','B']);assert.deepEqual(input.documents[0].confirmedPaymentIds,['P']);assert.equal(input.documents[0].currentReviewTarget,false);
+ const raw={caseId:job.caseId,inputRevision:3,facts:[{ref:'Q1',text:'동림'},{ref:'Q2',text:'서림'}],unknowns:['명의 충돌'],scope:['D-011'],action:'request_review',owner:'reviewer',reason:'두 현재 자료의 명의 충돌을 확인합니다.'};assert.equal(validateDecision(raw,job).facts.length,2);assert.throws(()=>validateDecision({...raw,facts:raw.facts.slice(0,1)},job),{code:'AI_CITATION'});
+});
