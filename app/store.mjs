@@ -59,7 +59,30 @@ export async function openStore({url=process.env.DATABASE_URL,local=process.env.
     for(const {id} of r.rows){await client.query('DELETE FROM w07_sessions WHERE public_workspace=$1',[id]);for(const table of ['w07_instructions','w07_approvals','w07_receipts'])await client.query(`DELETE FROM ${table} WHERE workspace_id=$1`,[id]);await client.query('DELETE FROM w07_workspaces WHERE id=$1',[id]);}
     return r.rows.length;
   });}
-  return {query,tx,create,createTrial,reserveNim,cleanupTrials,async read(id){const r=await query('SELECT state FROM w07_workspaces WHERE id=$1',[id]);must(r.rows[0],'WORKSPACE','작업공간이 없습니다.',404);return r.rows[0].state;},
+  async function claimGuidance(workspace,key,token,{spaceLimit=30,dailyLimit=300}={}) {
+    return transaction(async client=>{
+      const r=await client.query('SELECT state FROM w07_workspaces WHERE id=$1 FOR UPDATE',[workspace]);
+      const s=r.rows[0]?.state;must(s,'WORKSPACE','작업공간이 없습니다.',404);
+      s.guidance??={};
+      const prior=s.guidance[key];
+      if(prior?.status==='ready'||prior?.status==='pending'&&Date.now()-Date.parse(prior.at)<75000||prior?.status==='fallback'&&Date.now()-Date.parse(prior.at)<15000)return {claimed:false,entry:prior};
+      if(s.publicDemo){
+        must(Date.parse(s.publicDemo.expiresAt)>Date.now(),'AUTH','체험 시간이 끝났습니다.',401);
+        must((s.publicDemo.guidanceUsed||0)<spaceLimit,'GUIDANCE_LIMIT','이 공간의 AI 안내 한도에 도달했습니다. 기본 안내로 계속 처리할 수 있습니다.',429);
+        await spend(client,`guidance:${now().slice(0,10)}`,dailyLimit,'GUIDANCE_LIMIT');
+        s.publicDemo.guidanceUsed=(s.publicDemo.guidanceUsed||0)+1;s.publicDemo.guidanceLimit=spaceLimit;
+      }
+      const old=Object.entries(s.guidance).filter(([,entry])=>entry.status!=='pending').sort((a,b)=>a[1].at.localeCompare(b[1].at));
+      while(Object.keys(s.guidance).length>=60&&old.length)delete s.guidance[old.shift()[0]];
+      s.guidance[key]={status:'pending',at:now(),token};
+      await client.query('UPDATE w07_workspaces SET state=$2 WHERE id=$1',[workspace,JSON.stringify(s)]);
+      return {claimed:true};
+    });
+  }
+  async function finishGuidance(workspace,key,token,entry){
+    return tx(workspace,s=>{if(s.guidance?.[key]?.token===token)s.guidance[key]={...entry,at:now()};});
+  }
+  return {query,tx,create,createTrial,reserveNim,claimGuidance,finishGuidance,cleanupTrials,async read(id){const r=await query('SELECT state FROM w07_workspaces WHERE id=$1',[id]);must(r.rows[0],'WORKSPACE','작업공간이 없습니다.',404);return r.rows[0].state;},
     async pending(){const r=await query("SELECT id FROM w07_workspaces WHERE EXISTS (SELECT 1 FROM jsonb_each(state->'jobs') j WHERE j.value->>'status'='pending')");return r.rows.map(r=>r.id);},
     async recover(){const r=await query("SELECT id FROM w07_workspaces WHERE EXISTS (SELECT 1 FROM jsonb_each(state->'jobs') j WHERE j.value->>'status'='running' AND (j.value->>'startedAt')::timestamptz < now()-interval '90 seconds')");for(const {id} of r.rows)await tx(id,s=>{for(const j of Object.values(s.jobs))if(j.status==='running'&&Date.now()-Date.parse(j.startedAt)>90000){j.status='failed';j.error={code:'AI_INTERRUPTED',message:'서버 재시작으로 호출 확인이 필요합니다.'};const c=s.cases[j.caseId];if(c)s.tasks[`${j.id}:interrupted`]={id:`${j.id}:interrupted`,caseId:c.id,owner:'reviewer',reason:'중단된 NIM 호출 수동 확인',status:'open',at:now()};}});},
     async close(){if(pool)await pool.end();else await embedded.close();}};

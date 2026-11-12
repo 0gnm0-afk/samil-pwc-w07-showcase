@@ -1,0 +1,394 @@
+{
+  "version": "b2fe07b4c6e4b0c39a61db0bfb5ea069bd8e97ea595963b185e43ba0fd38d4f1",
+  "nodes": [
+    {
+      "id": "W07I_Start",
+      "type": "startEvent",
+      "name": "정산 요청",
+      "lane": "일반 영업지원 직원",
+      "description": ""
+    },
+    {
+      "id": "W07I_Receive",
+      "type": "userTask",
+      "name": "신규 등록·묶음 접수",
+      "lane": "일반 영업지원 직원",
+      "description": "직접 입력·CSV 신규 요청과 기존 미지급 요청을 관련자 그룹·지급예정월로 묶고 이번 결재 대상을 선택한다. 선택 금액과 유효 지급 월 합산액을 각각 기록한다. 요청서와 증빙을 건 ID에 연결한다."
+    },
+    {
+      "id": "W07I_EarlyAlert",
+      "type": "serviceTask",
+      "name": "접수 등록 위험 표시 시 동시 알림",
+      "lane": "시스템",
+      "description": "접수 정보에서 위험을 확인하면 해당 건을 영업·재무 승인함에 같은 시점에 등록하고 양쪽에 동시에 알린다. 이때는 열람만 가능하다."
+    },
+    {
+      "id": "W07I_Review",
+      "type": "userTask",
+      "name": "증빙 취합·합산 지급 근거 검토",
+      "lane": "회계팀",
+      "description": "회계가 관련 거래처와 월 합산액, 지급 근거, 이해상충 및 예외를 확인한다. 접수 이후 위험을 새로 식별하면 해당 시점에 양쪽에 알린다."
+    },
+    {
+      "id": "W07I_Route",
+      "type": "serviceTask",
+      "name": "승인권자 결정 근거 버전 확정",
+      "lane": "시스템",
+      "description": "일반 건은 월 합산액 200만 원 이하이면 영업지원팀장(전결), 초과하면 영업 임원 결재다. 특별승인은 금액에 관계없이 영업 임원과 재무 임원이 결재한다. 이해상충 당사자가 필수 승인자이면 적격 경로 부재로 기록하고 지급을 보류한다."
+    },
+    {
+      "id": "W07I_Risk",
+      "type": "exclusiveGateway",
+      "name": "승인 경로 확정?",
+      "lane": "시스템",
+      "description": "이해상충, 정상 정책을 벗어난 지급 요청, 관련자 합산 예외 또는 수취계좌 변경을 포함한다. 예외로 등록된 건은 소명 후에도 이번 검토 건의 이중승인을 유지한다."
+    },
+    {
+      "id": "W07I_Regular",
+      "type": "userTask",
+      "name": "영업 임원 일반 결재",
+      "lane": "영업 임원",
+      "description": "월 합산 200만 원 초과 일반 건의 승인, 보완 요청, 반려를 기록한다."
+    },
+    {
+      "id": "W07I_Delegated",
+      "type": "userTask",
+      "name": "영업지원팀장(전결)",
+      "lane": "영업지원팀장(전결)",
+      "description": "200만 원 이하 일반 건을 접수자와 다른 영업지원팀장가 결정한다."
+    },
+    {
+      "id": "W07I_OpenBoth",
+      "type": "serviceTask",
+      "name": "두 결재 요청 동시 발행",
+      "lane": "시스템",
+      "description": "동일한 검토 버전으로 영업과 재무 양쪽 승인함에 결재 요청을 함께 발행한 뒤 두 결재를 활성화한다. 양쪽 화면에 상대 결재 필요 여부와 상태를 표시한다. 한쪽 발행이 실패하면 두 결재 모두 활성화하지 않고 재처리한다."
+    },
+    {
+      "id": "W07I_Fork",
+      "type": "parallelGateway",
+      "name": "parallelGateway",
+      "lane": "시스템",
+      "description": ""
+    },
+    {
+      "id": "W07I_Business",
+      "type": "userTask",
+      "name": "사업상 타당성 결재",
+      "lane": "영업 임원",
+      "description": "영업 임원은 해당 버전의 사업상 타당성을 독립적으로 검토한다. 이해상충 당사자는 결재할 수 없다."
+    },
+    {
+      "id": "W07I_FinanceVote",
+      "type": "userTask",
+      "name": "합산·증빙·지급 조건 결재",
+      "lane": "재무 임원",
+      "description": "재무 임원은 영업부문과 독립적으로 합산·증빙·수취계좌를 확인하고 승인·보완 요청·반려를 결정한다."
+    },
+    {
+      "id": "W07I_BusinessStop",
+      "type": "boundaryEvent",
+      "name": "boundaryEvent",
+      "lane": "영업 임원",
+      "description": "재무 측 보완·반려 또는 승인 근거 변경으로 이 결재가 중단된다."
+    },
+    {
+      "id": "W07I_FinanceStop",
+      "type": "boundaryEvent",
+      "name": "boundaryEvent",
+      "lane": "재무 임원",
+      "description": "영업 측 보완·반려 또는 승인 근거 변경으로 이 결재가 중단된다."
+    },
+    {
+      "id": "W07I_BusinessMerge",
+      "type": "exclusiveGateway",
+      "name": "exclusiveGateway",
+      "lane": "영업 임원",
+      "description": ""
+    },
+    {
+      "id": "W07I_FinanceMerge",
+      "type": "exclusiveGateway",
+      "name": "exclusiveGateway",
+      "lane": "재무 임원",
+      "description": ""
+    },
+    {
+      "id": "W07I_Join",
+      "type": "parallelGateway",
+      "name": "parallelGateway",
+      "lane": "시스템",
+      "description": ""
+    },
+    {
+      "id": "W07I_Outcome",
+      "type": "exclusiveGateway",
+      "name": "결재 결과",
+      "lane": "시스템",
+      "description": "현재 버전에 필요한 모든 결재가 승인인 경우에만 지급 전 확인으로 간다. 한쪽의 보완 요청이나 반려는 즉시 지급 차단 상태를 기록하고 상대 미결 결재를 닫는다."
+    },
+    {
+      "id": "W07I_Rework",
+      "type": "userTask",
+      "name": "지급 보류·보완 확인",
+      "lane": "회계팀",
+      "description": "회계가 보완 회신과 AI 인용 근거를 확인한다. 미등록 상황과 적격 승인 경로 부재는 상위 보고 사유를 기록하고 근거와 경로가 확보될 때까지 지급을 보류한다. 확인한 새 근거로 재검토한다."
+    },
+    {
+      "id": "W07I_AIReview",
+      "type": "serviceTask",
+      "name": "지급보류 · AI 증빙 판단",
+      "lane": "시스템",
+      "description": "증빙 누락, 미등록 상황, 적격 승인 경로 부재를 지급보류로 저장한다. AI가 근거를 인용해 자료 보완 또는 회계 확인과 상위 보고를 제안한다. 서버가 범위·인용·입력 버전을 검증한다."
+    },
+    {
+      "id": "W07I_AIRoute",
+      "type": "exclusiveGateway",
+      "name": "보강 자료 있음?",
+      "lane": "시스템",
+      "description": ""
+    },
+    {
+      "id": "W07I_Supplement",
+      "type": "userTask",
+      "name": "영업지원 보완 회신",
+      "lane": "일반 영업지원 직원",
+      "description": "AI가 확인한 요청 자료와 근거를 보고 해당 작업에 보완 증빙을 연결한다. 회계팀이 회신을 검토한다."
+    },
+    {
+      "id": "W07I_Rejected",
+      "type": "endEvent",
+      "name": "반려 종료",
+      "lane": "시스템",
+      "description": ""
+    },
+    {
+      "id": "W07I_Prepay",
+      "type": "exclusiveGateway",
+      "name": "승인 근거 유효?",
+      "lane": "시스템",
+      "description": "지급 직전에 동일한 승인 버전과 결재 완료를 확인한다. 지급 대상, 금액, 수취계좌, 적용 월, 관련자 그룹·한도 판단 또는 예외 판정이 달라지면 기존 승인을 무효화하고 미집행 지급을 보류한다."
+    },
+    {
+      "id": "W07I_Pay",
+      "type": "userTask",
+      "name": "승인 조건대로 지급 지시",
+      "lane": "자금팀",
+      "description": "지급 지시를 기록하는 시점에 승인 버전과 지급 조건을 함께 확인한다. MVP에서는 모의 지급 지시를 생성하고 은행 회신은 별도 입력으로 받는다."
+    },
+    {
+      "id": "W07I_Reconcile",
+      "type": "userTask",
+      "name": "은행 회신·전표 대사",
+      "lane": "회계팀",
+      "description": "회계가 승인 내역·지급 지시·은행 결과·전표를 건별로 확인한다. 일치하면 대사 완료, 차이가 있으면 차이와 후속 확인 작업을 기록한다. 모의 은행 회신이 없으면 회신 대기를 유지한다."
+    },
+    {
+      "id": "W07I_Finish",
+      "type": "endEvent",
+      "name": "대사 결과 기록",
+      "lane": "회계팀",
+      "description": ""
+    }
+  ],
+  "flows": [
+    {
+      "id": "W07I_Flow01",
+      "from": "W07I_Start",
+      "to": "W07I_Receive",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow02",
+      "from": "W07I_Receive",
+      "to": "W07I_EarlyAlert",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow03",
+      "from": "W07I_EarlyAlert",
+      "to": "W07I_Review",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow04",
+      "from": "W07I_Review",
+      "to": "W07I_Route",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow05",
+      "from": "W07I_Route",
+      "to": "W07I_Risk",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow06",
+      "from": "W07I_Risk",
+      "to": "W07I_Regular",
+      "condition": "일반 · 200만 원 초과"
+    },
+    {
+      "id": "W07I_Flow07",
+      "from": "W07I_Risk",
+      "to": "W07I_OpenBoth",
+      "condition": "예외"
+    },
+    {
+      "id": "W07I_Flow08",
+      "from": "W07I_OpenBoth",
+      "to": "W07I_Fork",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow09",
+      "from": "W07I_Fork",
+      "to": "W07I_Business",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow10",
+      "from": "W07I_Fork",
+      "to": "W07I_FinanceVote",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow11",
+      "from": "W07I_Business",
+      "to": "W07I_BusinessMerge",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow12",
+      "from": "W07I_BusinessStop",
+      "to": "W07I_BusinessMerge",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow13",
+      "from": "W07I_FinanceVote",
+      "to": "W07I_FinanceMerge",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow14",
+      "from": "W07I_FinanceStop",
+      "to": "W07I_FinanceMerge",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow15",
+      "from": "W07I_BusinessMerge",
+      "to": "W07I_Join",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow16",
+      "from": "W07I_FinanceMerge",
+      "to": "W07I_Join",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow17",
+      "from": "W07I_Join",
+      "to": "W07I_Outcome",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow18",
+      "from": "W07I_Regular",
+      "to": "W07I_Outcome",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow19",
+      "from": "W07I_Outcome",
+      "to": "W07I_Prepay",
+      "condition": "필요 결재 모두 승인"
+    },
+    {
+      "id": "W07I_Flow20",
+      "from": "W07I_Outcome",
+      "to": "W07I_Rework",
+      "condition": "보완·근거 변경"
+    },
+    {
+      "id": "W07I_Flow21",
+      "from": "W07I_Outcome",
+      "to": "W07I_Rejected",
+      "condition": "반려"
+    },
+    {
+      "id": "W07I_Flow22",
+      "from": "W07I_Rework",
+      "to": "W07I_Review",
+      "condition": "증빙 확보 후 재검토"
+    },
+    {
+      "id": "W07I_Flow23",
+      "from": "W07I_Prepay",
+      "to": "W07I_Rework",
+      "condition": "변경 발견"
+    },
+    {
+      "id": "W07I_Flow24",
+      "from": "W07I_Prepay",
+      "to": "W07I_Pay",
+      "condition": "유효"
+    },
+    {
+      "id": "W07I_Flow25",
+      "from": "W07I_Pay",
+      "to": "W07I_Reconcile",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow26",
+      "from": "W07I_Reconcile",
+      "to": "W07I_Finish",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow27",
+      "from": "W07I_Risk",
+      "to": "W07I_AIReview",
+      "condition": "보류·추가 판단"
+    },
+    {
+      "id": "W07I_Flow28",
+      "from": "W07I_AIReview",
+      "to": "W07I_AIRoute",
+      "condition": ""
+    },
+    {
+      "id": "W07I_Flow29",
+      "from": "W07I_AIRoute",
+      "to": "W07I_Supplement",
+      "condition": "자료 보완"
+    },
+    {
+      "id": "W07I_Flow30",
+      "from": "W07I_AIRoute",
+      "to": "W07I_Rework",
+      "condition": "회계 확인·상위 보고"
+    },
+    {
+      "id": "W07I_Flow31",
+      "from": "W07I_Supplement",
+      "to": "W07I_Rework",
+      "condition": "보완 회신"
+    },
+    {
+      "id": "W07I_Flow32",
+      "from": "W07I_Risk",
+      "to": "W07I_Delegated",
+      "condition": "일반 · 200만 원 이하"
+    },
+    {
+      "id": "W07I_Flow33",
+      "from": "W07I_Delegated",
+      "to": "W07I_Outcome",
+      "condition": ""
+    }
+  ]
+}

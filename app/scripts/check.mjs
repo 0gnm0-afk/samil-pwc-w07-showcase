@@ -1,5 +1,7 @@
 import { readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { generateWorkflow } from './workflow-model.mjs';
+generateWorkflow();
 function scan(dir) { for(const entry of readdirSync(dir,{withFileTypes:true})) {
   if(['node_modules','.local'].includes(entry.name)) continue;
   const path=`${dir}/${entry.name}`;

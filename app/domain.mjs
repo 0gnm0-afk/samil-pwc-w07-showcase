@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { readRequestCsv } from './request-csv.mjs';
+import { projectWorkflow } from './workflow.mjs';
 export class RuleError extends Error { constructor(code, message, status=409) { super(message); this.code=code; this.status=status; } }
 export const must = (condition, code, message, status) => { if(!condition) throw new RuleError(code,message,status); };
 const canonical = value => Array.isArray(value)?value.map(canonical):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,canonical(value[k])])):value;
@@ -7,9 +8,9 @@ export const hash = value => createHash('sha256').update(typeof value==='string'
 export const now = () => new Date().toISOString();
 export const uid = prefix => `${prefix}-${randomUUID()}`;
 export const users = [
-  {id:'intake',name:'영업지원 · 접수 담당',role:'sales',capabilities:['intake']},
+  {id:'intake',name:'일반 영업지원 직원',role:'sales',capabilities:['intake']},
   {id:'reviewer',name:'회계팀',role:'accounting',capabilities:['reviewer','reconciler']},
-  {id:'sales',name:'영업지원 · 전결 담당',role:'sales',capabilities:['sales']},
+  {id:'sales',name:'영업지원팀장(전결)',role:'sales',capabilities:['sales']},
   {id:'executive',name:'영업 임원',role:'executive',capabilities:['executive']},
   {id:'alternate',name:'영업 임원 · 위임 대체자',role:'executive',capabilities:['alternate']},
   {id:'finance',name:'재무 임원',role:'finance',capabilities:['finance']},
@@ -18,7 +19,7 @@ export const users = [
   {id:'admin',name:'시연 관리자',role:'admin',capabilities:['admin']}
 ];
 export const businessRoles = [
-  {id:'sales',name:'영업지원',description:'요청 접수 · 증빙 보완 · 전결',members:[{id:'intake',name:'접수 담당'},{id:'sales',name:'전결 담당 (접수자와 다른 사람)'}]},
+  {id:'sales',name:'영업지원',description:'직원은 요청 접수·보완, 팀장은 200만 원 이하 일반 건의 전결을 담당합니다.',members:[{id:'intake',name:'일반 영업지원 직원'},{id:'sales',name:'영업지원팀장(전결)'}]},
   {id:'accounting',name:'회계팀',description:'증빙 검토 · 결재 상신 · 전표 대사',members:[{id:'reviewer',name:'회계 담당'}]},
   {id:'executive',name:'영업 임원',description:'일반 임원 결재 · 특별승인 사업상 타당성 검토',members:[{id:'executive',name:'영업 임원'}]},
   {id:'finance',name:'재무 임원',description:'예외 지급 조건 · 독립 승인',members:[{id:'finance',name:'재무 임원'}]},
@@ -344,7 +345,12 @@ export function command(s,actor,type,p={}) {
     ins.confirmationHistory??=[];ins.confirmationHistory.push(structuredClone(ins.confirmation));
     for(const other of Object.values(s.cases))for(const key of [`recon:${ins.id}`,`conflict:${ins.id}`,`voucher:${ins.id}`])if(other.holds[key]&&!other.holds[key].closedAt)closeHold(s,other,key,actor,p.reason,p.docIds);
   } else throw new RuleError('COMMAND','지원하지 않는 요청입니다.',400);
-  refresh(s);const e=event(s,c,actor,type,{...audit,docIds:p.docs?.map(d=>d.id)??audit.docIds,paymentId:p.paymentId??null,result:result.denied?'denied':'saved',reason:p.reason?redact(p.reason):undefined});
+  if(['pay','bank','reconcile'].includes(type)) {
+    const instruction=result.instruction||Object.values(s.instructions).find(i=>i.id===p.instructionId);
+    audit={...audit,instructionId:instruction?.id,paymentId:instruction?.paymentId,amount:p.amount??instruction?.amount,
+      outcome:p.outcome,reconciliation:instruction?.reconciliation,receiptId:p.receiptId,voucherId:p.voucherId};
+  }
+  refresh(s);const e=event(s,c,actor,type,{...audit,docIds:p.docs?.map(d=>d.id)??audit.docIds,paymentId:p.paymentId??audit.paymentId??null,result:result.denied?'denied':'saved',reason:p.reason?redact(p.reason):undefined});
   if(c&&!(type==='documents'&&p.taskId))queueAI(s,c,e);return {...result,caseId:c?.id??null,eventId:e.id};
 }
 function intakeGroups(s) {
@@ -401,6 +407,15 @@ export function publicState(s,actor) {
     instructions:Object.values(s.instructions).filter(i=>ids.has(i.caseId)),receipts:Object.values(s.receipts).filter(r=>Object.values(s.instructions).some(i=>ids.has(i.caseId)&&i.id===r.instructionId)),
     jobs:Object.values(s.jobs).filter(j=>ids.has(j.caseId)).map(({docs,...j})=>j),events:s.events.filter(e=>!e.caseId||ids.has(e.caseId)),conflicts:s.conflicts,
     workItems:assignedWork(s,actor,visible),intakeGroups:can(actor,'intake')?intakeGroups(s):[]};
+  result.cases = visible.map(c=>{
+    const assigned=result.workItems.filter(item=>item.caseId===c.id);
+    if(can(actor,'intake')&&!['completed','rejected','cancelled'].includes(c.status)&&c.paymentIds.some(id=>!s.instructions[id]))assigned.push({id:'change',kind:'change'});
+    const workflowByWork=Object.fromEntries(assigned.map(item=>{
+      const {current,next}=projectWorkflow(result,c,actor,item);
+      return [item.id,{current,next}];
+    }));
+    return {...c,workflow:projectWorkflow(result,c,actor),workflowByWork};
+  });
   // Account comparison tokens are server-only; values, attachments and diagnostics are masked.
   return JSON.parse(JSON.stringify(result,(key,value)=>['accountKey','passwordHash','registrationFingerprint'].includes(key)?undefined:value));
 }

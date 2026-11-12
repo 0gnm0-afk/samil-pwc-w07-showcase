@@ -1,123 +1,126 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="2354" height="1062" viewBox="0 0 2354 1062" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="2354" height="1162" viewBox="0 0 2354 1162" role="img" aria-labelledby="title desc">
   <title id="title">W07 판매장려금 지급 개선 BPMN</title>
   <desc id="desc">영업지원이 직접 입력과 CSV 요청을 묶어서 접수한다. 회계가 근거를 검토한다. 특별승인은 영업 임원과 재무 임원의 동일 버전 결재가 모두 필요하다. 추가 판단이 필요하면 지급을 보류하고 AI가 영업지원 보완 또는 회계 확인과 상위 보고로 연결한다.</desc>
   <defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M 0 0 L 9 4.5 L 0 9 z" fill="#425773"/></marker></defs>
   <style>text{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;fill:#172941}.title{font-size:29px;font-weight:700}.subtitle{font-size:16px;fill:#445970}.role{font-size:15px;font-weight:700;text-anchor:middle}.task{font-size:15px;font-weight:600;text-anchor:middle}.small{font-size:13px;text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:6px;stroke-linejoin:round}.wire{fill:none;stroke:#425773;stroke-width:1.7;marker-end:url(#arrow)}</style>
-  <rect width="2354" height="1062" fill="#fff"/>
+  <rect width="2354" height="1162" fill="#fff"/>
   <text x="23" y="40" class="title">W07 판매장려금 지급 개선 BPMN</text>
   <text x="23" y="68" class="subtitle">직접·CSV 신규 요청 접수 · 특별승인은 양쪽 임원의 같은 버전 승인 · 미확정 건은 지급보류와 AI 후속 작업</text>
   <rect x="22" y="90" width="2310" height="118" fill="#fff" stroke="#bdcad9"/>
   <rect x="22" y="90" width="116" height="118" fill="#edf2f8" stroke="#bdcad9"/>
-  <text x="80" y="154" class="role"><tspan x="80" dy="0">영업지원</tspan></text>
-  <rect x="22" y="208" width="2310" height="152" fill="#f8fafc" stroke="#bdcad9"/>
-  <rect x="22" y="208" width="116" height="152" fill="#edf2f8" stroke="#bdcad9"/>
-  <text x="80" y="289" class="role"><tspan x="80" dy="0">회계팀</tspan></text>
-  <rect x="22" y="360" width="2310" height="254" fill="#fff" stroke="#bdcad9"/>
-  <rect x="22" y="360" width="116" height="254" fill="#e3efff" stroke="#bdcad9"/>
-  <text x="80" y="492" class="role"><tspan x="80" dy="0">시스템</tspan></text>
-  <rect x="22" y="614" width="2310" height="160" fill="#f8fafc" stroke="#bdcad9"/>
-  <rect x="22" y="614" width="116" height="160" fill="#edf2f8" stroke="#bdcad9"/>
-  <text x="80" y="699" class="role"><tspan x="80" dy="0">영업 임원</tspan></text>
-  <rect x="22" y="774" width="2310" height="125" fill="#fff" stroke="#bdcad9"/>
-  <rect x="22" y="774" width="116" height="125" fill="#edf2f8" stroke="#bdcad9"/>
-  <text x="80" y="841.5" class="role"><tspan x="80" dy="0">재무 임원</tspan></text>
-  <rect x="22" y="899" width="2310" height="139" fill="#f8fafc" stroke="#bdcad9"/>
-  <rect x="22" y="899" width="116" height="139" fill="#edf2f8" stroke="#bdcad9"/>
-  <text x="80" y="973.5" class="role"><tspan x="80" dy="0">자금팀</tspan></text>
+  <text x="80" y="154" class="role"><tspan x="80" dy="-8">일반 영업지원</tspan><tspan x="80" dy="19">직원</tspan></text>
+  <rect x="22" y="208" width="2310" height="100" fill="#fff" stroke="#bdcad9"/>
+  <rect x="22" y="208" width="116" height="100" fill="#edf2f8" stroke="#bdcad9"/>
+  <text x="80" y="250" class="role"><tspan x="80">영업지원팀장</tspan><tspan x="80" dy="19">(전결)</tspan></text>
+  <rect x="22" y="308" width="2310" height="152" fill="#f8fafc" stroke="#bdcad9"/>
+  <rect x="22" y="308" width="116" height="152" fill="#edf2f8" stroke="#bdcad9"/>
+  <text x="80" y="389" class="role"><tspan x="80" dy="0">회계팀</tspan></text>
+  <rect x="22" y="460" width="2310" height="254" fill="#fff" stroke="#bdcad9"/>
+  <rect x="22" y="460" width="116" height="254" fill="#e3efff" stroke="#bdcad9"/>
+  <text x="80" y="592" class="role"><tspan x="80" dy="0">시스템</tspan></text>
+  <rect x="22" y="714" width="2310" height="160" fill="#f8fafc" stroke="#bdcad9"/>
+  <rect x="22" y="714" width="116" height="160" fill="#edf2f8" stroke="#bdcad9"/>
+  <text x="80" y="799" class="role"><tspan x="80" dy="0">영업 임원</tspan></text>
+  <rect x="22" y="874" width="2310" height="125" fill="#fff" stroke="#bdcad9"/>
+  <rect x="22" y="874" width="116" height="125" fill="#edf2f8" stroke="#bdcad9"/>
+  <text x="80" y="941.5" class="role"><tspan x="80" dy="0">재무 임원</tspan></text>
+  <rect x="22" y="999" width="2310" height="139" fill="#f8fafc" stroke="#bdcad9"/>
+  <rect x="22" y="999" width="116" height="139" fill="#edf2f8" stroke="#bdcad9"/>
+  <text x="80" y="1073.5" class="role"><tspan x="80" dy="0">자금팀</tspan></text>
   <polyline class="wire" points="188,146 202,146"/>
-  <polyline class="wire" points="368,146 415,146 415,411"/>
-  <polyline class="wire" points="498,438 555,438 555,309"/>
-  <polyline class="wire" points="638,282 706,282 706,411"/>
-  <polyline class="wire" points="789,438 833,438"/>
-  <polyline class="wire" points="875,438 1055,438 1055,628"/>
-  <polyline class="wire" points="854,459 854,540 912,540"/>
-  <polyline class="wire" points="1078,540 1114,540"/>
-  <polyline class="wire" points="1135,561 1135,730 1167,730"/>
-  <polyline class="wire" points="1156,540 1160,540 1160,832 1167,832"/>
-  <polyline class="wire" points="1333,730 1359,730"/>
-  <polyline class="wire" points="1306,757 1380,757 1380,751"/>
-  <polyline class="wire" points="1333,832 1359,832"/>
-  <polyline class="wire" points="1306,859 1380,859 1380,853"/>
-  <polyline class="wire" points="1401,730 1446,730 1446,540 1449,540"/>
-  <polyline class="wire" points="1401,832 1470,832 1470,561"/>
-  <polyline class="wire" points="1491,540 1525,540 1525,438 1559,438"/>
-  <path d="M1096 531v18" fill="none" stroke="#fff" stroke-width="6"/>
-  <polyline class="wire" points="1055,682 1055,704 1096,704 1096,383 1570,383 1570,427"/>
-  <polyline class="wire" points="1601,438 1744,438"/>
-  <polyline class="wire" points="1580,417 1580,309"/>
-  <polyline class="wire" points="1580,459 1580,522"/>
-  <polyline class="wire" points="1497,282 1450,282 1450,235 555,235 555,255"/>
-  <polyline class="wire" points="1765,417 1765,282 1663,282"/>
-  <polyline class="wire" points="1786,438 1930,438 1930,937"/>
-  <polyline class="wire" points="2013,964 2100,964 2100,309"/>
-  <polyline class="wire" points="2183,282 2242,282"/>
-  <polyline class="wire" points="854,417 854,367 1148,367 1148,413 1166,413"/>
-  <polyline class="wire" points="1340,413 1360,413 1360,418 1380,418"/>
-  <polyline class="wire" points="1401,397 1401,146 1366,146"/>
-  <polyline class="wire" points="1422,418 1480,418 1480,300 1497,300"/>
-  <polyline class="wire" points="1280,173 1280,195 1520,195 1520,255"/>
-  <polyline class="wire" points="842,429 809,429 809,146 835,146"/>
-  <polyline class="wire" points="1000,146 1000,106 1690,106 1690,374 1622,374 1622,418 1597,434"/>
+  <polyline class="wire" points="368,146 415,146 415,511"/>
+  <polyline class="wire" points="498,538 555,538 555,409"/>
+  <polyline class="wire" points="638,382 706,382 706,511"/>
+  <polyline class="wire" points="789,538 833,538"/>
+  <polyline class="wire" points="875,538 1055,538 1055,728"/>
+  <polyline class="wire" points="854,559 854,640 912,640"/>
+  <polyline class="wire" points="1078,640 1114,640"/>
+  <polyline class="wire" points="1135,661 1135,830 1167,830"/>
+  <polyline class="wire" points="1156,640 1160,640 1160,932 1167,932"/>
+  <polyline class="wire" points="1333,830 1359,830"/>
+  <polyline class="wire" points="1306,857 1380,857 1380,851"/>
+  <polyline class="wire" points="1333,932 1359,932"/>
+  <polyline class="wire" points="1306,959 1380,959 1380,953"/>
+  <polyline class="wire" points="1401,830 1446,830 1446,640 1449,640"/>
+  <polyline class="wire" points="1401,932 1470,932 1470,661"/>
+  <polyline class="wire" points="1491,640 1525,640 1525,538 1559,538"/>
+  <path d="M1096 631v18" fill="none" stroke="#fff" stroke-width="6"/>
+  <polyline class="wire" points="1055,782 1055,804 1096,804 1096,483 1570,483 1570,527"/>
+  <polyline class="wire" points="1601,538 1744,538"/>
+  <polyline class="wire" points="1580,517 1580,409"/>
+  <polyline class="wire" points="1580,559 1580,622"/>
+  <polyline class="wire" points="1497,382 1450,382 1450,335 555,335 555,355"/>
+  <polyline class="wire" points="1765,517 1765,382 1663,382"/>
+  <polyline class="wire" points="1786,538 1930,538 1930,1037"/>
+  <polyline class="wire" points="2013,1064 2100,1064 2100,409"/>
+  <polyline class="wire" points="2183,382 2242,382"/>
+  <polyline class="wire" points="854,517 854,467 1148,467 1148,513 1166,513"/>
+  <polyline class="wire" points="1340,513 1360,513 1360,518 1380,518"/>
+  <polyline class="wire" points="1401,497 1401,146 1366,146"/>
+  <polyline class="wire" points="1422,518 1480,518 1480,400 1497,400"/>
+  <polyline class="wire" points="1280,173 1280,195 1520,195 1520,355"/>
+  <polyline class="wire" points="842,529 809,529 809,258 835,258"/>
+  <polyline class="wire" points="1000,258 1000,218 1690,218 1690,474 1622,474 1622,518 1597,534"/>
   <circle cx="170" cy="146" r="18" fill="#fff" stroke="#42617e" stroke-width="1.6"/>
   <text x="170" y="181" class="small"><tspan x="170" dy="0">정산 요청</tspan></text>
   <rect x="202" y="119" width="166" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
   <text x="285" y="142" class="task"><tspan x="285" dy="0">직접·CSV 신규 등록</tspan><tspan x="285" dy="19">묶음에서 요청 접수</tspan></text>
-  <rect x="332" y="411" width="166" height="54" rx="8" fill="#deeeff" stroke="#2463aa" stroke-width="2"/>
-  <text x="415" y="434" class="task"><tspan x="415" dy="0">접수 등록</tspan><tspan x="415" dy="19">위험 표시 시 동시 알림</tspan></text>
-  <rect x="472" y="255" width="166" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
-  <text x="555" y="278" class="task"><tspan x="555" dy="0">증빙 취합·합산</tspan><tspan x="555" dy="19">지급 근거 검토</tspan></text>
-  <rect x="623" y="411" width="166" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
-  <text x="706" y="434" class="task"><tspan x="706" dy="0">승인권자 결정</tspan><tspan x="706" dy="19">근거 버전 확정</tspan></text>
-  <path d="M854,417l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M847,431l14,14 M847,445l14,-14" fill="none" stroke="#795715" stroke-width="2"/>
-  <text x="797" y="475" class="small"><tspan x="797" dy="0">승인 경로 확정?</tspan></text>
-  <rect x="972" y="628" width="166" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
-  <text x="1055" y="659" class="task">영업 임원 일반 결재</text>
-  <rect x="835" y="119" width="165" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
-  <text x="917" y="151" class="task">영업지원 전결</text>
-  <rect x="912" y="513" width="166" height="54" rx="8" fill="#deeeff" stroke="#2463aa" stroke-width="2"/>
-  <text x="995" y="545" class="task"><tspan x="995" dy="0">두 결재 요청 동시 발행</tspan></text>
-  <path d="M1135,519l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M1125,540h20 M1135,530v20" fill="none" stroke="#795715" stroke-width="2"/>
-  <rect x="1167" y="703" width="166" height="54" rx="8" fill="#deeeff" stroke="#2463aa" stroke-width="2"/>
-  <text x="1250" y="735" class="task"><tspan x="1250" dy="0">사업상 타당성 결재</tspan></text>
-  <rect x="1167" y="805" width="166" height="54" rx="8" fill="#deeeff" stroke="#2463aa" stroke-width="2"/>
-  <text x="1250" y="837" class="task"><tspan x="1250" dy="0">합산·증빙·지급 조건 결재</tspan></text>
-  <circle cx="1292" cy="757" r="14" fill="#fff" stroke="#42617e" stroke-width="1.6"/>
-  <circle cx="1292" cy="757" r="10" fill="none" stroke="#42617e"/><path d="M1289,752h6v10h-6z M1291,755h2 M1291,758h2" fill="none" stroke="#42617e"/>
-  <circle cx="1292" cy="859" r="14" fill="#fff" stroke="#42617e" stroke-width="1.6"/>
-  <circle cx="1292" cy="859" r="10" fill="none" stroke="#42617e"/><path d="M1289,854h6v10h-6z M1291,857h2 M1291,860h2" fill="none" stroke="#42617e"/>
-  <path d="M1380,709l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M1373,723l14,14 M1373,737l14,-14" fill="none" stroke="#795715" stroke-width="2"/>
-  <path d="M1380,811l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M1373,825l14,14 M1373,839l14,-14" fill="none" stroke="#795715" stroke-width="2"/>
-  <path d="M1470,519l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M1460,540h20 M1470,530v20" fill="none" stroke="#795715" stroke-width="2"/>
-  <path d="M1580,417l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M1573,431l14,14 M1573,445l14,-14" fill="none" stroke="#795715" stroke-width="2"/>
-  <text x="1630" y="475" class="small"><tspan x="1630" dy="0">결재 결과</tspan></text>
-  <rect x="1497" y="255" width="166" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
-  <text x="1580" y="278" class="task"><tspan x="1580" dy="0">지급보류·회계 확인</tspan><tspan x="1580" dy="19">필요 시 상위 보고</tspan></text>
-  <rect x="1166" y="391" width="174" height="44" rx="8" fill="#deeeff" stroke="#2463aa" stroke-width="2"/>
-  <text x="1253" y="418" class="task">지급보류 · AI 판단</text>
-  <path d="M1401,397l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M1394,411l14,14 M1394,425l14,-14" fill="none" stroke="#795715" stroke-width="2"/>
-  <text x="1401" y="456" class="small">보강 자료 있음?</text>
+  <rect x="332" y="511" width="166" height="54" rx="8" fill="#deeeff" stroke="#2463aa" stroke-width="2"/>
+  <text x="415" y="534" class="task"><tspan x="415" dy="0">접수 등록</tspan><tspan x="415" dy="19">위험 표시 시 동시 알림</tspan></text>
+  <rect x="472" y="355" width="166" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
+  <text x="555" y="378" class="task"><tspan x="555" dy="0">증빙 취합·합산</tspan><tspan x="555" dy="19">지급 근거 검토</tspan></text>
+  <rect x="623" y="511" width="166" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
+  <text x="706" y="534" class="task"><tspan x="706" dy="0">승인권자 결정</tspan><tspan x="706" dy="19">근거 버전 확정</tspan></text>
+  <path d="M854,517l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M847,531l14,14 M847,545l14,-14" fill="none" stroke="#795715" stroke-width="2"/>
+  <text x="797" y="575" class="small"><tspan x="797" dy="0">승인 경로 확정?</tspan></text>
+  <rect x="972" y="728" width="166" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
+  <text x="1055" y="759" class="task">영업 임원 일반 결재</text>
+  <rect x="835" y="231" width="165" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
+  <text x="917" y="263" class="task">팀장 전결</text>
+  <rect x="912" y="613" width="166" height="54" rx="8" fill="#deeeff" stroke="#2463aa" stroke-width="2"/>
+  <text x="995" y="645" class="task"><tspan x="995" dy="0">두 결재 요청 동시 발행</tspan></text>
+  <path d="M1135,619l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M1125,640h20 M1135,630v20" fill="none" stroke="#795715" stroke-width="2"/>
+  <rect x="1167" y="803" width="166" height="54" rx="8" fill="#deeeff" stroke="#2463aa" stroke-width="2"/>
+  <text x="1250" y="835" class="task"><tspan x="1250" dy="0">사업상 타당성 결재</tspan></text>
+  <rect x="1167" y="905" width="166" height="54" rx="8" fill="#deeeff" stroke="#2463aa" stroke-width="2"/>
+  <text x="1250" y="927" class="task"><tspan x="1250" dy="0">합산·증빙 검토</tspan><tspan x="1250" dy="19">지급 조건 결재</tspan></text>
+  <circle cx="1292" cy="857" r="14" fill="#fff" stroke="#42617e" stroke-width="1.6"/>
+  <circle cx="1292" cy="857" r="10" fill="none" stroke="#42617e"/><path d="M1289,852h6v10h-6z M1291,855h2 M1291,858h2" fill="none" stroke="#42617e"/>
+  <circle cx="1292" cy="959" r="14" fill="#fff" stroke="#42617e" stroke-width="1.6"/>
+  <circle cx="1292" cy="959" r="10" fill="none" stroke="#42617e"/><path d="M1289,954h6v10h-6z M1291,957h2 M1291,960h2" fill="none" stroke="#42617e"/>
+  <path d="M1380,809l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M1373,823l14,14 M1373,837l14,-14" fill="none" stroke="#795715" stroke-width="2"/>
+  <path d="M1380,911l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M1373,925l14,14 M1373,939l14,-14" fill="none" stroke="#795715" stroke-width="2"/>
+  <path d="M1470,619l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M1460,640h20 M1470,630v20" fill="none" stroke="#795715" stroke-width="2"/>
+  <path d="M1580,517l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M1573,531l14,14 M1573,545l14,-14" fill="none" stroke="#795715" stroke-width="2"/>
+  <text x="1630" y="575" class="small"><tspan x="1630" dy="0">결재 결과</tspan></text>
+  <rect x="1497" y="355" width="166" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
+  <text x="1580" y="378" class="task"><tspan x="1580" dy="0">지급보류·회계 확인</tspan><tspan x="1580" dy="19">필요 시 상위 보고</tspan></text>
+  <rect x="1166" y="491" width="174" height="44" rx="8" fill="#deeeff" stroke="#2463aa" stroke-width="2"/>
+  <text x="1253" y="518" class="task">지급보류 · AI 판단</text>
+  <path d="M1401,497l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M1394,511l14,14 M1394,525l14,-14" fill="none" stroke="#795715" stroke-width="2"/>
+  <text x="1401" y="556" class="small">보강 자료 있음?</text>
   <rect x="1195" y="119" width="171" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
   <text x="1280" y="151" class="task">영업지원 보완 회신</text>
-  <circle cx="1580" cy="540" r="18" fill="#fff" stroke="#42617e" stroke-width="3"/>
-  <text x="1580" y="575" class="small"><tspan x="1580" dy="0">반려 종료</tspan></text>
-  <path d="M1765,417l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M1758,431l14,14 M1758,445l14,-14" fill="none" stroke="#795715" stroke-width="2"/>
-  <text x="1765" y="475" class="small"><tspan x="1765" dy="0">승인 근거 유효?</tspan></text>
-  <rect x="1847" y="937" width="166" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
-  <text x="1930" y="960" class="task"><tspan x="1930" dy="0">승인 조건대로</tspan><tspan x="1930" dy="19">지급 지시</tspan></text>
-  <rect x="2017" y="255" width="166" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
-  <text x="2100" y="287" class="task"><tspan x="2100" dy="0">은행 회신·전표 대사</tspan></text>
-  <circle cx="2260" cy="282" r="18" fill="#fff" stroke="#42617e" stroke-width="3"/>
-  <text x="2260" y="317" class="small"><tspan x="2260" dy="0">대사 결과 기록</tspan></text>
-  <text x="955" y="427" class="small">일반 · 200만 원 초과</text>
-  <text x="810" y="185" class="small">일반 · 200만 원 이하</text>
-  <text x="884" y="527" class="small"><tspan x="884" dy="0">특별승인</tspan></text>
-  <text x="1673" y="427" class="small"><tspan x="1673" dy="0">필요 결재 모두 승인</tspan></text>
-  <text x="1525" y="361" class="small"><tspan x="1525" dy="0">보완·근거 변경</tspan></text>
-  <text x="1613" y="500" class="small"><tspan x="1613" dy="0">반려</tspan></text>
-  <text x="1015" y="225" class="small"><tspan x="1015" dy="0">증빙 확보 후 재검토</tspan></text>
-  <text x="1721" y="270" class="small"><tspan x="1721" dy="0">변경 발견</tspan></text>
-  <text x="1854" y="427" class="small"><tspan x="1854" dy="0">유효</tspan></text>
-  <text x="1000" y="360" class="small">증빙 누락·미등록 상황·적격 경로 부재</text>
-  <text x="1353" y="347" class="small">자료 보완</text>
-  <text x="1497" y="348" class="small">회계 확인</text>
+  <circle cx="1580" cy="640" r="18" fill="#fff" stroke="#42617e" stroke-width="3"/>
+  <text x="1580" y="675" class="small"><tspan x="1580" dy="0">반려 종료</tspan></text>
+  <path d="M1765,517l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M1758,531l14,14 M1758,545l14,-14" fill="none" stroke="#795715" stroke-width="2"/>
+  <text x="1765" y="575" class="small"><tspan x="1765" dy="0">승인 근거 유효?</tspan></text>
+  <rect x="1847" y="1037" width="166" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
+  <text x="1930" y="1060" class="task"><tspan x="1930" dy="0">승인 조건대로</tspan><tspan x="1930" dy="19">지급 지시</tspan></text>
+  <rect x="2017" y="355" width="166" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
+  <text x="2100" y="387" class="task"><tspan x="2100" dy="0">은행 회신·전표 대사</tspan></text>
+  <circle cx="2260" cy="382" r="18" fill="#fff" stroke="#42617e" stroke-width="3"/>
+  <text x="2260" y="417" class="small"><tspan x="2260" dy="0">대사 결과 기록</tspan></text>
+  <text x="955" y="527" class="small">일반 · 200만 원 초과</text>
+  <text x="720" y="286" class="small">일반 · 200만 원 이하</text>
+  <text x="884" y="627" class="small"><tspan x="884" dy="0">특별승인</tspan></text>
+  <text x="1673" y="527" class="small"><tspan x="1673" dy="0">필요 결재 모두 승인</tspan></text>
+  <text x="1525" y="461" class="small"><tspan x="1525" dy="0">보완·근거 변경</tspan></text>
+  <text x="1613" y="600" class="small"><tspan x="1613" dy="0">반려</tspan></text>
+  <text x="1015" y="325" class="small"><tspan x="1015" dy="0">증빙 확보 후 재검토</tspan></text>
+  <text x="1721" y="370" class="small"><tspan x="1721" dy="0">변경 발견</tspan></text>
+  <text x="1854" y="527" class="small"><tspan x="1854" dy="0">유효</tspan></text>
+  <text x="1000" y="460" class="small">증빙 누락·미등록 상황·적격 경로 부재</text>
+  <text x="1353" y="447" class="small">자료 보완</text>
+  <text x="1497" y="448" class="small">회계 확인</text>
 </svg>

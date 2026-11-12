@@ -6,13 +6,15 @@ import { openStore } from './store.mjs';
 import { initAccounts, login, loginRole, authenticate, sessionToken, workspaceToken, verifyPassword } from './auth.mjs';
 import { command, publicState, businessRoles, can, must, hash, now, RuleError, upgradeWorkflow } from './domain.mjs';
 import { processOne } from './ai.mjs';
+import { createGuidanceService } from './guidance.mjs';
 const instanceId=randomUUID();
-export async function startServer({store,hashes,port=Number(process.env.PORT||8080),worker=true,secure=process.env.NODE_ENV==='production'}={}) {
+export async function startServer({store,hashes,port=Number(process.env.PORT||8080),worker=true,secure=process.env.NODE_ENV==='production',guidanceOptions}={}) {
   store??=await openStore();hashes??=JSON.parse(process.env.W07_ACCOUNT_HASHES||'null');await initAccounts(store,hashes);await store.create('demo');await store.recover();
   const publicRoles=businessRoles.map((role,index)=>{
     const code='REDACTED-DEMO-' + role.id;
     return verifyPassword(code,hashes[`role:${role.id}`])?{...role,demoPassword:code}:role;
   });
+  const guide=createGuidanceService(store,guidanceOptions);
   const active=new Set(),attempts=new Map();
   async function kick(workspace){if(!worker||active.has(workspace))return;active.add(workspace);try{for(let i=0;i<10;i++)if(!await processOne(store,workspace))break;}catch{console.error(JSON.stringify({type:'worker_error',at:now()}));}finally{active.delete(workspace);}}
   const interval=worker?setInterval(async()=>{try{await store.recover();for(const w of await store.pending())void kick(w);}catch{console.error(JSON.stringify({type:'db_worker_error',at:now()}));}},15000):null;
@@ -26,7 +28,7 @@ export async function startServer({store,hashes,port=Number(process.env.PORT||80
     try{
       const url=new URL(req.url,'http://localhost');
       if(url.pathname==='/healthz')return json(res,200,{ok:true,version:'1.2.0',instanceId});
-      if(['GET','HEAD'].includes(req.method)&&['/','/app.js','/style.css'].includes(url.pathname)){
+      if(['GET','HEAD'].includes(req.method)&&['/','/app.js','/style.css','/catalog.js','/guidance-ui.js'].includes(url.pathname)){
         const path=url.pathname==='/'?'index.html':url.pathname.slice(1);const content=await readFile(new URL(`./public/${path}`,import.meta.url));res.writeHead(200,{'content-type':path.endsWith('.html')?'text/html; charset=utf-8':path.endsWith('.css')?'text/css; charset=utf-8':'text/javascript; charset=utf-8','cache-control':'no-cache'});return res.end(req.method==='HEAD'?undefined:content);
       }
       if(url.pathname==='/api/roles'&&req.method==='GET')return json(res,200,publicRoles);
@@ -49,6 +51,7 @@ export async function startServer({store,hashes,port=Number(process.env.PORT||80
       if(url.pathname==='/api/logout'&&req.method==='POST'){await store.query('DELETE FROM w07_sessions WHERE token_hash=$1',[hash(sessionToken(req))]);res.setHeader('set-cookie',`w07_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${secure?'; Secure':''}`);return json(res,200,{ok:true});}
       const workspace=url.searchParams.get('workspace')||actor.workspace||'demo';must(/^(demo|qa-[a-z0-9-]{1,70}|trial-[a-f0-9-]{36})$/.test(workspace),'WORKSPACE','작업공간 오류',400);
       if(actor.publicDemo)must(workspace===actor.workspace,'FORBIDDEN','내 체험 공간에만 접근할 수 있습니다.',403);
+      if(url.pathname==='/api/guidance'&&req.method==='POST')return json(res,200,await guide(workspace,actor,await body(req)));
       if(url.pathname==='/api/state'&&req.method==='GET'){
         let s=await store.read(workspace);
         if(s.workflowVersion!==2){s=await store.tx(workspace,current=>{upgradeWorkflow(current);return current;});void kick(workspace);}
