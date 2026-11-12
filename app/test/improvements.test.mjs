@@ -8,10 +8,10 @@ import {processOne} from '../ai.mjs';
 import {guidanceContext,createGuidanceService,validateGuidance} from '../guidance.mjs';
 const act=(s,user,type,p)=>command(s,actorFor(user),type,p);
 
-test('추천일은 한국 날짜·월말·주말·윤년·연말을 동일한 3영업일 규칙으로 처리',()=>{
+test('추천일은 접속 날짜와 무관하게 정산 다음 달 평일·윤년·연말을 처리',()=>{
   assert.equal(koreaToday('2026-11-12T15:00:00Z'),'2026-11-13');
   for(const [period,today,want] of [
-    ['2026-06','2026-11-12','2026-11-17'],['2026-06','2026-11-13','2026-11-18'],
+    ['2026-06','2026-11-12','2026-07-03'],['2026-06','2026-11-13','2026-07-03'],
     ['2026-11','2026-11-12','2026-12-03'],['2026-12','2026-11-12','2027-01-05'],
     ['2028-02','2028-02-01','2028-03-03'],['2026-02','2026-02-01','2026-03-04']
   ]){const r=recommendDate(period,today);assert.equal(r.date,want);assert.equal(r.source,'rules');assert.match(r.reason,/공휴일/);}
@@ -33,7 +33,7 @@ test('예정일 미리보기는 저장 없이 월별 재그룹·200만원 경계
   assert.throws(()=>act(s,'intake','schedule',{items:same.items,stateEventId:'old'}),{code:'SCHEDULE_CHANGED'});
   act(s,'intake','schedule',{items:split.items,unassignedOnly:true,stateEventId:null});
   const view=publicState(s,actor);assert.equal(view.intakeGroups.length,2);
-  assert.equal(view.plans[0].plannedDate,'2026-11-17');assert.equal(view.plans[0].scheduleRecommendation,undefined);
+  assert.equal(view.plans[0].plannedDate,'2026-11-17');assert.equal(view.plans[0].scheduleRecommendation.date,'2026-07-03');
 });
 
 test('공통 NIM 속도 예약은 동시 요청·시간 경계·업무 판단 우선순위·공급자 대기를 공유',async()=>{

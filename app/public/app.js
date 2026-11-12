@@ -1,3 +1,4 @@
+import {sourceHTML,mountSource} from './source-ui.js';
 import {dateBoard,mountDates} from './schedule-ui.js';
 import { moduleHTML, mountGuidance, clearGuidance } from './guidance-ui.js';
 import { roleNames, modules, approvalFocus, reasonChoices } from './catalog.js';
@@ -288,14 +289,14 @@ function inbox() {
     const c=caseFor(item.caseId);
     return '<button class="task-card" data-work="'+esc(item.id)+'" data-action="open"><strong>'+esc(c.title)+'</strong><span>'+esc(item.paymentId||c.currentBasis.month)+'</span>'+badge(c.status)+'</button>';
   }).join('')+'</div></section>').join('')||'<p class="empty">현재 배정된 후속 작업이 없습니다.</p>';
-  const scheduledNotice=view.scheduledGroups?`<div class="source-box source-rules"><span class="source-label">기본 안내 · 예정일 저장 완료</span><p>선택한 요청이 ${view.scheduledGroups.length}개의 지급월 묶음에 반영되었습니다. 아래 강조한 묶음을 각각 열어 증빙과 함께 접수하세요.</p></div>`:'';
-  shell('내 작업',(has('intake')?dateBoard(state.plans.filter(p=>!p.plannedDate&&!p.caseId&&p.status==='planned'),state.agencies):'')+scheduledNotice+moduleHTML('inbox',list)+(has('intake')?intakeQueue():'')+'<div id=inlineIntake></div>',has('intake')?'<button id="direct" class="primary">새 요청 직접 입력</button><button id="csv">CSV 등록</button>':'');
+  const scheduledNotice=view.scheduledGroups?`<div class="source-box source-rules"><span class="source-label">기본 안내 · 예정일 저장 완료</span><p>선택한 요청이 ${view.scheduledGroups.length}개의 지급월 묶음에 반영되었습니다. 아래 강조한 묶음에서 연결된 원본과 요청을 확인하고 접수하세요.</p></div>`:'';
+  shell('내 작업',(has('intake')?dateBoard(state.plans.filter(p=>!p.caseId&&p.status==='planned'),state.agencies):'')+scheduledNotice+moduleHTML('inbox',list)+(has('intake')?intakeQueue():'')+'<div id=inlineIntake></div>',has('intake')?'<button id="sourceData" class="primary">원본 세 표 등록·정정</button><button id="direct">새 요청 직접 입력</button><button id="csv">CSV 등록</button>':'');
   for(const button of document.querySelectorAll('[data-work]'))button.onclick=()=>show({kind:'task',item:workFor(button.dataset.work)});
   for(const button of document.querySelectorAll('[data-group]'))button.onclick=()=>{view.inlineId=button.dataset.group;intakeView(true);prepareModules();document.getElementById('inlineIntake').scrollIntoView({block:'start',behavior:'smooth'});};
   mountDates({api,run,onError:toast,onSaved:ids=>({kind:'inbox',scheduledGroups:state.intakeGroups.filter(g=>g.paymentIds.some(id=>ids.includes(id))).map(g=>g.id)})});
   if(view.inlineId)intakeView(true);
   for(const button of document.querySelectorAll('[data-change]'))button.onclick=()=>show({kind:'task',item:{kind:'change',caseId:button.dataset.change}});
-  listen('direct',()=>show({kind:'direct'}));listen('csv',()=>show({kind:'csv'}));
+  listen('sourceData',()=>show({kind:'source'}));listen('direct',()=>show({kind:'direct'}));listen('csv',()=>show({kind:'csv'}));
 }
 
 function intakeQueue() {
@@ -306,7 +307,7 @@ function intakeQueue() {
   const scheduled = batches.filter(g => g.month), unscheduled = batches.filter(g => !g.month);
   const amendable = state.cases.filter(c => !['completed','rejected','cancelled'].includes(c.status)
     && c.paymentIds.some(id => !state.instructions.some(i => i.paymentId === id)));
-  return `<section class="panel"><h2>2. 묶음 확인 · 증빙 접수</h2>
+  return `<section class="panel"><h2>2. 관련자·지급월 묶음 확인 후 접수</h2>
     ${scheduled.length ? table(scheduled) : '<p class="empty">지급예정일이 지정된 미접수 요청이 없습니다.</p>'}
 
   </section>${amendable.length ? `<details><summary>접수한 요청의 지급조건 변경</summary>
@@ -314,8 +315,8 @@ function intakeQueue() {
 }
 
 function registerView(channel) {
-  const currentDate = state.schedulePolicy.today;
-  const recommended = recommendDate(currentDate.slice(0,7),currentDate);
+  const currentDate = state.schedulePolicy.period;
+  const recommended = recommendDate(currentDate.slice(0,7),{payments:state.sourceRows.payments});
   const options = state.agencies.map(a => `<option value="${esc(a.agency_id)}">${esc(a.agency_id)} · ${esc(a.agency_name)}</option>`).join('');
   const example = 'request_id,agency_id,amount_krw,period_ym,planned_date,evidence_id,evidence_type,evidence_date,evidence_account_holder,evidence_account_no,evidence_amount_krw,evidence_period_ym,evidence_text\n'
     + `NEW-001,${state.agencies[0].agency_id},100000,${currentDate.slice(0,7)},${recommended.date},,,,,,,,\n`;
@@ -334,9 +335,9 @@ function registerView(channel) {
   shell(channel === 'direct' ? '새 지급 요청 등록' : 'CSV 지급 요청 등록', moduleHTML('register',content));
   if(channel==='direct'){
     const period=$('[name=period]'),planned=$('[name=plannedDate]');let dateEdited=false;
-    const update=apply=>{const rec=recommendDate(period.value,state.schedulePolicy.today);$('#dateReason').textContent=rec.reason+(dateEdited&&!apply?' 직접 지정한 날짜는 유지했습니다.':'');if(apply||!dateEdited)planned.value=rec.date||'';};
+    const update=apply=>{const rec=recommendDate(period.value,{agencyId:document.querySelector('[name=agencyId]').value,payments:state.sourceRows.payments});$('#dateReason').textContent=rec.reason+(dateEdited&&!apply?' 직접 지정한 날짜는 유지했습니다.':'');if(apply||!dateEdited)planned.value=rec.date||'';};
     planned.addEventListener('input',()=>{dateEdited=true;});
-    period.addEventListener('input',()=>update(false));
+    period.addEventListener('input',()=>update(false));document.querySelector('[name=agencyId]').addEventListener('change',()=>update(false));
     listen('applyRecommendedDate',()=>{dateEdited=false;update(true);planned.dispatchEvent(new Event('change',{bubbles:true}));});
   }
   form('registration', async fields => {
@@ -356,7 +357,7 @@ function intakeView(inline=false) {
   const selected = view.paymentIds || group.paymentIds.slice(0,30);
   const rows = group.paymentIds.map(planFor).map(p => `<tr><td><label class="checkbox"><input type="checkbox" name="paymentIds" value="${esc(p.id)}" ${selected.includes(p.id) ? 'checked' : ''}>${esc(p.id)}</label></td>
     <td>${esc(p.agencyId)}</td><td>${esc(p.period)}</td><td>${p.plannedDate?esc(p.plannedDate):`<label><span class="sr-only">${esc(p.id)} 지급예정일</span><input type="date" data-plan-date="${esc(p.id)}" name="schedule:${esc(p.id)}" value="${esc(p.scheduleRecommendation?.date||'')}" required></label><details><summary>추천 근거</summary><p class="source-box source-rules">${esc(p.scheduleRecommendation?.reason)}</p></details>`}</td><td>${won(p.amount)}</td></tr>`).join('');
-  const fields = group.month ? `${documentCards(group.paymentIds.flatMap(id=>planFor(id).pendingEvidence||[]))}<label>요청 제목<input name="title" required value="${esc(group.month)} 판매장려금 지급 검토"></label>${docFields()}
+  const fields = group.month ? `${assessmentHTML(group.sourceReview)}${documentCards(group.sourceReview?.records||[])}<label>요청 제목<input name="title" required value="${esc(group.month)} 판매장려금 지급 검토"></label>
     <div class="field-grid"><label>신고·확인 사항<select name="exception"><option value="">없음</option><option value="conflict">영업 임원 이해상충</option>
     <option value="policy">정책 예외</option><option value="aggregation">합산 예외</option><option value="uncertain">기타 판단 필요</option></select></label>
     <label>선택 사유<textarea name="exceptionReason" maxlength="4000" readonly></textarea></label></div>`
@@ -414,18 +415,8 @@ function intakeView(inline=false) {
 }
 
 function aiCard(task) {
-  if (!task) return '';
-  const ai=task.source==='ai'||!!(task.jobId&&task.citations?.length);
-  const heading = ai ? 'AI 안내 · 보완 작업 추천' : '기본 안내 · 연결된 작업';
-  return `<section class="decision-band ai-card source-box ${ai?'source-ai':'source-rules'}"><span class="source-label">${ai?'AI 안내 · NVIDIA NIM':'기본 안내'}</span><h3>${heading}</h3><h4>왜 필요한가요?</h4><p>${esc(task.reason)}</p>
-    <div class="source-box source-rules"><span class="source-label">기본 안내 · 실제 화면 조작 순서</span>
-    ${task.beforeAction?.length?'<h4>먼저 확인하세요</h4><ul>'+task.beforeAction.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul>':''}
-    ${task.howTo?.length?'<h4>이렇게 진행하세요</h4><ol>'+task.howTo.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ol>':''}
-    </div>
-    ${task.effect?'<div class="source-box source-rules"><span class="source-label">기본 안내 · 처리 결과</span><p>'+esc(task.effect)+'</p></div>':''}
-    ${task.escalation ? '<p><strong>상위 판단 필요 · 지급보류</strong></p>' : ''}
-    ${(task.citations || []).map(f => `<blockquote>${esc(f.quote)} <cite>${esc(f.docId)}</cite></blockquote>`).join('')}
-    ${task.unknowns?.length ? `<ul>${task.unknowns.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</section>`;
+  if(!task)return '';
+  return '<section class="source-box source-rules"><h3>이 요청에 연결된 후속 작업</h3><p>'+esc(task.owner?roles[task.owner]:'담당자')+'에게 배정된 작업입니다. 자료를 정정하거나 확인 근거를 남긴 뒤 회계 검토로 이어갑니다.</p>'+(task.effect?'<p>'+esc(task.effect)+'</p>':'')+'</section>';
 }
 
 function approvalSummary(c) {
@@ -451,15 +442,16 @@ function reviewForm(c) {
   const holds=Object.values(c.holds).filter(h=>!h.closedAt);
   const pending=c.paymentIds.map(planFor).filter(p=>!state.instructions.some(i=>i.paymentId===p.id));
   const openChecks=holds.filter(h=>h.owner==='reviewer'&&h.key!=='assignee'&&!h.key.startsWith('evidence:'));
-  const docs=c.docs.map(d=>'<label class="checkbox"><input type="checkbox" name="docIds" value="'+esc(d.id)+'">'+esc(({account:'계좌·명의 근거',narrative:'서술 자료',supplement:'보완 회신',bank:'은행 자료',voucher:'전표 자료'})[d.kind]||d.kind)+' · '+esc(d.id)+'</label><details><summary>증빙 본문 보기</summary><p class="doc">'+esc(d.text)+'</p></details>').join('');
-  const evidence=assessmentHTML(c.evidenceAssessment)+documentCards(c.docs)+'<fieldset><legend>대조에 사용할 증빙</legend>'+docs+'</fieldset><fieldset><legend>선택 증빙으로 확인한 지급 건</legend>'+pending.map(p=>'<label class="checkbox"><input type="checkbox" name="confirmPaymentIds" value="'+esc(p.id)+'">'+esc(p.id)+' · '+esc(p.accountLabel)+' · '+esc(p.owner)+(c.confirmations[p.id]?' · 확인 기록 있음':'')+'</label>').join('')+'</fieldset>'+reasonFields('review')+'<button type="submit" class="primary" data-action="review">검토 저장</button><button type="button" id="openHolds" data-action="openHolds">보류·예외 처리로 이동</button>';
+  const currentDocs=c.reviewMode==='source-1'?(c.evidenceAssessment?.records||[]):c.docs;
+  const docs=currentDocs.map(d=>'<label class="checkbox"><input type="checkbox" name="docIds" value="'+esc(d.id)+'">'+esc(({account:'계좌·명의 근거',narrative:'서술 자료',supplement:'보완 회신',bank:'은행 자료',voucher:'전표 자료'})[d.kind]||d.kind)+' · '+esc(d.id)+'</label><details><summary>증빙 본문 보기</summary><p class="doc">'+esc(d.text)+'</p></details>').join('');
+  const evidence=assessmentHTML(c.evidenceAssessment)+documentCards(currentDocs)+'<fieldset><legend>대조에 사용할 증빙</legend>'+docs+'</fieldset><fieldset><legend>선택 증빙으로 확인한 지급 건</legend>'+pending.map(p=>'<label class="checkbox"><input type="checkbox" name="confirmPaymentIds" value="'+esc(p.id)+'">'+esc(p.id)+' · '+esc(p.accountLabel)+' · '+esc(p.owner)+(c.confirmations[p.id]?' · 확인 기록 있음':'')+'</label>').join('')+'</fieldset>'+reasonFields('review')+'<button type="submit" class="primary" data-action="review">검토 저장</button><button type="button" id="openHolds" data-action="openHolds">보류·예외 처리로 이동</button>';
   const holdList=holds.length?holds.map(h=>openChecks.includes(h)?'<label class="checkbox"><input type="checkbox" name="resolveKeys" form="review" value="'+esc(h.key)+'">'+esc(h.reason)+' 확인 완료</label>':'<p class="hold-item">'+esc(h.reason)+'</p>').join(''):'<p>현재 남은 보류 사유가 없습니다.</p>';
   const holdContent=holdList+'<label class="checkbox"><input type="checkbox" name="special" form="review">정책 예외로 특별승인 적용</label><p class="meta">확인 완료 항목은 선택 증빙과 검토 사유로 저장합니다. 자료가 부족하면 아래에서 추가 판단을 의뢰하세요.</p><button type="submit" form="review" data-action="review">선택한 확인 결과 저장</button>';
   const canSubmit=c.canSubmit&&c.needsResubmit;
   const evidenceModule='<form id="review" class="stack">'+moduleHTML('evidence',evidence,{open:!canSubmit})+'</form>';
   const holdsModule=moduleHTML('holds',holdContent+
     '<details class="supporting-form"><summary>보완·추가 판단 의뢰</summary><form id="flag" class="stack">'+reasonFields('flag')+'<label class="checkbox"><input type="checkbox" name="conflict">영업 임원의 이해상충 확인</label><button type="submit" data-action="flag">지급보류 · AI 검토 의뢰</button></form></details>'+
-    '<details class="supporting-form"><summary>새 증빙 연결</summary><form id="documents" class="stack">'+docFields()+'<button type="submit" data-action="documents">증빙 저장</button></form></details>',{open:false});
+    (c.reviewMode==='source-1'?'<p>원본의 정정은 일반 영업지원 직원이 원본 세 표 등록·정정 화면에서 처리합니다. 추가 설명만 필요한 경우 보완 요청에 답할 수 있습니다.</p>':'<details class="supporting-form"><summary>새 증빙 연결</summary><form id="documents" class="stack">'+docFields()+'<button type="submit" data-action="documents">증빙 저장</button></form></details>'),{open:false});
   const submitModule=moduleHTML('submit',approvalSummary(c)+(canSubmit?'<p>검토 근거가 저장되어 결재를 상신할 수 있습니다.</p>':'<p>상신 전에 계좌·명의 증빙과 남은 보류 사유를 확인하세요.</p><button type="button" id="backToEvidence">증빙 확인으로 이동</button>')+'<button id="submit" type="button" data-action="submit" class="primary" '+(canSubmit?'':'disabled')+'>현재 검토 버전 상신</button>',{open:canSubmit});
   const supporting=moduleHTML('basis',caseFacts(c),{open:false})+holdsModule;
   return canSubmit?submitModule+evidenceModule+supporting:evidenceModule+supporting+submitModule;
@@ -489,14 +481,14 @@ function paymentForm(item, c) {
     <label hidden>모의 회신 ID<input name="receiptId" value="BANK-${crypto.randomUUID().slice(0,8)}" required></label>
     <label>은행 결과<select name="outcome"><option value="success">성공</option><option value="failed">확정 실패</option></select></label>
     <label>회신 처리일<input name="date" type="date" value="${esc(instruction.date)}" required></label>
-    <label>은행 원자료의 회신 금액<input name="amount" type="number" min="0" step="1" required></label>
+    <label>은행 원자료의 회신 금액<input name="amount" type="number" min="0" step="1" value="${c.reviewMode==='source-1'?instruction.amount:''}" required></label>
     <label>다른 수취계좌 (차이 있을 때)<input name="account"></label></div>
     <button class="primary" type="submit">은행 회신 저장</button></form>${settlementSource(c,item,"bank")}`;
   const receipt = state.receipts.find(r => r.id === instruction.receiptId);
   const actual = instruction.reconciliation === 'difference' && instruction.vouchers?.length;
   return `${details}<p>은행 회신 ${won(receipt.amount)} · ${esc(receipt.date)} · ${esc(receipt.accountLabel)}</p>
     <form id="reconcile" class="stack"><div class="field-grid"><label hidden>모의 전표 ID<input name="voucherId" value="VOUCHER-${crypto.randomUUID().slice(0,8)}" required></label>
-    <label>전표 원자료의 금액<input name="amount" type="number" min="0" step="1" required></label></div><button class="primary" type="submit">전표 입력·대사</button></form>
+    <label>전표 원자료의 금액<input name="amount" type="number" min="0" step="1" value="${c.reviewMode==='source-1'?receipt.amount:''}" required></label></div><button class="primary" type="submit">전표 입력·대사</button></form>
     ${actual ? moduleHTML('actual', `<form id="confirmActual" class="stack"><div class="field-grid">
       <label>확인 금액<input type="number" min="0" step="1" name="amount" value="${receipt.amount}" required></label>
       <label>실제 처리일<input name="date" type="date" value="${esc(receipt.date)}" required></label>
@@ -506,6 +498,7 @@ function paymentForm(item, c) {
 }
 
 function settlementSource(c,item,kind){
+  if(c.reviewMode==='source-1')return '<p class="source-box source-rules">지급 지시 또는 은행 회신의 실제 값으로 모의 입력 초안을 채웠습니다. 은행·전표 ID는 저장할 때 기록됩니다. 결과와 금액을 확인하고 직접 저장하세요. 실패나 차이 상황은 입력값을 바꾸어 검증할 수 있습니다.</p>';
   const a=c.settlementAssessments?.find(a=>a.paymentId===item.paymentId&&a.kind===kind);
   return '<section class="source-box source-rules"><h3>제출 원자료 대조</h3>'+ (a?'<ul>'+a.checks.map(k=>'<li>'+esc(k.status==='pass'?'✓ 일치':k.status==='fail'?'! 차이':'? 확인 필요')+' · '+esc(k.message)+'</li>').join('')+'</ul>':'')+(a?.docId?'<button type="button" id="applySource">제출 자료의 추출값 입력</button><p>추출한 실제 값만 입력합니다. 차이가 있으면 그대로 표시하며 저장은 별도입니다.</p>':'')+'</section><details><summary>원자료 연결</summary><form id="documents" class="stack">'+docFields(kind)+'<button type="submit">증빙 저장</button></form></details>';
 }
@@ -527,9 +520,9 @@ function workDetail(item, done) {
   const task = taskFor(item.taskId);
   let content = '';
   if (done) content = `<p class="decision-band">${badge(c.status)} <strong>처리 결과가 저장되었습니다.</strong></p><button type="button" id="backToInbox" data-action="open" class="primary">내 작업으로 돌아가기</button>`;
-  else if (item.kind === 'review') content = aiCard(task) + reviewForm(c);
+  else if (item.kind === 'review') content = reviewForm(c)+aiCard(task);
   else if (item.kind === 'approval') content = '<p class="decision-band">'+esc(approvalFocus(user.id,c.currentBasis.required.length===2).purpose)+'</p>'+approvalForm(c);
-  else if (item.kind === 'supplement') content = aiCard(task) + `<form id="supplement" class="stack">${docFields('supplement')}<button type="submit" class="primary">보완 회신 보내기</button></form>`;
+  else if (item.kind === 'supplement') content = aiCard(task) + `<form id="supplement" class="stack">${c.reviewMode==='source-1'?'<p class="source-box source-rules">원본 값이 잘못되었으면 원본 세 표 화면에서 먼저 정정하세요. 이 입력란에는 확인한 차이의 이유나 정정 근거를 남깁니다.</p><button type="button" id="sourceCorrection">원본 세 표 등록·정정 열기</button><input type="hidden" name="kind" value="supplement"><input type="hidden" name="docId" value="REPLY-'+crypto.randomUUID()+'"><label>보완 확인 내용<textarea name="text" required maxlength="4000"></textarea></label>':docFields('supplement')}<button type="submit" class="primary">보완 회신 보내기</button></form>`;
   else if (item.kind === 'change') content = changeForm(c);
   else content = paymentForm(item,c);
 
@@ -537,6 +530,8 @@ function workDetail(item, done) {
   else if (item.kind !== 'review') content = moduleHTML(item.kind === 'approval' ? 'approval' : item.kind, content);
   shell(done ? '처리 결과' : itemName(item), `<section class="panel work-panel"><h2>${esc(c.title)}</h2>${content}</section>${historyPanel(c,item,done)}`);
   if (done) {listen('backToInbox',()=>show());return;}
+  listen('sourceCorrection',()=>show({kind:'source'}));
+  if(c.reviewMode!=='source-1'&&['review','supplement','change'].includes(item.kind)){const b=document.createElement('button');b.textContent='원본 데이터 기준으로 재검토';b.onclick=()=>run('recheckSource',{caseId:c.id});document.querySelector('.work-panel').prepend(b);}
   form('review', f => run('review',{caseId:c.id,taskId:item.taskId,reason:f.get('reason'),docIds:f.getAll('docIds'),
     confirmPaymentIds:f.getAll('confirmPaymentIds'),resolveKeys:f.getAll('resolveKeys'),special:f.has('special')}));
   form('flag', f => run('flag',{caseId:c.id,reason:f.get('reason'),conflict:f.has('conflict')}));
@@ -557,6 +552,7 @@ function workDetail(item, done) {
 }
 
 function render() {
+  if(view.kind==='source'){shell('원본 자료 등록·정정',moduleHTML('register',sourceHTML(),{ruleOnly:true}));mountSource({state,api,run,onError:toast,onSaved:()=>({kind:'inbox'})});return;}
   if (view.kind === 'intake') return intakeView();
   if (['direct','csv'].includes(view.kind)) return registerView(view.kind);
   if (view.kind === 'done') return workDetail(view.item,true);

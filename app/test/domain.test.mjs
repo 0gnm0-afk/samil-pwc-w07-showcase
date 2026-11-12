@@ -1,13 +1,14 @@
+import {initialState,prepareLegacy} from './legacy-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {source,openStore} from '../store.mjs';
-import {initialState,groups,ledger,basis,command,actorFor,openHolds,publicState} from '../domain.mjs';
+import {groups,ledger,basis,command,actorFor,openHolds,publicState} from '../domain.mjs';
 import {processOne,validateDecision} from '../ai.mjs';
 import {parseCSV} from '../scripts/import-source.mjs';
 const ids=['RB-00054','RB-00120','RB-00180'];
 const act=(s,user,type,p)=>command(s,actorFor(user),type,p);
 const docs=[{id:'D-ACCOUNT',kind:'account',text:'모의 증빙: 세 지급의 등록 계좌 및 거래처 명의 일치. D-024 회수계좌 차이는 과거 회수 건이며 이번 수취계좌와 구분하여 확인.'}];
-function intake(s,paymentIds=ids){return act(s,'intake','intake',{paymentIds,docs}).caseId;}
+function intake(s,paymentIds=ids){prepareLegacy(s);return act(s,'intake','intake',{paymentIds,docs}).caseId;}
 function review(s,id,extra={}){return act(s,'reviewer','review',{caseId:id,docIds:['D-ACCOUNT'],confirmPaymentIds:s.cases[id].paymentIds.filter(p=>!s.instructions[p]),resolveKeys:openHolds(s.cases[id]).filter(h=>h.key!=='assignee'&&!h.key.startsWith('evidence:')).map(h=>h.key),reason:'원본 금액과 모의 명의·수취계좌 증빙 대조 확인',...extra});}
 function submitApprove(s,id){act(s,'reviewer','submit',{caseId:id});const c=s.cases[id];for(const a of c.approvals.filter(a=>a.version===c.version))act(s,a.userId,'decide',{caseId:id,version:c.version,decision:'approve',reason:'현재 버전 지급 근거 확인'});}
 test('원본 검증, 전이 연결, AC-01a의 결재 대상과 월 합산 분리',()=>{

@@ -1,7 +1,8 @@
+import {initialState,prepareLegacy} from './legacy-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {source} from '../store.mjs';
-import {initialState,command,actorFor,openHolds} from '../domain.mjs';
+import {command,actorFor,openHolds} from '../domain.mjs';
 test('변경 전후·보류 해제·확인 실적 이력 보존과 해결된 충돌 재입력 멱등성',()=>{
  const s=initialState(source),act=(u,t,p)=>command(s,actorFor(u),t,p);
  const ids=['RB-00054','RB-00120','RB-00180'];

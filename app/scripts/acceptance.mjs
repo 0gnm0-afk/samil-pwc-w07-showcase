@@ -16,7 +16,7 @@ async function request(user,path,payload,expected=200){
 const cmd=(user,type,payload,expected=200)=>request(user,'/api/command',{type,payload},expected);
 const get=async()=> (await request('reviewer','/api/state')).state;
 const check=(id,input,expected,observed)=>{checks.push({id,input,roles:'독립 역할별 서버 세션',expected,observed,result:'PASS',workspace,at:new Date().toISOString()});console.log(`${id}: PASS`);};
-async function reset(suffix,fixture='demo'){workspace=`${runId}-${suffix}`;await request('admin','/api/admin/workspace',{confirm:'RESET_DEMO',fixture});return workspace;}
+async function reset(suffix,fixture='legacy'){workspace=`${runId}-${suffix}`;await request('admin','/api/admin/workspace',{confirm:'RESET_DEMO',fixture});return workspace;}
 const ids=['RB-00054','RB-00120','RB-00180'];
 const normalDocs=[{id:'E-ACCOUNT',kind:'account',text:'모의 계좌·명의 증빙 v1.2: 요청의 원본 금액, 지급예정일 2026-07-10, 거래처 명의와 등록 수취계좌 일치. D-024 과거 회수계좌 불일치는 과거 입금 소명이며 이번 지급의 명의·계좌와 구분 확인.'}];
 async function intake(paymentIds=ids,extra={}){return (await cmd('intake','intake',{title:'AC 검증 · 지급 검토',paymentIds,docs:normalDocs,...extra})).caseId;}

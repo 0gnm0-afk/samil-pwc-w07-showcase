@@ -2,13 +2,13 @@ import { readFileSync } from 'node:fs';
 import { roleNames } from './public/catalog.js';
 export const workflowModel = JSON.parse(readFileSync(new URL('./data/workflow.json',import.meta.url),'utf8'));
 const names = {
-  intake:'요청 접수',review:'지급 근거 검토',submit:'결재 상신',decide:'결재',change:'지급조건 변경',
+  source_updated:'원본 데이터 정정',recheckSource:'원본 기준 재검토',intake:'요청 접수',review:'지급 근거 검토',submit:'결재 상신',decide:'결재',change:'지급조건 변경',
   documents:'증빙 접수',flag:'추가 판단 의뢰',pay:'모의 지급 지시',bank:'은행 회신',reconcile:'전표 대사',
   confirmActual:'실제 지급액 확인',cancel:'요청 취소',pay_blocked:'지급 차단',ai_result:'AI 후속 작업',
   approval_route_updated:'승인 경로 재검토'
 };
 const decisions={approve:'승인',supplement:'보완 요청',reject:'반려',pending:'대기',closed:'종료'};
-const savedResults={intake:'접수 완료',review:'검토 저장',submit:'결재 배정',change:'조건 변경 · 재검토',documents:'증빙 연결',flag:'지급보류 · 판단 의뢰',pay:'모의 지급 지시 생성',bank:'은행 결과 등록',reconcile:'대사 결과 저장',confirmActual:'실적 차이 확인',cancel:'취소',pay_blocked:'지급 차단',ai_result:'후속 작업 생성',approval_route_updated:'승인 경로 갱신'};
+const savedResults={source_updated:'정정 근거 보존 · 재검토',recheckSource:'원본 기준 재검토 시작',intake:'접수 완료',review:'검토 저장',submit:'결재 배정',change:'조건 변경 · 재검토',documents:'증빙 연결',flag:'지급보류 · 판단 의뢰',pay:'모의 지급 지시 생성',bank:'은행 결과 등록',reconcile:'대사 결과 저장',confirmActual:'실적 차이 확인',cancel:'취소',pay_blocked:'지급 차단',ai_result:'후속 작업 생성',approval_route_updated:'승인 경로 갱신'};
 const reconciliations={matched:'대사 일치',difference:'대사 차이 · 확인 필요',confirmed_difference:'차이 확인 완료',failed:'은행 확정 실패',awaiting_voucher:'은행 성공 · 전표 대기'};
 const stage=(id,title,owner,condition='',extra={})=>({id,title,owner,ownerName:roleNames[owner]||owner,condition,...extra});
 const review=()=>stage('W07I_Review','지급 근거 재검토','reviewer');
@@ -64,7 +64,7 @@ export function projectWorkflow(state,c,actor,selectedWork) {
   } else {
     const supplement=activeTasks.filter(t=>t.owner==='intake');
     if(supplement.length) {
-      current=stage('W07I_Supplement','증빙 보완 회신','intake','요청받은 자료를 해당 작업에 연결하세요.',{tasks:supplement});
+      current=stage('W07I_Supplement','원본 정정·보완 회신','intake','요청받은 자료를 해당 작업에 연결하세요.',{tasks:supplement});
       next=review();
     } else {
       current=review();current.title=c.canSubmit?'검토 결과·결재 상신':'증빙·보류 사유 확인';
@@ -86,7 +86,7 @@ export function projectWorkflow(state,c,actor,selectedWork) {
       current=stage('W07I_Prepay','지급조건 변경','intake');next=stage('W07I_Rework','변경 조건 재검토','reviewer','변경 저장 후 기존 승인과 지급 조건을 재검사합니다.');
     } else if(ownWork.kind==='review') {
       current=stage('W07I_Review',c.canSubmit?'검토 결과·결재 상신':'증빙·보류 사유 확인','reviewer','',{tasks:activeTasks.filter(t=>t.owner==='reviewer')});
-      next=c.canSubmit?approvalStage(c):activeTasks.some(t=>t.owner==='intake')?stage('W07I_Supplement','증빙 보완 회신','intake','요청받은 보완 자료를 제출하면 회계팀이 재검토합니다.'):stage('W07I_Rework','보류 사유 재검토','reviewer','근거와 적격 승인 경로를 확인한 후 상신합니다.');
+      next=c.canSubmit?approvalStage(c):activeTasks.some(t=>t.owner==='intake')?stage('W07I_Supplement','원본 정정·보완 회신','intake','요청받은 보완 자료를 제출하면 회계팀이 재검토합니다.'):stage('W07I_Rework','보류 사유 재검토','reviewer','근거와 적격 승인 경로를 확인한 후 상신합니다.');
     }
     current.paymentId=ownWork.paymentId;
   }

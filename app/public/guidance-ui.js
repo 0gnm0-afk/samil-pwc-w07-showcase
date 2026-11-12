@@ -1,4 +1,4 @@
-import { modules } from './catalog.js';
+import { modules,controlInstructions } from './catalog.js';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let generation=0;
 let observer;
@@ -13,16 +13,13 @@ export function clearGuidance() {
 const later=(fn,ms)=>{const timer=setTimeout(()=>{activeTimers.delete(timer);fn();},ms);activeTimers.add(timer);return timer;};
 const cache=new Map();
 const area=node=>node.querySelector(':scope > .module-guidance');
+function basicHTML(module){return '<h3>이 화면에서 맡은 업무와 처리 방법</h3><p>'+esc(module.purpose)+'</p><ul>'+module.actions.map(([id,label,effect])=>'<li><strong>'+esc(label)+'</strong>: '+esc(effect)+'</li>').join('')+'</ul>';}
 export function moduleHTML(id,content,{open=true,ruleOnly=false}={}) {
-  const module=modules[id];
-  if(id==='inbox')return `<section class="work-module"><h2>${esc(module.title)}</h2><p class="source-box source-rules">${esc(module.purpose)} 현재 배정된 작업을 선택하면 원자료·검토 결과와 필요한 행동을 함께 확인할 수 있습니다.</p><div class="module-content">${content}</div></section>`;
-  return `<details class="work-module" data-module="${id}" ${ruleOnly?'data-rule-only="true"':''} ${open?'open':''}>
-    <summary><span>${esc(module.title)}</span><span class="module-toggle">설명·처리</span></summary>
-    <div class="module-purpose source-box source-rules"><span class="source-label">기본 안내</span><p>${esc(module.purpose)}</p></div><div class="module-content">${content}</div>
-    <section class="module-guidance" aria-label="${esc(module.title)} AI 안내">
-      <h3>${ruleOnly?'지급예정일 안내':'업무 안내'}</h3><p class="guidance-status" role="status">${ruleOnly?'기본 규칙으로 계산하며 AI를 호출하지 않습니다.':'현재 업무를 확인하면 AI 안내를 불러옵니다.'}</p>
-      <div class="guidance-body"><div class="source-box source-rules"><span class="source-label">기본 안내</span><p>${esc(module.purpose)}</p></div></div>
-    </section></details>`;
+ const module=modules[id];
+ if(id==='inbox')return '<section class="work-module"><h2>'+esc(module.title)+'</h2><div class="source-box source-rules"><p>'+esc(module.purpose)+' 현재 배정된 작업을 선택하면 연결된 원본과 검사 결과를 확인하고 처리할 수 있습니다.</p></div><div class="module-content">'+content+'</div></section>';
+ return '<details class="work-module" data-module="'+id+'" '+(ruleOnly?'data-rule-only="true" ':'')+(open?'open':'')+'><summary><span>'+esc(module.title)+'</span><span class="module-toggle">검토·처리</span></summary>'+
+ '<section class="module-guidance" aria-label="데이터 검토 결과"><p class="guidance-status source-box source-rules" role="status">연결된 데이터의 검토 결과를 확인하고 있습니다.</p><div class="guidance-body"></div></section>'+
+ '<section class="module-purpose source-box source-rules">'+basicHTML(module)+'</section><div class="guidance-actions"></div><div class="module-content">'+content+'</div></details>';
 }
 export function formDraft(node) {
   const result={};
@@ -38,10 +35,15 @@ export function formDraft(node) {
   return result;
 }
 function basic(node,result,message) {
-  area(node).querySelector('.guidance-status').textContent=message;
-  const fallback=result?.fallback;
-  area(node).querySelector('.guidance-body').innerHTML=`<div class="source-box source-rules"><span class="source-label">기본 안내 · 업무 규칙</span>`+(fallback?`<p>${esc(fallback.summary)}</p>
-    <ul>${fallback.actions.map(a=>`<li><strong>${esc(a.label)}</strong> — ${esc(a.effect)}${!a.enabled?' · 현재 실행 조건 확인 필요':''}</li>`).join('')}</ul><p>다음 업무 · ${esc(fallback.nextStep)}</p>`:`<p>${esc(modules[node.dataset.module].purpose)}</p>`)+`</div>`;
+ area(node).querySelector('.guidance-status').textContent=message;
+ area(node).querySelector('.guidance-body').innerHTML='';
+ node.querySelector(':scope > .guidance-actions').innerHTML='';
+ updateBasic(node,result);
+}
+function updateBasic(node,result){
+ const basic=result?.basicGuidance||result?.fallback;
+ if(!basic)return;
+ node.querySelector(':scope > .module-purpose').innerHTML='<h3>이 화면에서 맡은 업무와 처리 방법</h3><p>'+esc(basic.summary)+'</p>'+basic.actions.map(a=>'<details><summary>'+esc(a.label)+' — 실행 방법과 결과</summary><ol>'+(a.howTo||controlInstructions(node.dataset.module,a.id).howTo).map(t=>'<li>'+esc(t)+'</li>').join('')+'</ol><p>'+esc(a.effect)+'</p></details>').join('')+'<p>이후 업무: '+esc(basic.nextStep)+'</p>';
 }
 export function mountGuidance({api,getContext,onStale,onNavigate}) {
   clearGuidance();const epoch=generation;
@@ -52,13 +54,13 @@ export function mountGuidance({api,getContext,onStale,onNavigate}) {
   const visible=new Set();
   async function load(node,force=false) {
     if(epoch!==generation||!node.open||!visible.has(node)||!node.getClientRects().length)return;
-    if(node.dataset.ruleOnly){basic(node,{fallback:{summary:'요청별 추천일을 확인하고 저장할 요청을 선택하세요. 저장 전 예상 결과에서 지급월·합산액·승인 담당자를 함께 확인할 수 있습니다.',actions:[{label:'예정일 저장',enabled:true,effect:'날짜가 확정되고 지급월 묶음이 다시 계산됩니다. 이어서 해당 묶음에서 증빙과 함께 접수하세요.'}],nextStep:'일반 영업지원 직원 · 지급 요청과 증빙 접수'}},'기본 규칙으로 날짜를 계산했습니다. AI 호출은 사용하지 않습니다.');return;}
+    if(node.dataset.ruleOnly){basic(node,null,'이 화면은 정해진 등록·날짜 규칙을 사용합니다. AI를 호출하지 않습니다.');return;}
     const input={...getContext(),moduleId:node.dataset.module,draft:formDraft(node)};
     const signature=JSON.stringify(input);
     if(!force&&requests.get(node)===signature)return;
     requests.set(node,signature);
     const status=area(node).querySelector('.guidance-status');
-    status.textContent='BPMN과 현재 업무 상태를 확인해 안내를 작성하고 있습니다.';
+    status.textContent='원본 데이터와 규칙을 대조해 판단이 필요한 항목을 확인하고 있습니다.';
     try {
       const result=cache.get(signature)||await api('/api/guidance',input);
       if(epoch!==generation||requests.get(node)!==signature)return;
@@ -71,7 +73,7 @@ export function mountGuidance({api,getContext,onStale,onNavigate}) {
       }
       if(result.status!=='ready') {
         basic(node,result,result.message||'기본 업무 안내로 계속 처리할 수 있습니다.');
-        if(result.status==='rules')return;
+        if(result.status==='rules'){area(node).querySelector('.guidance-body').innerHTML='<div class="source-box source-rules"><h3>규칙으로 확인한 데이터 검토 결과</h3><p>'+esc(result.review?.summary||result.message)+'</p></div>';return;}
         if(result.status==='waiting'){
           timers.set(node,later(()=>load(node,true),Math.min(60000,Math.max(1500,Date.parse(result.retryAt)-Date.now()))));return;
         }
@@ -80,20 +82,13 @@ export function mountGuidance({api,getContext,onStale,onNavigate}) {
         area(node).querySelector('.guidance-body').append(retry);return;
       }
       cache.set(signature,result);if(cache.size>80)cache.delete(cache.keys().next().value);
-      const answer=result.answer;
+      const answer=result.answer;const review=result.review||answer;
       status.textContent='NVIDIA NIM · 현재 모듈과 업무 근거를 반영한 안내';
-      area(node).querySelector('.guidance-body').innerHTML=`<div class="source-box source-rules"><span class="source-label">기본 안내 · 현재 업무</span><p class="guidance-summary">${esc(answer.summary)}</p></div>
-        ${answer.recommendations.map((r,i)=>`<div class="recommendation source-box source-ai"><span class="source-label">AI 안내 · 추천</span><strong>권장 · ${esc(r.label)}</strong><h4>왜 추천하나요?</h4><p>${esc(r.reason)}</p>
-          <div class="source-box source-rules"><span class="source-label">기본 안내 · 실제 화면 조작 순서</span>
-          ${r.beforeAction?.length?`<h4>먼저 확인하세요</h4><ul>${r.beforeAction.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`:''}
-          ${r.howTo?.length?`<h4>이렇게 진행하세요</h4><ol>${r.howTo.map(t=>`<li>${esc(t)}</li>`).join('')}</ol>`:''}
-          </div>
-          <div class="source-box source-rules"><span class="source-label">기본 안내 · 실행 결과</span><p>${esc(r.effect)}</p></div>
-          <button type="button" data-recommendation="${i}">${r.destination==='inbox'?'내 작업으로 돌아가기':['apply','applySource'].includes(r.interaction)?'추천 선택 적용':r.interaction==='navigate'?'작업 화면 열기':'해당 입력·버튼 확인'}</button>
-          <details><summary>권장 근거 보기</summary>${r.evidence.map(e=>`<div class="source-box source-rules"><span class="source-label">${e.source==='document'?'제출 자료':'업무 규칙·현재 사실'}</span><p>${esc(e.displayText||e.text)}</p></div>`).join('')}</details></div>`).join('')}
-        <div class="source-box source-rules"><span class="source-label">기본 안내 · 다음 담당자</span><p>${esc(answer.nextStep)}</p></div>
-        ${answer.checks.length?`<div class="source-box source-ai"><span class="source-label">AI 안내 · 추가 확인</span><ul>${answer.checks.map(text=>`<li>${esc(text)}</li>`).join('')}</ul></div>`:''}`;
-      for(const button of area(node).querySelectorAll('[data-recommendation]'))button.onclick=()=>{
+      updateBasic(node,result);
+      status.textContent='NVIDIA NIM이 원본 데이터를 검토한 판단입니다. 최종 결정은 담당자가 합니다.';
+      area(node).querySelector('.guidance-body').innerHTML='<div class="source-box source-ai"><h3>데이터를 검토한 AI 권고</h3>'+review.recommendations.map(r=>'<article><h4>'+esc(r.label)+'을 권고합니다</h4><p>'+esc(r.reason)+'</p><details><summary>판단에 사용한 원본·규칙 확인</summary>'+r.evidence.map(e=>'<blockquote>'+esc(e.displayText||e.text)+'</blockquote>').join('')+'</details></article>').join('')+(review.checks.length?'<h4>현재 자료만으로는 추가 확인이 필요한 내용</h4><ul>'+review.checks.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul>':'')+'</div>';
+      node.querySelector(':scope > .guidance-actions').innerHTML=answer.recommendations.length?'<div class="source-box source-rules"><h3>권고를 입력에 반영하려면</h3>'+answer.recommendations.map((r,i)=>'<p>'+esc(r.effect)+'</p><button type="button" data-recommendation="'+i+'">'+(r.destination==='inbox'?'내 작업으로 돌아가기':['apply','applySource'].includes(r.interaction)?'권고한 선택을 입력란에 적용':'해당 선택·입력 확인')+'</button>').join('')+'</div>':'';
+      for(const button of node.querySelectorAll(':scope > .guidance-actions [data-recommendation]'))button.onclick=()=>{
         const r=answer.recommendations[Number(button.dataset.recommendation)];
         if(epoch!==generation||requests.get(node)!==signature)return;
         if(r.destination==='inbox'){onNavigate?.('inbox');return;}

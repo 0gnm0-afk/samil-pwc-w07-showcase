@@ -1,3 +1,4 @@
+import {assessSource} from './source-data.mjs';
 import {createHash} from 'node:crypto';
 export const evidenceVersion='evidence-1';
 const digest=value=>createHash('sha256').update(value).digest('hex');
@@ -28,6 +29,7 @@ export function normalizeEvidence(input,{redact,paymentIds,revision,at,by}){
     paymentIds:[...paymentIds],at,by,revision,extraction:{version:evidenceVersion,fields,locations,issues}};
 }
 export function assessEvidence(s,c){
+  if(c.reviewMode==='source-1')return assessSource(s,c);
   const plans=c.paymentIds.map(id=>s.plans[id]).filter(p=>!s.instructions[p.id]);
   const payments=plans.map(p=>{
     const proof=c.docs.filter(d=>['account','supplement'].includes(d.kind)&&(!d.paymentIds||d.paymentIds.includes(p.id)));
@@ -64,6 +66,11 @@ export function assessSettlement(s,c,paymentId,kind){
   const receipt=s.receipts[i.receiptId],expected=kind==='bank'?i:receipt;
   const docs=c.docs.filter(d=>d.kind===kind&&(!d.paymentIds||d.paymentIds.includes(i.paymentId)));
   const doc=docs.at(-1),f=doc?.extraction?.fields||{},checks=[];
+  if(c.reviewMode==='source-1'&&!doc){
+    const values=kind==='bank'?{amount:i.amount,date:i.date,outcome:'success'}:{amount:receipt?.amount};
+    const difference=kind==='voucher'&&(i.actualUnresolved||i.conflict||i.vouchers?.at(-1)?.amount!==undefined&&i.vouchers.at(-1).amount!==receipt?.amount);
+    return {kind,paymentId:i.paymentId,source:'simulation',fields:values,checks:[{status:difference?'fail':'pass',message:difference?'지급 지시·은행 회신·전표 사이의 실제 차이를 확인해야 합니다.':'현재 지급 지시·은행 회신의 값으로 모의 초안을 구성했습니다. 실제 처리 결과는 담당자가 입력하고 저장합니다.'}],status:difference?'exception':'pass'};
+  }
   if(!doc)checks.push({status:'unknown',message:kind==='bank'?'은행 회신 원자료가 아직 없습니다.':'전표 원자료가 아직 없습니다.'});
   for(const field of kind==='bank'?['amount','date','outcome']:['amount']){
     if(f[field]===undefined)checks.push({status:'unknown',field,message:`${field} 항목을 확인할 수 없습니다.`});

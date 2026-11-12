@@ -27,12 +27,13 @@ test('5개 역할 비밀번호 로그인: 우회 차단·작업 유지·회계 �
   await req(a,`/api/state?workspace=${wb}`,undefined,403);await req(a,'/api/state?workspace=demo',undefined,403);
   await req(a,'/api/admin/workspace',{confirm:'RESET_DEMO'},403);
   const ids=['RB-00054','RB-00120','RB-00180'];
+  await cmd('schedule',{items:ids.map(id=>({id,date:'2026-07-10'}))});
   const cid=(await cmd('intake',{paymentIds:ids,docs:[{id:'ROLE-DOC',kind:'account',text:'모의 계좌·명의 확인서'}]})).caseId;
   await cmd('submit',{caseId:cid},403);await cmd('decide',{caseId:cid,version:1,decision:'approve',reason:'자기 승인 시도'},403);
   const oldSession=a.jar.get('w07_session');await req(a,'/api/logout',{});await req(a,'/api/state',undefined,401);
   await req(a,'/api/login',{roleId:'accounting',member:'reviewer',password:'wrong'},401);await req(a,'/api/state',undefined,401);
   assert.equal((await login(a,'accounting')).workspace,wa);assert.notEqual(a.jar.get('w07_session'),oldSession);
-  await cmd('review',{caseId:cid,docIds:['ROLE-DOC'],confirmPaymentIds:ids,reason:'모의 증빙 대조'});await cmd('submit',{caseId:cid});
+  await cmd('review',{caseId:cid,docIds:(await state()).cases.find(c=>c.id===cid).evidenceAssessment.records.map(d=>d.id),confirmPaymentIds:ids,reason:'모의 증빙 대조'});await cmd('submit',{caseId:cid});
   await cmd('pay',{caseId:cid,version:1,paymentId:ids[0]},403);
   await login(a,'executive');await cmd('decide',{caseId:cid,version:1,decision:'approve',reason:'사업상 타당성 확인'});
   await login(a,'treasury');const instructions=[];
@@ -46,6 +47,7 @@ test('5개 역할 비밀번호 로그인: 우회 차단·작업 유지·회계 �
   await store.tx(wb,s=>{delete s.publicDemo.authVersion;});await req(b,'/api/state',undefined,401);
   await store.tx(wb,s=>{s.publicDemo.authVersion=2;});
   await Promise.all([store.reserveNim(wb),store.reserveNim(wb),store.reserveNim(wb)]);await store.reserveNim(wb);assert.equal((await store.read(wb)).publicDemo.aiUsed,4);
+  await req(b,'/api/command',{type:'schedule',payload:{items:ids.map(id=>({id,date:'2026-07-10'}))}});
   const bid=(await req(b,'/api/command',{type:'intake',payload:{paymentIds:ids,docs:[{id:'LIMIT-DOC',kind:'narrative',text:'모의 서술 증빙의 명의가 불명확하여 확인이 필요합니다.'}]}})).caseId;
   let called=false;await processOne(store,wb,{call:async()=>{called=true;throw Error('검증용 응답 실패');}});assert.equal(called,true);assert.equal((await store.read(wb)).cases[bid].canPay,false);
   // Workspace anchor is not an authenticated session token.

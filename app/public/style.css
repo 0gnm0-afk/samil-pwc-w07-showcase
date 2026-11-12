@@ -40,3 +40,5 @@ h1,h2,h3,.login-story p{word-break:keep-all}
 @media(max-width:767px){.demo-codes{margin-top:20px}.login-shell{min-height:0}.decision-band{padding:12px}}
 
 .date-reason{display:block;max-width:280px;color:#556575;margin-top:4px}.document-list{display:grid;gap:12px}.evidence-original{white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;background:#fff;border:1px solid #ccd4db}.document-card pre{white-space:pre-wrap;overflow-wrap:anywhere}.evidence-check{border-top:1px solid #cbd4df;margin-top:12px;padding-top:12px}#dateBoard input[type=date]{min-width:145px}#dateBoard .row{margin:14px 0}#inlineIntake:empty{display:none}
+
+.guidance-actions{margin:0 24px}.source-ai blockquote{background:transparent;border-left:3px solid var(--source-ai-border);padding:8px 12px;white-space:pre-wrap}.document-card table{width:100%;table-layout:fixed}.document-card td{overflow-wrap:anywhere}#sourcePreview pre{white-space:pre-wrap}#dateBoard .date-reason{font-size:12px;max-width:230px}

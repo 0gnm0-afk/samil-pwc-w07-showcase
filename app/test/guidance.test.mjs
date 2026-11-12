@@ -1,7 +1,8 @@
+import {initialState,prepareLegacy} from './legacy-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {initialState,command,actorFor,publicState} from '../domain.mjs';
+import {command,actorFor,publicState} from '../domain.mjs';
 import {source,openStore} from '../store.mjs';
 import {guidanceContext,validateGuidance,createGuidanceService,callGuidance} from '../guidance.mjs';
 import {extractWorkflow} from '../scripts/workflow-model.mjs';
@@ -25,7 +26,7 @@ test('BPMN 레인 분리와 모든 연결·생성 문맥의 일치',()=>{
 test('NIM 권고는 전체 BPMN 문맥으로 생성하고 확정 사실은 서버 상태를 사용',async()=>{
   const s=initialState(source,'boundary'),caseId=pending(s),{context}=guidanceContext(s,actorFor('finance'),{moduleId:'approval',caseId});
   const answer=await callGuidance(context,{apiKey:'test-only',fetcher:async(url,options)=>{
-    const body=JSON.parse(options.body),sent=JSON.parse(body.messages[1].content);
+    const body=JSON.parse(options.body),sent=JSON.parse(body.messages[1].content.split('\n최종 판단 기준:')[0]);
     assert.equal(sent.process.flows.length,33);assert.equal(sent.module.node,'W07I_FinanceVote');
     assert(!body.messages[1].content.includes('accountKey'));
     return {ok:true,status:200,json:async()=>({id:'mock-transport',choices:[{message:{content:JSON.stringify({summary:'양쪽 승인이 완료되었습니다.',nextStep:'곧 지급하세요.',recommendations:[{targetId:'decision:approve',reason:'제출된 근거와 담당 지급 조건을 검토한 뒤 승인 여부를 결정하세요.',beforeAction:['현재 자료와 지급 조건을 확인하세요.'],howTo:['화면의 해당 버튼을 확인하세요.'],refs:['R-APPROVAL']}],checks:[]})}}]})};

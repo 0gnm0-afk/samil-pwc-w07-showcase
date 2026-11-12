@@ -93,3 +93,9 @@ node scripts/privacy-check.mjs
 | `ai.mjs` | NIM 호출·출력 검증·작업 적용 |
 | `public/` | 공통 목록·상세·역할별 입력 |
 | `test/`, `scripts/acceptance.mjs` | 규칙·SQL·HTTP·실연동 증거 |
+
+## 원본 세 표 기반 검토 (TASK-037)
+
+최신 기준은 구현지시서 17절과 실행안내의 원본 세 표 절이다. source-data.mjs는 세 표 입력·정정·근거 연결·규칙 검토, public/schedule.js는 데이터 이력 기반 일정 추천을 담당한다. /api/source/preview와 applySourceRows는 미리보기 식별값·전체 검증·원자적 저장을 사용한다. 상태의 sourceRows/sourceHistory/sourceRevision은 계좌 비교키를 제거하여 제공한다. /api/guidance는 순수 판단 review와 서버의 basicGuidance를 분리하며 이전 answer도 호환 목적으로 유지한다. 정상 원본은 NIM을 호출하지 않는다.
+
+실연동 검증: node --env-file-if-exists=.env.local scripts/source-verification.mjs. 실제 NIM 호출, 정상 0회, 계좌 차이 후속 작업, 한쪽 특별승인, 대사 차이를 기록한다. 구 AC 테스트는 legacy-fixture로 과거 첨부 방식의 통제를 유지하여 검증하고 source-data.test.mjs가 새 흐름을 검증한다.

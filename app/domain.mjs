@@ -1,8 +1,10 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { readRequestCsv } from './request-csv.mjs';
 import { projectWorkflow } from './workflow.mjs';
-import { recommendDate, koreaToday, scheduleVersion, scheduleRule } from './public/schedule.js';
+import { recommendDate, koreaToday, scheduleVersion, scheduleRule, dataPeriod } from './public/schedule.js';
 import {normalizeEvidence,assessEvidence,assessSettlement} from './evidence.mjs';
+import {prepareSource,sourcePreview,sourceRecords,assessSource} from './source-data.mjs';
+import {sourceTables} from './public/source-schema.js';
 export class RuleError extends Error { constructor(code, message, status=409) { super(message); this.code=code; this.status=status; } }
 export const must = (condition, code, message, status) => { if(!condition) throw new RuleError(code,message,status); };
 const canonical = value => Array.isArray(value)?value.map(canonical):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,canonical(value[k])])):value;
@@ -52,14 +54,18 @@ export function groups(agencies) {
   return {components,edges};
 }
 export function initialState(source,fixture='demo') {
-  const s={schema:1,workflowVersion:2,epoch:uid('DATA'),fixture,fixtureVersion:'v1.2.0',createdAt:now(),source,plans:{},cases:{},instructions:{},receipts:{},conflicts:[],actuals:{},tasks:{},notifications:{},jobs:{},events:[]};
+  const s={schema:1,workflowVersion:2,epoch:uid('DATA'),fixture,fixtureVersion:'v1.2.0',createdAt:now(),source:structuredClone(source),sourceRevision:0,sourceHistory:[],plans:{},cases:{},instructions:{},receipts:{},conflicts:[],actuals:{},tasks:{},notifications:{},jobs:{},events:[]};
   for(const p of source.payments){ const a=source.agencies.find(a=>a.agency_id===p.agency_id);const paid=p.approval_status==='승인'&&p.payment_date!=='NONE';
     s.plans[p.rebate_id]={id:p.rebate_id,agencyId:p.agency_id,amount:Number(p.rebate_amount_krw),period:p.period_ym,
-      plannedDate:['RB-00054','RB-00120','RB-00180'].includes(p.rebate_id)?'2026-07-10':null,
+      plannedDate:null,
       paidDate:paid?p.payment_date:null,status:paid?'historical':p.approval_status==='미지급'?'planned':'rejected',
       accountKey:a.accountKey,accountLabel:a.accountLabel,owner:a.agency_name,source:p.source,simulation:{kind:'simulation',version:'demo-v1.2',effectiveDate:'2026-07-10'}};
   }
-  if(fixture!=='demo') {
+  // Only the admin AC rehearsal preserves the previous attachment-based scenario.
+  // Ordinary workspaces start with all forty pending dates unassigned.
+  if(fixture==='legacy') {
+    for(const id of ['RB-00054','RB-00120','RB-00180'])s.plans[id].plannedDate='2026-07-10';
+  } else if(fixture!=='demo') {
     must(['difference','boundary','closed'].includes(fixture),'FIXTURE','알 수 없는 검증 전용 시드입니다.',400);
     s.source={...source,agencies:[{agency_id:'S-001',agency_name:'검증상사',representative_name:'합성 대표',address:'합성 주소',accountKey:hash('S-ACCOUNT'),accountLabel:'모의 ****9000'}],payments:[],collections:[],sources:[{kind:'synthetic',version:'ac-v1.2',reason:'AC-04·05·08 경계·차이·종료 상태 검증',month:'2026-07'}]};
     s.plans={};
@@ -130,11 +136,13 @@ function reevaluate(s,c) {
 function refresh(s){for(const c of Object.values(s.cases))reevaluate(s,c);}
 function syncEvidence(s,c){
   const assessment=assessEvidence(s,c);c.evidenceAssessment=assessment;
+  if(c.reviewMode==='source-1')for(const record of assessment.records){if(!c.docs.some(d=>d.id===record.id))c.docs.push({...record,revision:c.revision,at:now(),by:'source',sourceRecord:true});}
+  c.sourceReview=c.reviewMode==='source-1'?assessment:null;
   for(const p of assessment.payments){
     const key=`auto-evidence:${p.paymentId}`,prior=c.confirmations[p.paymentId];
     if(p.status==='pass'){
-      if(!prior||prior.actor==='rules'&&hash(prior.docIds)!==hash(p.docIds)){
-        c.confirmations[p.paymentId]={at:now(),actor:'rules',method:'evidence-1',accountKey:s.plans[p.paymentId].accountKey,docIds:p.docIds,reason:'필수 항목·대상·명의·계좌·작성 시점의 규칙 대조 통과'};
+      if(!prior||prior.actor==='rules'&&(hash(prior.docIds)!==hash(p.docIds)||prior.sourceSignature!==p.sourceSignature)){
+        c.confirmations[p.paymentId]={at:now(),actor:'rules',method:assessment.version,sourceSignature:p.sourceSignature,accountKey:s.plans[p.paymentId].accountKey,docIds:p.docIds,reason:c.reviewMode==='source-1'?'연결된 원본 데이터와 지급 조건의 규칙 검토 통과':'필수 항목·대상·명의·계좌·작성 시점의 규칙 대조 통과'};
         event(s,c,{id:'rules'},'evidence_auto_pass',{paymentId:p.paymentId,docIds:p.docIds,ruleVersion:assessment.version});
       }
       for(const h of [key,`evidence:${p.paymentId}`])if(c.holds[h]&&!c.holds[h].closedAt)closeHold(s,c,h,{id:'rules'},'현재 증빙의 규칙 대조 통과',p.docIds);
@@ -166,7 +174,7 @@ function queueAI(s,c,e) {
   for(const prior of Object.values(s.jobs))if(prior.caseId===c.id&&prior.status==='pending'&&prior.revision!==c.revision){prior.status='stale';prior.applied=false;prior.finishedAt=now();}
   const uncertain=openHolds(c).filter(h=>h.key.startsWith('document:')||h.key.startsWith('auto-evidence:')||h.key==='assignee');
   const assessment=c.evidenceAssessment||assessEvidence(s,c);
-  const missingProof=c.paymentIds.filter(id=>!s.instructions[id]&&!c.confirmations[id]&&
+  const missingProof=c.reviewMode==='source-1'?[]:c.paymentIds.filter(id=>!s.instructions[id]&&!c.confirmations[id]&&
     !c.docs.some(d=>['account','supplement'].includes(d.kind)&&d.revision>=(s.plans[id].evidenceAfterRevision||0)));
   if(!uncertain.length&&!missingProof.length&&assessment.status==='pass')return;
   const id=`${c.id}:${c.revision}`;
@@ -174,6 +182,7 @@ function queueAI(s,c,e) {
   const docs=structuredClone(c.docs);
   const assigneeBlocked=uncertain.some(h=>h.key==='assignee');
   const focus=uncertain.filter(h=>h.key.startsWith('document:')).map(h=>h.key.slice('document:'.length));
+  if(c.reviewMode==='source-1'&&assessment.status!=='pass')for(const row of assessment.payments.filter(r=>!['pass','manual'].includes(r.status))){for(const ref of row.checks.filter(k=>k.status!=='pass').map(k=>k.docId).filter(Boolean))if(!focus.includes(ref))focus.push(ref);const agencyDoc=assessment.records.find(d=>d.table==='agencies'&&d.paymentIds.includes(row.paymentId));if(agencyDoc&&!focus.includes(agencyDoc.id))focus.push(agencyDoc.id);}
   if(assigneeBlocked){
     let factId='RULE-ASSIGNEE';
     while(docs.some(d=>d.id===factId))factId+='-RULE';
@@ -188,7 +197,7 @@ function queueAI(s,c,e) {
     if(!focus.length)focus.push(factId);
   }
   if(assessment.status!=='pass')docs.push({id:'RULE-EXTRACTION',kind:'rule',text:assessment.payments.flatMap(p=>p.checks.filter(k=>k.status!=='pass').map(k=>`${p.paymentId}: ${k.message}`)).join('\n')});
-  const mode=assigneeBlocked?'assignee':novel?'uncertain':'documents';
+  const mode=assigneeBlocked?'assignee':novel?'uncertain':c.reviewMode==='source-1'?'source':'documents';
   const progress={status:c.status,version:c.version,revision:c.revision,evidenceAssessment:JSON.parse(JSON.stringify(assessment)),requiredApprovers:c.currentBasis.required,
     approvals:c.approvals.filter(a=>a.version===c.version),confirmations:c.confirmations,
     paymentEvidence:c.paymentIds.map(id=>({paymentId:id,evidenceAfterRevision:s.plans[id].evidenceAfterRevision||0,confirmed:!!c.confirmations[id]})),
@@ -232,7 +241,7 @@ function registerRequests(s,actor,payload) {
       must(agency,'AGENCY','등록된 거래처를 선택하세요.',400);
       money(amount);
       must(amount>0,'AMOUNT','금액은 0원보다 커야 합니다.',400);
-      date(plannedDate);
+      if(plannedDate)date(plannedDate);
       must(typeof period==='string'&&/^\d{4}-(0[1-9]|1[0-2])$/.test(period),'PERIOD','정산월은 YYYY-MM 형식으로 입력하세요.',400);
       const fingerprint=hash({id,agencyId,amount,period,plannedDate,...(input.evidence?{evidence:input.evidence}:{})});
       const prior=Object.hasOwn(s.plans,id)?s.plans[id]:null;
@@ -250,13 +259,13 @@ function registerRequests(s,actor,payload) {
         pendingEvidence=[normalizeEvidence(d,{redact,paymentIds:[id],revision:0,at:now(),by:actor.id})];
         pendingEvidence[0].origin={...source};
       }
-      added.push({id,agencyId,amount,period,plannedDate,paidDate:null,status:'planned',accountKey:agency.accountKey,accountLabel:agency.accountLabel,owner:agency.agency_name,source,registrationFingerprint:fingerprint,...(pendingEvidence?{pendingEvidence}:{})});
+      added.push({id,agencyId,amount,period,plannedDate:plannedDate||null,paidDate:null,status:'planned',accountKey:agency.accountKey,accountLabel:agency.accountLabel,owner:agency.agency_name,source,registrationFingerprint:fingerprint,...(pendingEvidence?{pendingEvidence}:{})});
     }catch(error){
       if(isCsv&&error instanceof RuleError)throw new RuleError(error.code,`CSV ${input.row}행: ${error.message}`,error.status);
       throw error;
     }
   }
-  for(const request of added)s.plans[request.id]=request;
+  for(const request of added){s.plans[request.id]=request;s.source.payments.push({rebate_id:request.id,agency_id:request.agencyId,period_ym:request.period,sales_performance_krw:'NONE',rebate_amount_krw:String(request.amount),approval_status:'미지급',approver:'NONE',payment_date:'NONE',source:request.source,revision:1});}if(added.length)s.sourceRevision=(s.sourceRevision||0)+1;
   return {registered:added.map(r=>r.id),existing};
 }
 function requireCase(s,id){const c=Object.hasOwn(s.cases,id)?s.cases[id]:null;must(c,'CASE','검토 건이 없습니다.',404);return c;}
@@ -268,31 +277,77 @@ function affectedHold(s,ins,key,reason,months) {
   for(const c of Object.values(s.cases))if(c.paymentIds.some(id=>members.includes(s.plans[id].agencyId)&&months.includes(s.plans[id].plannedDate?.slice(0,7))&&!s.instructions[id]))hold(s,c,key,reason,'reconciler',{instructionId:ins.id});
   const own=s.cases[ins.caseId];hold(s,own,key,reason,'reconciler',{instructionId:ins.id});
 }
+export function previewSource(s,actor,input){
+  role(actor,'intake');try{return sourcePreview(s,input);}catch(error){throw new RuleError('SOURCE_INPUT',error.message,400);}
+}
+function applySourceRows(s,actor,input){
+  let preview;try{preview=prepareSource(s,input);}catch(error){throw new RuleError('SOURCE_INPUT',error.message,400);}
+  must(!preview.errors.length,'SOURCE_INPUT',preview.errors[0]?.message||'입력 오류를 확인하세요.',400);
+  must(input.previewHash===preview.previewHash,'SOURCE_CHANGED','원본 또는 업무 상태가 변경되었습니다. 미리보기를 다시 확인하세요.');
+  const changed=preview.rows.filter(r=>r.kind!=='same');if(changed.some(r=>r.kind==='changed'))text(input.reason);
+  if(!changed.length)return {applied:[],existing:preview.rows.map(r=>r.id)};
+  const draft=structuredClone(s),revision=(s.sourceRevision||0)+1;
+  draft.sourceRevision=revision;draft.sourceHistory??=[];
+  for(const row of changed){
+    const key=sourceTables[row.table].id,record={...row.after,revision:(row.before?.revision||1)+1,source:{kind:row.before?'corrected':'registered',file:redact(row.filename),row:row.row,id:row.id,at:now(),by:actor.id}};
+    const index=draft.source[row.table].findIndex(r=>r[key]===row.id);if(index<0)draft.source[row.table].push(record);else draft.source[row.table][index]=record;
+    draft.sourceHistory.push({table:row.table,id:row.id,before:row.before,after:record,revision,at:now(),by:actor.id,reason:redact(input.reason||'새 원본 행 등록')});
+  }
+  for(const row of changed.filter(r=>r.table==='payments')){
+    const r=draft.source.payments.find(p=>p.rebate_id===row.id),a=draft.source.agencies.find(a=>a.agency_id===r.agency_id),prior=draft.plans[row.id];
+    const historical=r.approval_status==='승인'&&r.payment_date!=='NONE';
+    draft.plans[row.id]={...(prior||{}),id:row.id,agencyId:r.agency_id,amount:Number(r.rebate_amount_krw),period:r.period_ym,plannedDate:prior?.plannedDate||null,
+      status:prior?.caseId?prior.status:historical?'historical':r.approval_status==='반려'?'rejected':'planned',paidDate:historical?r.payment_date:null,
+      accountKey:prior?.accountKey||a.accountKey,accountLabel:prior?.accountLabel||a.accountLabel,owner:prior?.owner||a.agency_name,source:r.source};
+  }
+  for(const row of changed.filter(r=>r.table==='agencies'))for(const plan of Object.values(draft.plans).filter(p=>p.agencyId===row.id&&p.status==='planned'&&!draft.instructions[p.id])){
+    const a=draft.source.agencies.find(a=>a.agency_id===row.id),accountChanged=plan.accountKey!==a.accountKey||plan.owner!==a.agency_name;
+    plan.accountKey=a.accountKey;plan.accountLabel=a.accountLabel;plan.owner=a.agency_name;
+    const c=draft.cases[plan.caseId];if(c&&accountChanged){delete c.confirmations[plan.id];exception(draft,c,'account_change','대리점 마스터의 수취계좌 또는 명의 정정');hold(draft,c,'changed','수취계좌·명의 정정에 대한 회계 확인이 필요합니다.');invalidate(draft,c,'수취계좌·명의 변경');}
+  }
+  for(const c of Object.values(draft.cases).filter(c=>!['completed','rejected','cancelled'].includes(c.status))){
+    if(!preview.affectedCases.includes(c.id)&&basis(draft,c).signature===basis(s,s.cases[c.id]).signature)continue;
+    must(basis(draft,c).validScope,'SOURCE_SCOPE','정정으로 기존 결재 묶음이 여러 그룹·월로 나뉩니다. 해당 미집행 요청을 취소한 뒤 정정하고 다시 접수하세요.');
+    const replies=Object.values(draft.tasks).filter(t=>t.caseId===c.id&&t.owner==='intake'&&t.status==='open'&&(!t.jobId||draft.jobs[t.jobId]?.revision===c.revision));
+    c.revision++;
+    for(const job of Object.values(draft.jobs).filter(j=>j.caseId===c.id&&j.status==='pending')){job.status='stale';job.applied=false;}
+    refresh(draft);
+    const taskIds=[];
+    for(const original of replies){original.status='responded';original.response={sourceRevision:revision,docIds:sourceRecords(draft,c.paymentIds).map(d=>d.id),actor:actor.id,at:now()};taskIds.push(task(draft,c,`source-response:${revision}:${original.id}`,'reviewer','영업지원의 원본 정정 내용을 확인하고 지급 근거를 다시 검토하세요.',{responseTo:original.id}));}
+    const e=event(draft,c,actor,'source_updated',{sourceRevision:revision,rows:changed.map(r=>({table:r.table,id:r.id})),taskIds});queueAI(draft,c,e);
+  }
+  Object.assign(s,draft);return {applied:changed.map(r=>({table:r.table,id:r.id,kind:r.kind})),sourceRevision:revision};
+}
 export function command(s,actor,type,p={}) {
   must(actor&&users.some(u=>u.id===actor.id&&u.role===actor.role),'AUTH','인증된 사용자가 아닙니다.',401);
   upgradeWorkflow(s);
   let c=p.caseId?requireCase(s,p.caseId):null,result={},audit={};
-  if(type==='registerRequests') {
+  if(type==='applySourceRows'){
+    role(actor,'intake');result=applySourceRows(s,actor,p);audit={sourceRevision:s.sourceRevision,rows:result.applied};
+  } else if(type==='recheckSource'){
+    role(actor,'intake','reviewer');mutable(c);must(c.paymentIds.some(id=>!s.instructions[id]),'CLOSED','미집행 건만 원본 기준으로 재검토할 수 있습니다.');c.reviewMode='source-1';c.revision++;c.confirmations={};audit={reviewMode:c.reviewMode};
+  } else if(type==='registerRequests') {
     role(actor,'intake');
     result=registerRequests(s,actor,p);
     audit={registered:result.registered,existing:result.existing};
   } else if(type==='schedule') {
     role(actor,'intake');
-    if(p.mode==='all-recommended'){
-      const preview=previewSchedule(s,actor,p);must(p.previewHash===preview.previewHash&&p.asOfDate===preview.asOfDate&&Object.hasOwn(p,'stateEventId'),'SCHEDULE_CHANGED','전체 적용 전 최신 권장일과 묶음을 확인하세요.');p={...p,items:preview.items,unassignedOnly:true};
+    if(['all-recommended','re-recommend'].includes(p.mode)){
+      const preview=previewSchedule(s,actor,p);must(p.previewHash===preview.previewHash&&p.asOfDate===preview.asOfDate&&Object.hasOwn(p,'stateEventId'),'SCHEDULE_CHANGED','전체 적용 전 최신 권장일과 묶음을 확인하세요.');p={...p,items:preview.items,unassignedOnly:true,includeAssigned:p.mode==='re-recommend'};
     }
     must(Array.isArray(p.items)&&p.items.length>0&&new Set(p.items.map(i=>i?.id)).size===p.items.length,'INPUT','중복 없는 지급 계획을 확인하세요.',400);
-    if(p.asOfDate)must(p.asOfDate===koreaToday(),'SCHEDULE_CHANGED','날짜가 바뀌었습니다. 권장 날짜를 다시 확인하세요.');
+    if(p.asOfDate)must(p.asOfDate===dataPeriod(s.source.payments),'SCHEDULE_CHANGED','데이터 기준월이 바뀌었습니다. 추천을 다시 확인하세요.');
+    if(p.sourceRevision!==undefined)must(p.sourceRevision===(s.sourceRevision||0),'SCHEDULE_CHANGED','원본 데이터가 바뀌었습니다. 추천을 다시 확인하세요.');
     if(Object.hasOwn(p,'stateEventId'))must(p.stateEventId===(s.events.at(-1)?.id||null),'SCHEDULE_CHANGED','업무 상태가 바뀌었습니다. 예상 합산과 승인 담당자를 다시 확인하세요.');
-    for(const item of p.items){date(item.date);const plan=s.plans[item.id];must(plan&&plan.status==='planned'&&!s.instructions[item.id],'CLOSED','미집행 요청만 지급 계획을 입력할 수 있습니다.');if(p.unassignedOnly)must(!plan.caseId&&!plan.plannedDate,'SCHEDULE_CHANGED','이미 예정일이 정해졌습니다. 새로고침하세요.');}
-    audit.changes=[];for(const item of p.items){date(item.date);const plan=s.plans[item.id];must(plan&&plan.status==='planned'&&!s.instructions[item.id],'CLOSED','미집행 요청만 지급 계획을 입력할 수 있습니다.');if(p.unassignedOnly)must(!plan.caseId&&!plan.plannedDate,'SCHEDULE_CHANGED','이미 예정일이 정해졌습니다. 새로고침하세요.');audit.changes.push({paymentId:plan.id,before:plan.plannedDate,after:item.date});plan.plannedDate=item.date;
+    for(const item of p.items){date(item.date);const plan=s.plans[item.id];must(plan&&plan.status==='planned'&&!s.instructions[item.id],'CLOSED','미집행 요청만 지급 계획을 입력할 수 있습니다.');if(p.unassignedOnly)must(!plan.caseId&&(p.includeAssigned||!plan.plannedDate),'SCHEDULE_CHANGED','이미 예정일이 정해졌습니다. 새로고침하세요.');}
+    audit.changes=[];for(const item of p.items){date(item.date);const plan=s.plans[item.id];must(plan&&plan.status==='planned'&&!s.instructions[item.id],'CLOSED','미집행 요청만 지급 계획을 입력할 수 있습니다.');if(p.unassignedOnly)must(!plan.caseId&&(p.includeAssigned||!plan.plannedDate),'SCHEDULE_CHANGED','이미 예정일이 정해졌습니다. 새로고침하세요.');audit.changes.push({paymentId:plan.id,before:plan.plannedDate,after:item.date});plan.plannedDate=item.date;
       if(plan.caseId){const other=s.cases[plan.caseId];other.revision++;hold(s,other,'schedule','지급예정일 변경에 대한 회계 확인 필요');invalidate(s,other,'지급예정일 변경');}}
   } else if(type==='intake') {
     role(actor,'intake');must(Array.isArray(p.paymentIds)&&p.paymentIds.length>0&&p.paymentIds.length<=30&&new Set(p.paymentIds).size===p.paymentIds.length,'INPUT','중복 없는 지급 ID를 선택하세요.',400);
     if(p.plannedDate!==undefined)date(p.plannedDate);
     for(const id of p.paymentIds){const plan=s.plans[id];must(plan&&plan.status==='planned'&&!plan.caseId&&!s.instructions[id],'CLOSED_ID','종료되었거나 이미 접수된 지급 ID입니다.');must(plan.plannedDate||p.plannedDate,'MONTH','지급예정일을 먼저 입력하세요.');}
     for(const id of p.paymentIds)s.plans[id].plannedDate??=p.plannedDate;
-    c={id:uid('CASE'),title:redact(p.title||'판매장려금 지급 검토'),creator:actor.id,paymentIds:p.paymentIds,revision:1,version:0,status:'review',docs:[],holds:{},exceptions:{},conflicts:[],confirmations:{},snapshots:[],approvals:[],needsResubmit:true};
+    c={id:uid('CASE'),title:redact(p.title||'판매장려금 지급 검토'),creator:actor.id,paymentIds:p.paymentIds,revision:1,version:0,status:'review',reviewMode:s.fixture==='demo'?'source-1':'legacy',docs:[],holds:{},exceptions:{},conflicts:[],confirmations:{},snapshots:[],approvals:[],needsResubmit:true};
     s.cases[c.id]=c;for(const id of c.paymentIds)s.plans[id].caseId=c.id;
     for(const id of c.paymentIds)for(const d of s.plans[id].pendingEvidence||[]){must(!c.docs.some(doc=>doc.id===d.id),'DOC_ID','CSV 증빙 ID가 중복됩니다.',400);c.docs.push({...structuredClone(d),revision:c.revision});}
     addDocuments(s,c,actor,p.docs??[]);
@@ -340,8 +395,9 @@ export function command(s,actor,type,p={}) {
     audit={docIds:p.docIds,confirmPaymentIds:p.confirmPaymentIds??[],resolveKeys:p.resolveKeys??[],taskId:p.taskId};
     if(p.special)exception(s,c,'policy',redact(p.reason));
     for(const id of p.confirmPaymentIds??[]){must(c.paymentIds.includes(id)&&!s.instructions[id],'PAYMENT','미집행 승인 대상을 확인하세요.');must(assessEvidence(s,c).payments.find(r=>r.paymentId===id)?.status!=='conflict','EVIDENCE_CONFLICT','확인된 증빙 불일치를 자료 보완 없이 해제할 수 없습니다.');const plan=s.plans[id],a=s.source.agencies.find(a=>a.agency_id===plan.agencyId);
-      must(p.docIds.some(docId=>c.docs.some(d=>d.id===docId&&['account','supplement'].includes(d.kind)&&d.revision>=(plan.evidenceAfterRevision||0))),'STALE_EVIDENCE','현재 지급 조건에 적용되는 계좌·명의 증빙 또는 보완 회신을 연결하세요.');
-      must(plan.owner===a.agency_name,'OWNER','명의가 다른 지급은 별도 허용 정책 확정 전 보류합니다.');c.confirmations[id]={at:now(),actor:actor.id,accountKey:plan.accountKey,docIds:p.docIds,reason:redact(p.reason)};
+      if(c.reviewMode==='source-1')must(plan.accountKey&&a?.accountKey,'ACCOUNT_REQUIRED','등록계좌가 비어 있습니다. 원본 마스터를 정정한 뒤 확인하세요.');
+      must(c.reviewMode==='source-1'?p.docIds.some(id=>assessSource(s,c).records.some(d=>d.id===id&&d.paymentIds.includes(plan.id))):p.docIds.some(docId=>c.docs.some(d=>d.id===docId&&['account','supplement'].includes(d.kind)&&d.revision>=(plan.evidenceAfterRevision||0))),'STALE_EVIDENCE','현재 지급 조건에 적용되는 계좌·명의 증빙 또는 보완 회신을 연결하세요.');
+      must(plan.owner===a.agency_name,'OWNER','명의가 다른 지급은 별도 허용 정책 확정 전 보류합니다.');c.confirmations[id]={at:now(),actor:actor.id,sourceSignature:c.reviewMode==='source-1'?assessSource(s,c).payments.find(r=>r.paymentId===id)?.sourceSignature:undefined,accountKey:plan.accountKey,docIds:p.docIds,reason:redact(p.reason)};
       if(c.holds[`evidence:${id}`]&&!c.holds[`evidence:${id}`].closedAt)closeHold(s,c,`evidence:${id}`,actor,p.reason,p.docIds);
     }
     for(const key of p.resolveKeys??[]){must(!key.startsWith('recon:')&&!key.startsWith('conflict:'),'RECON_ROLE','은행 실적 차이는 회계 대사 담당자가 확인해야 합니다.');must(!key.startsWith('evidence:'),'EVIDENCE','지급별 증빙 확인으로 해제하세요.');must(key!=='assignee','ASSIGNEE','적격 승인 경로가 확인될 때까지 지급을 보류합니다.');closeHold(s,c,key,actor,p.reason,p.docIds);}
@@ -410,25 +466,18 @@ export function command(s,actor,type,p={}) {
   refresh(s);const e=event(s,c,actor,type,{...audit,docIds:p.docs?.map(d=>d.id)??audit.docIds,paymentId:p.paymentId??audit.paymentId??null,result:result.denied?'denied':'saved',reason:p.reason?redact(p.reason):undefined});
   if(c&&!(type==='documents'&&p.taskId))queueAI(s,c,e);return {...result,caseId:c?.id??null,eventId:e.id};
 }
-export function previewSchedule(s,actor,items) {
-  role(actor,'intake');
-  const all=items?.mode==='all-recommended';
-  if(all)items=Object.values(s.plans).filter(p=>p.status==='planned'&&!p.caseId&&!p.plannedDate&&!s.instructions[p.id]).map(p=>({id:p.id,date:recommendDate(p.period,koreaToday()).date}));
-  else if(!Array.isArray(items))items=items?.items;
-  must(Array.isArray(items)&&items.length>0&&new Set(items.map(i=>i?.id)).size===items.length,'INPUT','예정일을 확인할 요청을 선택하세요.',400);
-  const projected=structuredClone(s);
-  for(const item of items){
-    date(item.date);const p=projected.plans[item.id];
-    must(p&&p.status==='planned'&&!p.caseId&&!p.plannedDate&&!projected.instructions[item.id],'SCHEDULE_CHANGED','미접수·예정일 미정 요청만 추천일을 적용할 수 있습니다.');
-    p.plannedDate=item.date;
-  }
-  const selected=new Set(items.map(i=>i.id));
-  return {source:'rules',saved:false,mode:all?'all-recommended':'selected',asOfDate:koreaToday(),previewHash:hash({items,today:koreaToday(),scheduleVersion}),stateEventId:s.events.at(-1)?.id||null,items,
-    groups:intakeGroups(projected).filter(g=>g.paymentIds.some(id=>selected.has(id))).map(g=>{
-      const ids=g.paymentIds.filter(id=>selected.has(id)),b=basis(projected,{paymentIds:ids,exceptions:{}});
-      return {id:g.id,month:g.month,members:g.members,paymentIds:ids,selectedTotal:b.selectedTotal,total:b.total,missing:b.missing,required:b.required};
-    })};
+export function previewSchedule(s,actor,input) {
+  role(actor,'intake');const options=Array.isArray(input)?{items:input}:input||{},all=options.mode==='all-recommended',again=options.mode==='re-recommend';
+  let items=options.items;
+  if(all||again)items=Object.values(s.plans).filter(p=>p.status==='planned'&&!p.caseId&&!s.instructions[p.id]&&(again?(!options.paymentIds||options.paymentIds.includes(p.id)):!p.plannedDate)).map(p=>({id:p.id,date:recommendDate(p.period,{agencyId:p.agencyId,payments:s.source.payments}).date}));
+  must(Array.isArray(items)&&items.length>0&&new Set(items.map(i=>i?.id)).size===items.length,'INPUT','예정일을 적용할 요청을 선택하세요.',400);
+  const includeAssigned=again||options.includeAssigned===true,projected=structuredClone(s);
+  for(const item of items){date(item.date);const p=projected.plans[item.id];must(p&&p.status==='planned'&&!p.caseId&&!projected.instructions[item.id]&&(includeAssigned||!p.plannedDate),'SCHEDULE_CHANGED','미접수 요청만 날짜를 적용할 수 있습니다. 기존 날짜 변경은 재추천을 선택하세요.');p.plannedDate=item.date;}
+  const selected=new Set(items.map(i=>i.id)),asOfDate=dataPeriod(s.source.payments),sourceRevision=s.sourceRevision||0;
+  return {source:'rules',saved:false,mode:all?'all-recommended':again?'re-recommend':'selected',includeAssigned,asOfDate,sourceRevision,previewHash:hash({items,asOfDate,sourceRevision,scheduleVersion}),stateEventId:s.events.at(-1)?.id||null,items,
+    groups:intakeGroups(projected).filter(g=>g.paymentIds.some(id=>selected.has(id))).map(g=>{const ids=g.paymentIds.filter(id=>selected.has(id)),b=basis(projected,{paymentIds:ids,exceptions:{}});return {id:g.id,month:g.month,members:g.members,paymentIds:ids,selectedTotal:b.selectedTotal,total:b.total,missing:b.missing,required:b.required};})};
 }
+
 function intakeGroups(s) {
   const graph=groups(s.source.agencies);
   const batches=new Map();
@@ -442,7 +491,7 @@ function intakeGroups(s) {
     }
     batches.get(id).paymentIds.push(p.id);
   }
-  return [...batches.values()].map(group=>({...group,selectedTotal:group.paymentIds.reduce((sum,id)=>sum+s.plans[id].amount,0),required:group.month?basis(s,{paymentIds:group.paymentIds,exceptions:{}}).required:[],workflow:{history:[],
+  return [...batches.values()].map(group=>({...group,sourceReview:assessSource(s,{paymentIds:group.paymentIds,confirmations:{},revision:0}),selectedTotal:group.paymentIds.reduce((sum,id)=>sum+s.plans[id].amount,0),required:group.month?basis(s,{paymentIds:group.paymentIds,exceptions:{}}).required:[],workflow:{history:[],
     current:{id:'W07I_Receive',title:group.month?'묶음에서 지급 요청 접수':'지급예정일 지정',owner:'intake',ownerName:'일반 영업지원 직원',mine:true},
     next:group.month?{id:'W07I_Review',title:'지급 근거 검토',owner:'reviewer',ownerName:'회계팀',condition:'요청과 증빙을 접수한 후'}:
       {id:'W07I_Receive',title:'묶음에서 지급 요청 접수',owner:'intake',ownerName:'일반 영업지원 직원',condition:'선택 요청의 지급예정일 저장 후'}
@@ -485,8 +534,8 @@ export function publicState(s,actor) {
   const today=koreaToday();
   const result={epoch:s.epoch,fixture:s.fixture,fixtureVersion:s.fixtureVersion,createdAt:s.createdAt,
     publicDemo:s.publicDemo?{...s.publicDemo,aiLimit:null,guidanceLimit:null}:null,source:s.source.sources,
-    schedulePolicy:{version:scheduleVersion,today,rule:scheduleRule},
-    agencies:s.source.agencies,plans:Object.values(s.plans).map(p=>({...p,...(p.status==='planned'&&!p.plannedDate?{scheduleRecommendation:recommendDate(p.period,today)}:{})})),cases:visible,tasks:Object.values(s.tasks).filter(t=>ids.has(t.caseId)),notifications:Object.values(s.notifications).filter(n=>ids.has(n.caseId)),
+    sourceRevision:s.sourceRevision||0,sourceRows:s.source,sourceHistory:s.sourceHistory||[],schedulePolicy:{version:scheduleVersion,today,period:dataPeriod(s.source.payments),rule:scheduleRule},
+    agencies:s.source.agencies,plans:Object.values(s.plans).map(p=>({...p,...(p.status==='planned'?{scheduleRecommendation:recommendDate(p.period,{agencyId:p.agencyId,payments:s.source.payments})}:{})})),cases:visible,tasks:Object.values(s.tasks).filter(t=>ids.has(t.caseId)),notifications:Object.values(s.notifications).filter(n=>ids.has(n.caseId)),
     instructions:Object.values(s.instructions).filter(i=>ids.has(i.caseId)),receipts:Object.values(s.receipts).filter(r=>Object.values(s.instructions).some(i=>ids.has(i.caseId)&&i.id===r.instructionId)),
     jobs:Object.values(s.jobs).filter(j=>ids.has(j.caseId)).map(({docs,...j})=>j),events:s.events.filter(e=>!e.caseId||ids.has(e.caseId)),conflicts:s.conflicts,
     workItems:assignedWork(s,actor,visible),intakeGroups:can(actor,'intake')?intakeGroups(s):[]};

@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { openStore } from './store.mjs';
 import { initAccounts, login, loginRole, authenticate, sessionToken, workspaceToken, verifyPassword } from './auth.mjs';
-import { command, publicState, previewSchedule, businessRoles, can, must, hash, now, RuleError, upgradeWorkflow } from './domain.mjs';
+import { command, publicState, previewSchedule, previewSource, businessRoles, can, must, hash, now, RuleError, upgradeWorkflow } from './domain.mjs';
 import { processOne } from './ai.mjs';
 import { createGuidanceService } from './guidance.mjs';
 const instanceId=randomUUID();
@@ -22,13 +22,13 @@ export async function startServer({store,hashes,port=Number(process.env.PORT||80
   await store.cleanupTrials();
   const cleanup=setInterval(()=>{void store.cleanupTrials().catch(()=>{});},3600000);cleanup.unref();
   const json=(res,status,body)=>{res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});res.end(JSON.stringify(body,(key,value)=>['accountKey','passwordHash','registrationFingerprint'].includes(key)?undefined:value));};
-  async function body(req){let data='';for await(const part of req){data+=part;must(Buffer.byteLength(data)<=150000,'SIZE','입력은 150KB 이하여야 합니다.',413);}try{return JSON.parse(data||'{}');}catch{throw new RuleError('JSON','JSON 형식 오류',400);}}
+  async function body(req){let data='';for await(const part of req){data+=part;must(Buffer.byteLength(data)<=1024*1024,'SIZE','입력 전체는 1MB 이하여야 합니다.',413);}try{return JSON.parse(data||'{}');}catch{throw new RuleError('JSON','JSON 형식 오류',400);}}
   const server=createServer(async(req,res)=>{
     res.setHeader('x-content-type-options','nosniff');res.setHeader('referrer-policy','same-origin');res.setHeader('content-security-policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
     try{
       const url=new URL(req.url,'http://localhost');
       if(url.pathname==='/healthz')return json(res,200,{ok:true,version:'1.2.0',instanceId});
-      if(['GET','HEAD'].includes(req.method)&&['/','/app.js','/style.css','/catalog.js','/guidance-ui.js','/schedule.js','/evidence-ui.js','/schedule-ui.js'].includes(url.pathname)){
+      if(['GET','HEAD'].includes(req.method)&&['/','/app.js','/style.css','/catalog.js','/guidance-ui.js','/schedule.js','/evidence-ui.js','/schedule-ui.js','/source-ui.js','/source-schema.js'].includes(url.pathname)){
         const path=url.pathname==='/'?'index.html':url.pathname.slice(1);const content=await readFile(new URL(`./public/${path}`,import.meta.url));res.writeHead(200,{'content-type':path.endsWith('.html')?'text/html; charset=utf-8':path.endsWith('.css')?'text/css; charset=utf-8':'text/javascript; charset=utf-8','cache-control':'no-cache'});return res.end(req.method==='HEAD'?undefined:content);
       }
       if(url.pathname==='/api/roles'&&req.method==='GET')return json(res,200,publicRoles);
@@ -53,6 +53,7 @@ export async function startServer({store,hashes,port=Number(process.env.PORT||80
       if(actor.publicDemo)must(workspace===actor.workspace,'FORBIDDEN','내 체험 공간에만 접근할 수 있습니다.',403);
       if(url.pathname==='/api/guidance'&&req.method==='POST')return json(res,200,await guide(workspace,actor,await body(req)));
       if(url.pathname==='/api/schedule/preview'&&req.method==='POST')return json(res,200,previewSchedule(await store.read(workspace),actor,await body(req)));
+      if(url.pathname==='/api/source/preview'&&req.method==='POST')return json(res,200,previewSource(await store.read(workspace),actor,await body(req)));
       if(url.pathname==='/api/state'&&req.method==='GET'){
         let s=await store.read(workspace);
         if(s.workflowVersion!==2){s=await store.tx(workspace,current=>{upgradeWorkflow(current);return current;});void kick(workspace);}
@@ -68,7 +69,7 @@ export async function startServer({store,hashes,port=Number(process.env.PORT||80
       if(url.pathname==='/api/command'&&req.method==='POST'){
         const p=await body(req);const result=await store.tx(workspace,(s,meta)=>{
           if(can(actor,'intake')&&p.payload?.caseId)must(s.cases[p.payload.caseId]?.creator===actor.id,'FORBIDDEN','자기 접수 건만 처리할 수 있습니다.',403);
-          if(actor.publicDemo)must(s.events.length<300&&Object.keys(s.cases).length<15&&Object.values(s.cases).reduce((n,c)=>n+c.docs.reduce((m,d)=>m+d.text.length,0),0)<80000,'DEMO_LIMIT','이 공간의 체험 입력 한도에 도달했습니다.',429);
+          if(actor.publicDemo)must(s.events.length<1500&&Object.keys(s.cases).length<100&&Object.values(s.cases).reduce((n,c)=>n+c.docs.reduce((m,d)=>m+d.text.length,0),0)<500000,'DEMO_LIMIT','이 공간의 체험 입력 한도에 도달했습니다.',429);
           const prior=new Set(Object.keys(s.jobs));const result=command(s,actor,p.type,p.payload);
           if(meta.validation&&s.nextFault){for(const j of Object.values(s.jobs))if(!prior.has(j.id)){j.fault=s.nextFault;delete s.nextFault;break;}}
           return result;
