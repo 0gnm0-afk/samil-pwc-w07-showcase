@@ -31,3 +31,16 @@ test('새 충돌 문서만 인용 후보로 제공하고 양쪽 근거 누락을
  const input=promptFor(job);assert.deepEqual(input.citationChoices.map(q=>q.docId),['A','B']);assert.deepEqual(input.documents[0].confirmedPaymentIds,['P']);assert.equal(input.documents[0].currentReviewTarget,false);
  const raw={caseId:job.caseId,inputRevision:3,facts:[{ref:'Q1',text:'동림'},{ref:'Q2',text:'서림'}],unknowns:['명의 충돌'],scope:['D-011'],action:'request_review',owner:'reviewer',reason:'두 현재 자료의 명의 충돌을 확인합니다.'};assert.equal(validateDecision(raw,job).facts.length,2);assert.throws(()=>validateDecision({...raw,facts:raw.facts.slice(0,1)},job),{code:'AI_CITATION'});
 });
+test('담당 역할은 서버 규칙으로 배정하고 AI의 권한 밖 조치·역할 충돌은 거부한다',()=>{
+ const job={caseId:'CASE-OWNER',revision:1,basis:{members:['D-024']},docs:[{id:'D1',text:'회수 입금계좌와 지급 등록계좌가 다릅니다.'}]};
+ const raw={caseId:job.caseId,inputRevision:1,facts:[{ref:'Q1',text:'계좌 용도 차이 확인 필요'}],unknowns:['두 계좌의 사용 목적'],scope:['D-024'],action:'request_review',reason:'입금과 지급의 용도 차이를 회계팀이 확인합니다.'};
+ assert.equal(validateDecision(raw,job).owner,'reviewer');
+ assert.equal(validateDecision({...raw,action:'request_supplement'},job).owner,'intake');
+ assert.throws(()=>validateDecision({...raw,owner:'intake'},job),{code:'AI_ACTION'});
+ assert.throws(()=>validateDecision({...raw,action:'pay',owner:'treasury'},job),{code:'AI_ACTION'});
+ assert.throws(()=>validateDecision({...raw,facts:[{ref:'Q999',text:'없는 근거'}]},job),{code:'AI_CITATION'});
+});
+test('원본 모드의 인용은 계좌·명의·행 식별자를 포함한 원본 행 전체를 연결한다',()=>{
+ const job={mode:'source',focus:['M','B'],docs:[{id:'M',text:'계좌: 은행 ****1234\n거래처: D-024\n명의: 성일상사'},{id:'B',text:'계좌: 은행 ****5678\n입금: DP-13'}],basis:{members:['D-024']}};
+ assert.deepEqual(promptFor(job).citationChoices.map(q=>q.quote),job.docs.map(d=>d.text));
+});

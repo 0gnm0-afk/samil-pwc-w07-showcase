@@ -27,6 +27,7 @@ test('부분 선택도 D-024 소명 단서를 전달하고 미정월·미확인 
  const {caseIds:[id]}=act(s,'intake','batchIntake',payload(s,['RB-00054'])),c=s.cases[id];
  assert.equal(c.currentBasis.total,3888097);assert.equal(c.currentBasis.selectedTotal,1373515);assert.equal(c.canSubmit,false);
  assert(c.sourceReview.payments[0].checks.some(k=>k.code==='collection_account'&&k.message.includes('D-024')));assert(Object.values(s.jobs).length>0);
+ assert.deepEqual(new Set(Object.values(s.jobs)[0].focus),new Set(['SRC-collections-DP-00013-1','SRC-collections-DP-00014-1','SRC-agencies-D-024-1']));
  const docs=c.sourceReview.records.map(d=>d.id);act(s,'reviewer','review',{caseId:id,docIds:docs,confirmPaymentIds:c.paymentIds,reason:'관련 거래처 입금 차이의 사업상 사유를 확인'});assert.equal(c.canSubmit,true);
  const fresh=initialState(source),r=act(fresh,'intake','batchIntake',payload(fresh,['RB-00054']));assert.equal(fresh.cases[r.caseIds[0]].currentBasis.missing.length,2);assert.equal(fresh.cases[r.caseIds[0]].canSubmit,false);
 });

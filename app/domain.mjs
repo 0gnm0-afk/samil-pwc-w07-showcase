@@ -184,7 +184,15 @@ function queueAI(s,c,e) {
   const docs=structuredClone(c.docs);
   const assigneeBlocked=uncertain.some(h=>h.key==='assignee');
   const focus=uncertain.filter(h=>h.key.startsWith('document:')).map(h=>h.key.slice('document:'.length));
-  if(c.reviewMode==='source-1'&&assessment.status!=='pass')for(const row of assessment.payments.filter(r=>!['pass','manual'].includes(r.status))){for(const ref of row.checks.filter(k=>k.status!=='pass').map(k=>k.docId).filter(Boolean))if(!focus.includes(ref))focus.push(ref);const agencyDoc=assessment.records.find(d=>d.table==='agencies'&&d.paymentIds.includes(row.paymentId));if(agencyDoc&&!focus.includes(agencyDoc.id))focus.push(agencyDoc.id);}
+  if(c.reviewMode==='source-1'&&assessment.status!=='pass')for(const row of assessment.payments.filter(r=>!['pass','manual'].includes(r.status))){
+    for(const check of row.checks.filter(k=>k.status!=='pass')){
+      const referenced=assessment.records.find(d=>d.id===check.docId);
+      if(referenced&&!focus.includes(referenced.id))focus.push(referenced.id);
+      const agencyId=referenced?.fields.agency_id||s.plans[row.paymentId].agencyId;
+      const agencyDoc=assessment.records.find(d=>d.table==='agencies'&&d.fields.agency_id===agencyId);
+      if(agencyDoc&&!focus.includes(agencyDoc.id))focus.push(agencyDoc.id);
+    }
+  }
   if(assigneeBlocked){
     let factId='RULE-ASSIGNEE';
     while(docs.some(d=>d.id===factId))factId+='-RULE';
