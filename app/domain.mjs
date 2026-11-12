@@ -6,6 +6,7 @@ import { koreaToday, scheduleVersion, scheduleRule, dataPeriod } from './public/
 import {normalizeEvidence,assessEvidence,assessSettlement} from './evidence.mjs';
 import {prepareSource,sourcePreview,sourceRecords,assessSource} from './source-data.mjs';
 import {sourceTables} from './public/source-schema.js';
+import {reviewSummary,reviewIssues,latestReviewJob} from './review-summary.mjs';
 export class RuleError extends Error { constructor(code, message, status=409) { super(message); this.code=code; this.status=status; } }
 export const must = (condition, code, message, status) => { if(!condition) throw new RuleError(code,message,status); };
 const canonical = value => Array.isArray(value)?value.map(canonical):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,canonical(value[k])])):value;
@@ -212,7 +213,7 @@ function queueAI(s,c,e) {
     approvals:c.approvals.filter(a=>a.version===c.version),confirmations:c.confirmations,
     paymentEvidence:c.paymentIds.map(id=>({paymentId:id,evidenceAfterRevision:s.plans[id].evidenceAfterRevision||0,confirmed:!!c.confirmations[id]})),
     responseLinks:Object.values(s.tasks).filter(t=>t.caseId===c.id&&t.responseTo).map(t=>({id:t.id,responseTo:t.responseTo,docIds:s.tasks[t.responseTo]?.response?.docIds||[],status:t.status})),
-    history:s.events.filter(e=>e.caseId===c.id).slice(-12).map(e=>({type:e.type,at:e.at,revision:e.revision})),
+    issues:reviewIssues(assessment),history:s.events.filter(e=>e.caseId===c.id).slice(-12).map(e=>({type:e.type,at:e.at,revision:e.revision})),
     effects:{request_supplement:'영업지원 직원에게 보완 작업이 도착합니다. 회신하면 회계팀이 다시 검토하며 지급보류는 자동 해제되지 않습니다.',request_review:'회계팀이 근거와 영향 범위를 확인합니다. 확인 결과를 저장한 뒤 상신 요건을 다시 검사합니다.',hold_for_review:'지급보류를 유지하고 회계팀이 예외 사유와 상위 판단을 확인합니다.',recheck:'새 근거를 회계팀이 현재 지급 조건과 다시 대조합니다.'}};
   s.jobs[id]={id,caseId:c.id,epoch:s.epoch,revision:c.revision,version:c.version,eventId:e.id,status:'pending',createdAt:now(),docs,mode,focus,progress,reasons:uncertain.map(h=>({key:h.key,reason:h.reason})),basis:{month:c.currentBasis.month,total:c.currentBasis.total,members:c.currentBasis.members}};
 }
@@ -328,9 +329,61 @@ function applySourceRows(s,actor,input){
   }
   Object.assign(s,draft);return {applied:changed.map(r=>({table:r.table,id:r.id,kind:r.kind})),sourceRevision:revision};
 }
+function reviewAction(s,actor,p){
+  role(actor,'reviewer');
+  const original=requireCase(s,p.caseId);
+  text(p.requestId,8,100);
+  const fingerprint=hash({actor:actor.id,...p});
+  const previous=original.reviewActions?.[p.requestId];
+  if(previous){must(previous.fingerprint===fingerprint,'REQUEST_CHANGED','동일한 요청의 내용이 바뀌었습니다.');return {...previous.result,duplicate:true};}
+  must(original.revision===p.revision,'REVIEW_CHANGED','자료나 검토 내용이 바뀌었습니다. 최신 결과를 확인하세요.');
+  // Memory callers and SQL callers get the same all-or-nothing behavior.
+  const draft=structuredClone(s),c=requireCase(draft,p.caseId);mutable(c);reevaluate(draft,c);
+  const summary=reviewSummary(draft,c),job=latestReviewJob(draft,c);
+  let result={caseId:c.id,action:p.action};
+  if(p.action==='retry'){
+    must(summary.canRetry&&p.jobId===job.id,'AI_CHANGED','다시 시도할 AI 작업이 없습니다.');
+    job.status='pending';job.error=null;job.finishedAt=null;delete job.retryAt;
+  }else if(p.action==='supplement'||p.action==='hold'){
+    text(p.reason,4,4000);must(c.needsResubmit,'REVIEW_CHANGED','이미 결재를 요청했습니다. 최신 상태를 확인하세요.');
+    hold(draft,c,'accounting_review',redact(p.reason));
+    if(p.action==='supplement'){
+      must(!summary.requestedSupplement,'ALREADY_REQUESTED','영업직원에게 이미 자료를 요청했습니다.');
+      task(draft,c,`accounting-supplement:${c.revision}`,'intake',p.reason,{action:'request_supplement'});
+    }
+  }else{
+    must(['submit','accept','confirm'].includes(p.action),'REVIEW_ACTION','처리할 행동을 확인하세요.',400);
+    if(p.action==='submit')must(summary.canSubmit,'SUBMIT_BLOCKED','아직 확인할 사항이 남아 있습니다.');
+    else{
+      must(summary.canConfirm,'REVIEW_BLOCKED','원본 정정 또는 별도 확인이 필요한 항목을 먼저 해결하세요.');
+      must(!['pending','running'].includes(job?.status),'AI_PENDING','AI가 자료를 검토하고 있습니다. 결과가 나온 뒤 확인하세요.');
+      must(!job||p.jobId===job.id,'AI_CHANGED','현재 자료의 AI 의견을 다시 확인하세요.');
+      let reason=p.reason;
+      if(p.action==='accept'){
+        must(summary.canAccept,'AI_NOT_READY','추가 확인이 필요한 AI 의견은 그대로 수용할 수 없습니다.');
+        reason=`AI가 인용한 근거와 진행 권고를 회계 담당자가 확인해 수용했습니다. ${job.decision.reason}`;
+      }else text(reason,8,4000);
+      const pending=c.paymentIds.filter(id=>!draft.instructions[id]);
+      const docIds=[...new Set([...(c.evidenceAssessment?.payments||[]).filter(r=>pending.includes(r.paymentId)).flatMap(r=>r.docIds||[]),...c.docs.filter(d=>['supplement','narrative','account'].includes(d.kind)).map(d=>d.id)])];
+      const resolveKeys=openHolds(c).filter(h=>h.owner==='reviewer'&&!h.key.startsWith('evidence:')&&h.key!=='assignee'&&!/^(recon:|conflict:|voucher:|month:)/.test(h.key)).map(h=>h.key);
+      command(draft,actor,'review',{caseId:c.id,reason,docIds,confirmPaymentIds:pending.filter(id=>!['pass','manual'].includes(c.evidenceAssessment?.payments.find(r=>r.paymentId===id)?.status)),resolveKeys});
+      c.reviewRecord={jobId:job?.id,reason:redact(reason),actor:actor.id,at:now()};
+    }
+    command(draft,actor,'submit',{caseId:c.id});
+    // Submission completes any remaining review/response task for this version.
+    for(const t of Object.values(draft.tasks))if(t.caseId===c.id&&['open','responded'].includes(t.status)&&t.owner==='reviewer')t.status='closed';
+    result.version=c.version;
+  }
+  refresh(draft);
+  event(draft,c,actor,'review_action',{action:p.action,jobId:p.jobId,reason:p.reason?redact(p.reason):undefined});
+  c.reviewActions??={};c.reviewActions[p.requestId]={fingerprint,result};
+  Object.assign(s,draft);return result;
+}
+
 export function command(s,actor,type,p={}) {
   must(actor&&users.some(u=>u.id===actor.id&&u.role===actor.role),'AUTH','인증된 사용자가 아닙니다.',401);
   upgradeWorkflow(s);
+  if(type==='reviewAction')return reviewAction(s,actor,p);
   let c=p.caseId?requireCase(s,p.caseId):null,result={},audit={};
   if(type==='batchIntake'){return batchIntake(s,actor,p);
   } else if(type==='applySourceRows'){
@@ -375,6 +428,7 @@ export function command(s,actor,type,p={}) {
   } else if(type==='flag') {
     role(actor,'reviewer');mutable(c);text(p.reason);
     c.revision++;
+    if(p.policy===true)exception(s,c,'policy',redact(p.reason));
     if(p.conflict){
       exception(s,c,'conflict',redact(p.reason));
       if(!c.conflicts.includes('executive'))c.conflicts.push('executive');
@@ -480,7 +534,7 @@ export function command(s,actor,type,p={}) {
       outcome:p.outcome,reconciliation:instruction?.reconciliation,receiptId:p.receiptId,voucherId:p.voucherId};
   }
   refresh(s);const e=event(s,c,actor,type,{...audit,docIds:p.docs?.map(d=>d.id)??audit.docIds,paymentId:p.paymentId??audit.paymentId??null,result:result.denied?'denied':'saved',reason:p.reason?redact(p.reason):undefined});
-  if(c&&!(type==='documents'&&p.taskId))queueAI(s,c,e);return {...result,caseId:c?.id??null,eventId:e.id};
+  if(c)queueAI(s,c,e);return {...result,caseId:c?.id??null,eventId:e.id};
 }
 export function previewSchedule(s,actor,input) {
   role(actor,'intake');const options=Array.isArray(input)?{items:input}:input||{},all=options.mode==='all-recommended',again=options.mode==='re-recommend';
@@ -525,11 +579,12 @@ function assignedWork(s,actor,cases) {
     }
     if(can(actor,'reviewer')){
       const aiTasks=activeTasks.filter(t=>t.owner==='reviewer'&&(t.jobId||t.responseTo));
-      for(const t of aiTasks)add('review',t.id,{taskId:t.id});
+      if(aiTasks.length)add('review','case',{taskId:aiTasks[0].id});
       if(!aiTasks.length&&c.needsResubmit&&c.paymentIds.some(id=>!s.instructions[id]))add('review','case');
     }
     const approval=c.approvals.find(a=>a.version===c.version&&a.userId===actor.id&&a.decision==='pending');
     if(approval&&c.canSubmit&&!c.needsResubmit&&c.currentBasis.required.some(r=>r.userId===actor.id))add('approval',approval.id);
+    else if(['executive','finance'].includes(actor.id)&&s.notifications[`${c.id}:${actor.id}`]&&(c.needsResubmit||!c.canSubmit))add('notice','exception');
     for(const paymentId of c.paymentIds){
       const instruction=s.instructions[paymentId];
       if(can(actor,'treasury')){
@@ -562,7 +617,7 @@ export function publicState(s,actor) {
       const {current,next}=projectWorkflow(result,c,actor,item);
       return [item.id,{current,next}];
     }));
-    return {...c,evidenceAssessment:c.evidenceAssessment||assessEvidence(s,c),settlementAssessments:c.paymentIds.flatMap(id=>['bank','voucher'].map(kind=>assessSettlement(s,c,id,kind)).filter(Boolean)),workflow:projectWorkflow(result,c,actor),workflowByWork};
+    return {...c,reviewSummary:reviewSummary(s,c),evidenceAssessment:c.evidenceAssessment||assessEvidence(s,c),settlementAssessments:c.paymentIds.flatMap(id=>['bank','voucher'].map(kind=>assessSettlement(s,c,id,kind)).filter(Boolean)),workflow:projectWorkflow(result,c,actor),workflowByWork};
   });
   // Account comparison tokens are server-only; values, attachments and diagnostics are masked.
   return JSON.parse(JSON.stringify(result,(key,value)=>['accountKey','passwordHash','registrationFingerprint'].includes(key)?undefined:value));

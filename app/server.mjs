@@ -29,7 +29,7 @@ export async function startServer({store,hashes,port=Number(process.env.PORT||80
     try{
       const url=new URL(req.url,'http://localhost');
       if(url.pathname==='/healthz')return json(res,200,{ok:true,version:'1.2.0',instanceId});
-      if(['GET','HEAD'].includes(req.method)&&['/','/app.js','/style.css','/catalog.js','/guidance-ui.js','/schedule.js','/evidence-ui.js','/schedule-ui.js','/source-ui.js','/source-schema.js'].includes(url.pathname)){
+      if(['GET','HEAD'].includes(req.method)&&['/','/app.js','/style.css','/catalog.js','/guidance-ui.js','/schedule.js','/evidence-ui.js','/schedule-ui.js','/source-ui.js','/source-schema.js','/review-ui.js'].includes(url.pathname)){
         const path=url.pathname==='/'?'index.html':url.pathname.slice(1);const content=await readFile(new URL(`./public/${path}`,import.meta.url));res.writeHead(200,{'content-type':path.endsWith('.html')?'text/html; charset=utf-8':path.endsWith('.css')?'text/css; charset=utf-8':'text/javascript; charset=utf-8','cache-control':'no-cache'});return res.end(req.method==='HEAD'?undefined:content);
       }
       if(url.pathname==='/api/roles'&&req.method==='GET')return json(res,200,publicRoles);

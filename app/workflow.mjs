@@ -8,6 +8,7 @@ const names = {
   approval_route_updated:'승인 경로 재검토'
 };
 const decisions={approve:'승인',supplement:'보완 요청',reject:'반려',pending:'대기',closed:'종료'};
+const aiStatuses={applied:'검토 의견 전달 완료',stale:'이전 자료에 대한 의견',failed:'검토 실패 · 담당자 확인 필요',running:'검토 중'};
 const savedResults={source_updated:'정정 근거 보존 · 재검토',recheckSource:'원본 기준 재검토 시작',intake:'접수 완료',review:'검토 저장',submit:'결재 배정',change:'조건 변경 · 재검토',documents:'증빙 연결',flag:'지급보류 · 판단 의뢰',pay:'모의 지급 지시 생성',bank:'은행 결과 등록',reconcile:'대사 결과 저장',confirmActual:'실적 차이 확인',cancel:'취소',pay_blocked:'지급 차단',ai_result:'후속 작업 생성',approval_route_updated:'승인 경로 갱신'};
 const reconciliations={matched:'대사 일치',difference:'대사 차이 · 확인 필요',confirmed_difference:'차이 확인 완료',failed:'은행 확정 실패',awaiting_voucher:'은행 성공 · 전표 대기'};
 const stage=(id,title,owner,condition='',extra={})=>({id,title,owner,ownerName:roleNames[owner]||owner,condition,...extra});
@@ -40,7 +41,7 @@ export function projectWorkflow(state,c,actor,selectedWork) {
       continue;
     }
     history.push({id:e.id,title:names[e.type],owner:e.actor,ownerName:roleNames[e.actor]||e.actor,at:e.at,
-      result:decisions[e.detail?.decision]||reconciliations[e.detail?.reconciliation]||e.detail?.status||savedResults[e.type]||'처리 완료',version:e.version,
+      result:decisions[e.detail?.decision]||reconciliations[e.detail?.reconciliation]||aiStatuses[e.detail?.status]||e.detail?.status||savedResults[e.type]||'처리 완료',version:e.version,
       records:[{type:e.type,at:e.at,detail:e.detail}],tasks:linked,
       docs:c.docs.filter(d=>d.at===e.at||d.revision===e.revision&&['intake','documents','change'].includes(e.type))});
   }
