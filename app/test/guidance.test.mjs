@@ -34,6 +34,29 @@ test('NIM 권고는 전체 BPMN 문맥으로 생성하고 확정 사실은 서�
   assert.match(answer.nextStep,/필수 승인 모두 완료/);
   assert.equal(answer.workflowState.nextStageId,'W07I_Pay');
 });
+test('접수 전 부분 선택·월 합산·승인 경로·다음 단계를 서버에서 계산하고 NIM 숫자 주장을 거부',()=>{
+  const s=initialState(source,'demo'),actor=actorFor('intake');
+  const group=publicState(s,actor).intakeGroups.find(g=>g.paymentIds.includes('RB-00054'));
+  const input={moduleId:'intake',groupId:group.id,draft:{paymentIds:['RB-00054'],preset:'verified',exception:''}};
+  const {context}=guidanceContext(s,actor,input);
+  assert.deepEqual(context.selectionFacts.requiredRoles,['executive']);
+  assert.equal(context.selectionFacts.selectedCount,1);assert.equal(context.selectionFacts.selectedTotal,1373515);
+  assert.equal(context.selectionFacts.monthlyTotal,3888097);
+  assert.match(context.outputContract.statusText,/1건 · 선택 금액 1,373,515원/);
+  assert.match(context.outputContract.statusText,/월 합산 3,888,097원/);
+  assert.match(context.outputContract.nextText,/지급 근거 검토 · 회계팀/);
+  assert.equal(context.outputContract.workflowState.nextStageId,group.workflow.next.id);
+  const raw={summary:context.outputContract.statusText,nextStep:context.outputContract.nextText,workflowState:context.outputContract.workflowState,
+    recommendations:[{actionId:'intake',reason:'제출할 증빙의 내용과 선택한 지급 요청이 일치하는지 확인한 뒤 접수하세요.',refs:['R-AGGREGATE']}],checks:[]};
+  assert.equal(validateGuidance(raw,context).recommendations.length,1);
+  for(const reason of ['선택된 요청은 3건입니다.','388만원은 200만원 이하로 전결입니다.','영업지원팀장 승인 경로로 진행합니다.','선택한 요청 1건을 접수하고 증빙 확인을 완료했습니다.']){
+    assert.throws(()=>validateGuidance({...raw,recommendations:[{...raw.recommendations[0],reason}]},context),{code:'AI_STATE'});
+  }
+  const special=guidanceContext(s,actor,{...input,draft:{...input.draft,exception:'policy'}}).context;
+  assert.deepEqual(special.selectionFacts.requiredRoles,['executive','finance']);
+  const boundary=initialState(source,'boundary'),bgroup=publicState(boundary,actor).intakeGroups.find(g=>g.paymentIds.includes('S-BOUNDARY'));
+  assert.deepEqual(guidanceContext(boundary,actor,{moduleId:'intake',groupId:bgroup.id}).context.selectionFacts.requiredRoles,['sales']);
+});
 test('병렬 승인·역할 권한·저장 전 입력·실행 조건과 안내 버전 일치',()=>{
   const s=initialState(source,'boundary'),caseId=pending(s);
   const input={moduleId:'approval',caseId,draft:{decision:'approve',reason:'비밀번호=숨김'}};

@@ -366,7 +366,11 @@ function intakeGroups(s) {
     }
     batches.get(id).paymentIds.push(p.id);
   }
-  return [...batches.values()].sort((a,b)=>Number(!a.month)-Number(!b.month)||a.id.localeCompare(b.id));
+  return [...batches.values()].map(group=>({...group,workflow:{history:[],
+    current:{id:'W07I_Receive',title:group.month?'묶음에서 지급 요청 접수':'지급예정일 지정',owner:'intake',ownerName:'일반 영업지원 직원',mine:true},
+    next:group.month?{id:'W07I_Review',title:'지급 근거 검토',owner:'reviewer',ownerName:'회계팀',condition:'요청과 증빙을 접수한 후'}:
+      {id:'W07I_Receive',title:'묶음에서 지급 요청 접수',owner:'intake',ownerName:'일반 영업지원 직원',condition:'선택 요청의 지급예정일 저장 후'}
+  }})).sort((a,b)=>Number(!a.month)-Number(!b.month)||a.id.localeCompare(b.id));
 }
 
 function assignedWork(s,actor,cases) {

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { publicState, hash, must, redact, can } from './domain.mjs';
+import { publicState, hash, must, redact, can, basis } from './domain.mjs';
 import { workflowModel } from './workflow.mjs';
 import { MODEL } from './ai.mjs';
 import { modules, evidenceOptions, moduleFields, approvalFocus, reasonChoices, catalogVersion } from './public/catalog.js';
@@ -38,6 +38,11 @@ export function guidanceContext(s,actor,input) {
   const paymentIds=c?.paymentIds||group?.paymentIds||[];
   const selectedIds=draft.paymentIds||paymentIds;
   must(Array.isArray(selectedIds)&&selectedIds.every(id=>paymentIds.includes(id)),'INPUT','화면에 있는 지급 요청을 선택하세요.',400);
+  const projectedBasis=group?.month?basis(s,{paymentIds:selectedIds.length?selectedIds:group.paymentIds,exceptions:draft.exception?{[draft.exception]:true}:{}}):null;
+  const selectionFacts=group?{selectedPaymentIds:selectedIds,selectedCount:selectedIds.length,
+    selectedTotal:state.plans.filter(p=>selectedIds.includes(p.id)).reduce((sum,p)=>sum+p.amount,0),
+    monthlyTotal:group.total,requiredRoles:projectedBasis?.required.map(r=>r.role)??[],saved:false,
+    evidenceStatus:'선택한 시연 문구이며 아직 제출·회계 대조가 완료되지 않았습니다.'}:null;
   const tasks=state.workItems.filter(w=>!c||w.caseId===c.id);
   const required=c?.currentBasis.required||[];
   const currentApproval=c?.approvals.find(a=>a.version===c.version&&a.userId===actor.id&&a.decision==='pending');
@@ -90,7 +95,7 @@ export function guidanceContext(s,actor,input) {
     for(const [value,label] of options)controls.push({id:`${field}:${value}`,label,field,value,effect:'선택한 모의 처리 결과를 확인한 뒤 저장합니다.'});
   }
   if(input.moduleId==='approval')for(const action of actions.filter(a=>a.enabled))controls.push({id:`decision:${action.id}`,label:action.label,field:'decision',value:action.id,effect:action.effect});
-  const context={guidanceVersion:'guidance-5',catalogVersion,process:workflowModel,rules,progressFacts,module:{id:input.moduleId,...module,inputFields:moduleFields[input.moduleId]||{},actions:actions.filter(a=>a.enabled),
+  const context={guidanceVersion:'guidance-6',catalogVersion,process:workflowModel,rules,progressFacts,selectionFacts,module:{id:input.moduleId,...module,inputFields:moduleFields[input.moduleId]||{},actions:actions.filter(a=>a.enabled),
       blockedActions:actions.filter(a=>!a.enabled).map(a=>({label:a.label,condition:a.condition,effect:a.effect}))},
     actor:{id:actor.id,name:actor.name,capabilities:actor.capabilities},
     request:c?{id:c.id,title:c.title,version:c.version,revision:c.revision,status:c.status,canSubmit:c.canSubmit,canPay:c.canPay,needsResubmit:c.needsResubmit,
@@ -109,14 +114,17 @@ export function guidanceContext(s,actor,input) {
     {ref:'CURRENT',text:JSON.stringify({status:c?.status,checks:c?.checks,required,actions:context.module.actions,selectedTotal:context.selectedTotal,group,workItems:tasks,progressFacts})},
     ...documents.map(d=>({ref:`DOC:${d.id}`,text:d.text}))];
   context.evidence=evidence;
-  const flow=c?.workflow;
-  const statusText=!c?module.purpose:flow.current.terminal?`${flow.current.title} 상태입니다. 이 요청은 종료되었으며 처리 이력을 확인할 수 있습니다.`:
+  const flow=c?.workflow||group?.workflow;
+  const routeNames={sales:'영업지원팀장(전결)',executive:'영업 임원',finance:'재무 임원'};
+  const selectionText=selectionFacts?`선택한 요청 ${selectionFacts.selectedCount}건 · 선택 금액 ${selectionFacts.selectedTotal.toLocaleString('ko-KR')}원. ${group.month?`관련자 월 합산 ${group.total.toLocaleString('ko-KR')}원. 현재 입력 기준 예상 승인 담당: ${selectionFacts.requiredRoles.map(r=>routeNames[r]).join(' + ')}. 회계 검토 후 실제 결재를 배정합니다.`:'지급예정일을 저장한 후 월 합산과 승인 경로를 계산합니다.'} 선택한 증빙 문구는 저장 전이며 회계 대조 전입니다.`:null;
+  const statusText=!c?(selectionText||module.purpose):flow.current.terminal?`${flow.current.title} 상태입니다. 이 요청은 종료되었으며 처리 이력을 확인할 수 있습니다.`:
     `${flow.current.title} 단계입니다. ${flow.current.parallel?.length?flow.current.parallel.map(branch=>`${branch.ownerName}: ${branch.status}`).join(', ')+'. ':''}`+
     (['evidence','holds','supplement'].includes(input.moduleId)?`등록된 증빙은 ${documents.length}건입니다. ${pendingResponses.length?'보완 회신이 접수되어 회계팀 재검토를 기다립니다. ':''}${progressFacts.submittedAccountProofIds.length?'계좌·명의 자료가 등록되어 있으며 회계 대조 완료 여부는 별도로 확인합니다. ':''}`:'')+module.purpose;
   const nextText=flow?(flow.next?[flow.next.title,flow.next.ownerName,flow.next.condition].filter(Boolean).join(' · '):'다음 업무가 없습니다. 처리 이력을 확인할 수 있습니다.'):'현재 역할의 작업 목록에서 이어서 처리할 업무를 선택합니다.';
   context.outputContract={
     statusText,nextText,
-    workflowState:c?{currentStageId:c.workflow.current.id,nextStageId:c.workflow.next?.id??null}:null,
+    workflowState:flow?{currentStageId:flow.current.id,nextStageId:flow.next?.id??null}:null,
+    advicePolicy:group?'지금은 접수 버튼을 누르기 전입니다. reason은 사용자가 앞으로 확인하고 실행할 안내이며 확인한 뒤 접수하세요 같은 미래 행동으로 끝내세요. 접수했습니다·완료했습니다처럼 과거 완료를 주장하지 마세요. 접수 건수·금액·승인 담당과 경로는 statusText의 서버 계산이 확정한 사실입니다. 권장 이유와 추가 확인에서는 증빙 확인과 접수 행동을 설명하세요. 숫자를 언급하려면 selectionFacts의 정확한 수치만 사용하고 반올림하거나 다시 계산하지 마세요. 선택 건수와 묶음 전체 건수는 다릅니다. 승인 경로는 selectionFacts.requiredRoles와 일치해야 합니다. preset 코드(verified)를 쓰지 마세요. 선택한 문구는 검증된 사실이 아닙니다.':null,
     allowedRefs:evidence.map(e=>e.ref),
     allowedActionIds:context.module.actions.map(a=>a.id),
     referenceInstructions:'recommendations[].refs에는 allowedRefs에 있는 문자열만 그대로 복사한다. evidence, group, selectedTotal, request 같은 입력 항목 이름은 근거 ID가 아니다. 화면 상태·합산·선택 조건은 CURRENT를 참조한다.',
@@ -147,6 +155,16 @@ export function validateGuidance(raw,context) {
   const expected=context.outputContract.workflowState;
   must(expected?raw.workflowState?.currentStageId===expected.currentStageId&&raw.workflowState?.nextStageId===expected.nextStageId:raw.workflowState===null,'AI_STATE','현재 업무 단계와 맞지 않는 안내');
   const prose=[raw.summary,raw.nextStep,...raw.checks,...raw.recommendations.map(r=>r.reason)].map(userText).join(' ');
+  if(context.selectionFacts){
+    const advice=[...raw.checks,...raw.recommendations.map(r=>r.reason)].join(' ');
+    const facts=context.selectionFacts,allowedNumbers=new Set([facts.selectedCount,facts.selectedTotal,facts.monthlyTotal,2000000,200]);
+    must(!/접수했습니다|접수하였습니다|완료했습니다|완료하였습니다|확인했습니다|저장했습니다|마쳤습니다/.test(advice),'AI_STATE','저장 전 접수를 완료했다고 설명한 안내');
+    const numbers=[...advice.matchAll(/[0-9][0-9,]*(?:\.[0-9]+)?/g)].map(m=>Number(m[0].replaceAll(',','')));
+    must(numbers.every(n=>allowedNumbers.has(n))&&!/verified/.test(advice),'AI_STATE','접수 선택 건수·금액과 맞지 않는 안내');
+    if(facts.requiredRoles.includes('executive'))must(!/전결|팀장/.test(advice),'AI_STATE','임원 결재 대상의 전결 안내');
+    if(facts.requiredRoles.length===1&&facts.requiredRoles[0]==='sales')must(!/임원/.test(advice),'AI_STATE','전결 대상의 임원 결재 안내');
+    if(facts.monthlyTotal>2000000)must(!/월\s*합산[^.!?\n]{0,70}(이하|미만)/.test(advice),'AI_STATE','월 합산 경계와 맞지 않는 안내');
+  }
   must(!/W07I_|draft\.saved|module\.actions|CURRENT|CASE-[a-f0-9-]{10,}|enabled\s*[=:]/.test(prose),'AI_LANGUAGE','업무용 설명으로 확인할 수 없는 안내');
   if(context.request?.workflow.current.terminal) {
     must(/완료|종료|반려|취소/.test(raw.summary)&&/없|종료|완료/.test(raw.nextStep)&&!/(지급|승인|상신|결재).{0,12}(진행|이동|실행|요청|필요)/.test(raw.nextStep),'AI_STATE','종료 상태와 맞지 않는 안내');
@@ -187,7 +205,7 @@ export async function callGuidance(context,{fetcher=fetch,apiKey=process.env.NVI
   must(apiKey,'AI_AUTH','NIM 연결 설정이 필요합니다.');
   const response=await fetcher('https://integrate.api.nvidia.com/v1/chat/completions',{
     method:'POST',headers:{'content-type':'application/json',Authorization:`Bearer ${apiKey}`},signal:AbortSignal.timeout(55000),
-    body:JSON.stringify({model:MODEL,messages:[{role:'system',content:system+'\nactor가 지금 화면을 보는 사용자다. progressFacts.actorApproval이 있으면 현재 사용자가 직접 검토하고 결재할 담당자다. 다른 결재가 대기라는 이유만으로 보완 요청을 권하지 않는다. 가장 적합한 행동 한 가지를 우선 권고하고, 다른 선택은 실제 부족한 자료 등 구체적 조건이 있을 때만 설명한다.\n최신 지급·대사 사실은 progressFacts.accountingFacts가 기준이다. currentVoucher는 최신 전표, confirmedActual은 최종 확정 실적이다. request.instructions.vouchers의 이전 전표와 history의 과거 차이를 현재 미해결 금액으로 설명하지 않는다. 종료 상태이면 이력 조회만 안내한다. 보완 회신은 과거 누락을 해소하려고 제출된 자료이므로 시간에 따른 변화 자체를 자료 충돌이라고 부르지 않는다. 근거 참조 ID는 refs에만 넣고 본문에서는 자료의 종류와 업무명을 쓴다.'},{role:'user',content:JSON.stringify(context)}],stream:false,temperature:0.1,max_tokens:2200,response_format:{type:'json_object'},chat_template_kwargs:{enable_thinking:false}})
+    body:JSON.stringify({model:MODEL,messages:[{role:'system',content:system+'\n'+(context.outputContract.advicePolicy||'')+'\nactor가 지금 화면을 보는 사용자다. progressFacts.actorApproval이 있으면 현재 사용자가 직접 검토하고 결재할 담당자다. 다른 결재가 대기라는 이유만으로 보완 요청을 권하지 않는다. 가장 적합한 행동 한 가지를 우선 권고하고, 다른 선택은 실제 부족한 자료 등 구체적 조건이 있을 때만 설명한다.\n최신 지급·대사 사실은 progressFacts.accountingFacts가 기준이다. currentVoucher는 최신 전표, confirmedActual은 최종 확정 실적이다. request.instructions.vouchers의 이전 전표와 history의 과거 차이를 현재 미해결 금액으로 설명하지 않는다. 종료 상태이면 이력 조회만 안내한다. 보완 회신은 과거 누락을 해소하려고 제출된 자료이므로 시간에 따른 변화 자체를 자료 충돌이라고 부르지 않는다. 근거 참조 ID는 refs에만 넣고 본문에서는 자료의 종류와 업무명을 쓴다.'},{role:'user',content:JSON.stringify(context)}],stream:false,temperature:0.1,max_tokens:2200,response_format:{type:'json_object'},chat_template_kwargs:{enable_thinking:false}})
   });
   must(response.ok,'AI_HTTP',`NIM HTTP ${response.status}`);
   const body=await response.json();
@@ -208,9 +226,7 @@ export function createGuidanceService(store,{call=callGuidance,spaceLimit=Number
   return async function guide(workspace,actor,input) {
     const saved=await store.read(workspace);
     const {context,key}=guidanceContext(saved,actor,input);
-    const next=context.request?.workflow.next;
-    const fallback={summary:context.module.purpose,actions:context.module.actions,
-      nextStep:next?[next.title,next.ownerName,next.condition].filter(Boolean).join(' · '):context.request?.workflow.current.terminal?'다음 업무가 없습니다. 처리 이력을 확인할 수 있습니다.':'현재 역할의 작업 목록을 확인하세요.'};
+    const fallback={summary:context.outputContract.statusText,actions:context.module.actions,nextStep:context.outputContract.nextText};
     if(Object.hasOwn(input,'stateEventId')&&input.stateEventId!==(saved.events.at(-1)?.id||null))return {status:'stale',contextKey:key,fallback};
     const flightKey=`${workspace}:${key}`;
     if(inFlight.has(flightKey))return inFlight.get(flightKey);

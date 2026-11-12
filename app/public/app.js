@@ -479,7 +479,8 @@ function paymentForm(item, c) {
 
 function historyPanel(c) {
   const workId=view.item?.id||(view.item?.kind==='change'?'change':undefined);
-  const flow=c?{...c.workflow,...c.workflowByWork?.[workId]}:{history:[],current:{title:'묶음에서 지급 요청 접수',ownerName:roles.intake},next:{title:'지급 근거 검토',ownerName:roles.reviewer,condition:'요청과 증빙을 접수한 후'}};
+  const flow=c?{...c.workflow,...c.workflowByWork?.[workId]}:state.intakeGroups.find(g=>g.id===view.id)?.workflow;
+  if(!flow)return '';
   const branches=step=>step.parallel?.length?'<div class="parallel-steps">'+step.parallel.map(p=>'<div class="parallel-step '+(p.owner===user.id?'mine':'')+'"><strong>'+esc(p.ownerName)+'</strong><span>'+esc(p.status)+'</span></div>').join('')+'</div>':'';
   const tasks=step=>(step.tasks||[]).map(t=>'<p class="flow-task">'+esc(roles[t.owner])+' · '+esc(t.reason)+(t.jobId?' · AI 후속 작업':'')+'</p>').join('');
   const past=flow.history.map(h=>'<details class="flow-step past"><summary><span class="flow-phase">✓ 진행 이력</span><strong>'+esc(h.title)+'</strong><span>'+esc(h.ownerName)+' · '+esc(h.result)+'</span><small>'+date(h.at)+'</small>'+branches(h)+'</summary><div class="flow-details">'+h.records.map(r=>'<p>'+esc(labels[r.type]||r.type)+' · '+esc(r.detail?.reason||r.detail?.decision||r.detail?.status||'처리 기록')+'</p>').join('')+(h.docs||[]).map(d=>'<p class="doc">'+esc(d.text)+'</p>').join('')+tasks(h)+'</div></details>').join('');
