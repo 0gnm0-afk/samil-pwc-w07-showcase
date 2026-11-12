@@ -323,7 +323,7 @@ export function command(s,actor,type,p={}) {
     const target=p.taskId&&s.tasks[p.taskId];
     if(p.taskId)must(target?.caseId===c.id&&can(actor,target.owner)&&target.status==='open'&&(!target.jobId||s.jobs[target.jobId]?.revision===c.revision),'TASK_CHANGED','현재 담당 작업을 새로고침하세요.');
     c.revision++;addDocuments(s,c,actor,p.docs);
-    if(c.version&&p.docs.some(d=>['account','supplement','narrative','uncertain'].includes(d.kind))&&c.paymentIds.some(id=>!s.instructions[id]))invalidate(s,c,'새 증빙이 제출되어 현재 근거로 재상신이 필요합니다.');
+    if(c.version&&p.docs.some(d=>['account','supplement'].includes(d.kind))&&c.paymentIds.some(id=>!s.instructions[id]))invalidate(s,c,'새 계좌·명의 증빙이 제출되어 현재 근거로 재상신이 필요합니다.');
     for(const t of Object.values(s.tasks))if((!target||t===target)&&t.caseId===c.id&&can(actor,t.owner)&&t.status==='open'&&!t.key?.startsWith('hold:')){t.status='responded';t.response={docIds:p.docs.map(d=>d.id),actor:actor.id,at:now()};}
     if(target){audit.taskId=target.id;task(s,c,`response:${c.revision}`,'reviewer','보완 회신을 확인하고 지급 근거를 다시 검토하세요.',{responseTo:target.id});}
   } else if(type==='change') {
