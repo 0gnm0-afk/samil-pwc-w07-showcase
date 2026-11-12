@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { readRequestCsv } from './request-csv.mjs';
 import { projectWorkflow } from './workflow.mjs';
 import { recommendDate, koreaToday, scheduleVersion, scheduleRule } from './public/schedule.js';
+import {normalizeEvidence,assessEvidence,assessSettlement} from './evidence.mjs';
 export class RuleError extends Error { constructor(code, message, status=409) { super(message); this.code=code; this.status=status; } }
 export const must = (condition, code, message, status) => { if(!condition) throw new RuleError(code,message,status); };
 const canonical = value => Array.isArray(value)?value.map(canonical):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,canonical(value[k])])):value;
@@ -105,6 +106,7 @@ function reevaluate(s,c) {
     c.canSubmit=false;
     return;
   }
+  syncEvidence(s,c);
   const b=basis(s,c);c.currentBasis=b;
   // DR-07 applies even to cases received after the discrepant bank response.
   for(const i of Object.values(s.instructions))if(i.actualUnresolved){const plan=s.plans[i.paymentId],r=s.receipts[i.receiptId];
@@ -126,19 +128,47 @@ function reevaluate(s,c) {
   c.status=openHolds(c).length?'held':c.canPay?'payable':!c.needsResubmit&&c.version?'approval_pending':'review';
 }
 function refresh(s){for(const c of Object.values(s.cases))reevaluate(s,c);}
+function syncEvidence(s,c){
+  const assessment=assessEvidence(s,c);c.evidenceAssessment=assessment;
+  for(const p of assessment.payments){
+    const key=`auto-evidence:${p.paymentId}`,prior=c.confirmations[p.paymentId];
+    if(p.status==='pass'){
+      if(!prior||prior.actor==='rules'&&hash(prior.docIds)!==hash(p.docIds)){
+        c.confirmations[p.paymentId]={at:now(),actor:'rules',method:'evidence-1',accountKey:s.plans[p.paymentId].accountKey,docIds:p.docIds,reason:'필수 항목·대상·명의·계좌·작성 시점의 규칙 대조 통과'};
+        event(s,c,{id:'rules'},'evidence_auto_pass',{paymentId:p.paymentId,docIds:p.docIds,ruleVersion:assessment.version});
+      }
+      for(const h of [key,`evidence:${p.paymentId}`])if(c.holds[h]&&!c.holds[h].closedAt)closeHold(s,c,h,{id:'rules'},'현재 증빙의 규칙 대조 통과',p.docIds);
+      for(const d of c.docs.filter(d=>p.docIds.includes(d.id)))if(c.holds[`document:${d.id}`]&&!c.holds[`document:${d.id}`].closedAt)closeHold(s,c,`document:${d.id}`,{id:'rules'},'해당 제출 자료의 항목 대조 통과',p.docIds);
+    }else if(p.status==='conflict'){
+      delete c.confirmations[p.paymentId];hold(s,c,key,'증빙 항목과 현재 지급 조건이 일치하지 않습니다. 자료를 보완하세요.');
+    }else if(prior&&p.status!=='manual'){
+      delete c.confirmations[p.paymentId];hold(s,c,key,'증빙이 변경되어 자동 검토 결과를 다시 확인해야 합니다.');
+    }
+  }
+}
 function addDocuments(s,c,actor,docs) {
   must(Array.isArray(docs)&&docs.length<=20,'DOCS','증빙 목록을 확인하세요.',400);
   for(const d of docs){text(d.id,1,80);text(d.text);must(!c.docs.some(x=>x.id===d.id),'DOC_ID','증빙 ID가 중복됩니다.');must(['account','narrative','supplement','bank','voucher','uncertain'].includes(d.kind),'DOC_KIND','증빙 유형을 확인하세요.',400);
-    const doc={id:d.id,kind:d.kind,text:redact(d.text),source:'simulation',at:now(),by:actor.id,revision:c.revision};c.docs.push(doc);
+    must(!d.fields||typeof d.fields==='object'&&!Array.isArray(d.fields)&&Object.values(d.fields).every(v=>['string','number'].includes(typeof v)&&String(v).length<=500),'DOC_FIELDS','증빙 항목 형식을 확인하세요.',400);
+    const ids=d.paymentIds||c.paymentIds;must(Array.isArray(ids)&&ids.length>0&&ids.every(id=>c.paymentIds.includes(id)),'DOC_SCOPE','이 요청에 연결할 증빙 대상을 확인하세요.',400);
+    const doc=normalizeEvidence(d,{redact,paymentIds:ids,at:now(),by:actor.id,revision:c.revision});c.docs.push(doc);
     if(d.kind!=='account'&&d.kind!=='bank'&&d.kind!=='voucher')hold(s,c,`document:${doc.id}`,`${doc.id} 서술 증빙의 사실·충돌 확인 필요`);
   }
 }
+function checkSettlementSource(c,ins,input,kind){
+  const doc=c.docs.filter(d=>d.kind===kind&&(!d.paymentIds||d.paymentIds.includes(ins.paymentId))).at(-1);
+  if(!doc?.extraction)return;
+  must(!doc.extraction.issues.length,'SOURCE_CONFLICT','원자료 안의 상충하는 항목을 먼저 보완하세요.');
+  for(const key of kind==='bank'?['amount','date','outcome','accountKey']:['amount'])if(doc.extraction.fields[key]!==undefined)must(doc.extraction.fields[key]===input[key],'SOURCE_MISMATCH','입력한 값이 제출 원자료와 다릅니다. 추출 항목과 입력을 확인하거나 정정 원자료를 연결하세요.');
+}
 function queueAI(s,c,e) {
   if(['completed','rejected','cancelled'].includes(c.status))return;
-  const uncertain=openHolds(c).filter(h=>h.key.startsWith('document:')||h.key==='assignee');
+  for(const prior of Object.values(s.jobs))if(prior.caseId===c.id&&prior.status==='pending'&&prior.revision!==c.revision){prior.status='stale';prior.applied=false;prior.finishedAt=now();}
+  const uncertain=openHolds(c).filter(h=>h.key.startsWith('document:')||h.key.startsWith('auto-evidence:')||h.key==='assignee');
+  const assessment=c.evidenceAssessment||assessEvidence(s,c);
   const missingProof=c.paymentIds.filter(id=>!s.instructions[id]&&!c.confirmations[id]&&
     !c.docs.some(d=>['account','supplement'].includes(d.kind)&&d.revision>=(s.plans[id].evidenceAfterRevision||0)));
-  if(!uncertain.length&&!missingProof.length)return;
+  if(!uncertain.length&&!missingProof.length&&assessment.status==='pass')return;
   const id=`${c.id}:${c.revision}`;
   if(s.jobs[id])return;
   const docs=structuredClone(c.docs);
@@ -157,8 +187,9 @@ function queueAI(s,c,e) {
     docs.push({id:factId,kind:'rule',text:`${missingProof.join(' · ')}의 유효한 수취계좌·명의 확인 증빙이 등록되지 않았습니다.`});
     if(!focus.length)focus.push(factId);
   }
+  if(assessment.status!=='pass')docs.push({id:'RULE-EXTRACTION',kind:'rule',text:assessment.payments.flatMap(p=>p.checks.filter(k=>k.status!=='pass').map(k=>`${p.paymentId}: ${k.message}`)).join('\n')});
   const mode=assigneeBlocked?'assignee':novel?'uncertain':'documents';
-  const progress={status:c.status,version:c.version,revision:c.revision,requiredApprovers:c.currentBasis.required,
+  const progress={status:c.status,version:c.version,revision:c.revision,evidenceAssessment:JSON.parse(JSON.stringify(assessment)),requiredApprovers:c.currentBasis.required,
     approvals:c.approvals.filter(a=>a.version===c.version),confirmations:c.confirmations,
     paymentEvidence:c.paymentIds.map(id=>({paymentId:id,evidenceAfterRevision:s.plans[id].evidenceAfterRevision||0,confirmed:!!c.confirmations[id]})),
     responseLinks:Object.values(s.tasks).filter(t=>t.caseId===c.id&&t.responseTo).map(t=>({id:t.id,responseTo:t.responseTo,docIds:s.tasks[t.responseTo]?.response?.docIds||[],status:t.status})),
@@ -203,7 +234,7 @@ function registerRequests(s,actor,payload) {
       must(amount>0,'AMOUNT','금액은 0원보다 커야 합니다.',400);
       date(plannedDate);
       must(typeof period==='string'&&/^\d{4}-(0[1-9]|1[0-2])$/.test(period),'PERIOD','정산월은 YYYY-MM 형식으로 입력하세요.',400);
-      const fingerprint=hash({id,agencyId,amount,period,plannedDate});
+      const fingerprint=hash({id,agencyId,amount,period,plannedDate,...(input.evidence?{evidence:input.evidence}:{})});
       const prior=Object.hasOwn(s.plans,id)?s.plans[id]:null;
       if(prior){
         must(prior.registrationFingerprint===fingerprint,'REQUEST_ID_CONFLICT','이미 다른 내용으로 등록된 요청 ID입니다.',409);
@@ -212,7 +243,14 @@ function registerRequests(s,actor,payload) {
       }
       const source={kind:'registered',channel:isCsv?'csv':'direct',id,at:now(),by:actor.id};
       if(isCsv)source.row=input.row;
-      added.push({id,agencyId,amount,period,plannedDate,paidDate:null,status:'planned',accountKey:agency.accountKey,accountLabel:agency.accountLabel,owner:agency.agency_name,source,registrationFingerprint:fingerprint});
+      let pendingEvidence;
+      if(input.evidence){
+        const d={...input.evidence,id:input.evidence.id||uid('DOC')};text(d.id,1,80);text(d.text);must(['account','narrative','supplement','bank','voucher','uncertain'].includes(d.kind),'DOC_KIND','증빙 종류를 확인하세요.',400);
+        must(!d.fields||typeof d.fields==='object'&&!Array.isArray(d.fields)&&Object.values(d.fields).every(v=>v===undefined||['string','number'].includes(typeof v)&&String(v).length<=500),'DOC_FIELDS','증빙 항목 형식을 확인하세요.',400);
+        pendingEvidence=[normalizeEvidence(d,{redact,paymentIds:[id],revision:0,at:now(),by:actor.id})];
+        pendingEvidence[0].origin={...source};
+      }
+      added.push({id,agencyId,amount,period,plannedDate,paidDate:null,status:'planned',accountKey:agency.accountKey,accountLabel:agency.accountLabel,owner:agency.agency_name,source,registrationFingerprint:fingerprint,...(pendingEvidence?{pendingEvidence}:{})});
     }catch(error){
       if(isCsv&&error instanceof RuleError)throw new RuleError(error.code,`CSV ${input.row}행: ${error.message}`,error.status);
       throw error;
@@ -239,8 +277,14 @@ export function command(s,actor,type,p={}) {
     result=registerRequests(s,actor,p);
     audit={registered:result.registered,existing:result.existing};
   } else if(type==='schedule') {
-    role(actor,'intake');must(Array.isArray(p.items)&&p.items.length>0&&p.items.length<=50,'INPUT','지급 계획을 확인하세요.',400);
+    role(actor,'intake');
+    if(p.mode==='all-recommended'){
+      const preview=previewSchedule(s,actor,p);must(p.previewHash===preview.previewHash&&p.asOfDate===preview.asOfDate&&Object.hasOwn(p,'stateEventId'),'SCHEDULE_CHANGED','전체 적용 전 최신 권장일과 묶음을 확인하세요.');p={...p,items:preview.items,unassignedOnly:true};
+    }
+    must(Array.isArray(p.items)&&p.items.length>0&&new Set(p.items.map(i=>i?.id)).size===p.items.length,'INPUT','중복 없는 지급 계획을 확인하세요.',400);
+    if(p.asOfDate)must(p.asOfDate===koreaToday(),'SCHEDULE_CHANGED','날짜가 바뀌었습니다. 권장 날짜를 다시 확인하세요.');
     if(Object.hasOwn(p,'stateEventId'))must(p.stateEventId===(s.events.at(-1)?.id||null),'SCHEDULE_CHANGED','업무 상태가 바뀌었습니다. 예상 합산과 승인 담당자를 다시 확인하세요.');
+    for(const item of p.items){date(item.date);const plan=s.plans[item.id];must(plan&&plan.status==='planned'&&!s.instructions[item.id],'CLOSED','미집행 요청만 지급 계획을 입력할 수 있습니다.');if(p.unassignedOnly)must(!plan.caseId&&!plan.plannedDate,'SCHEDULE_CHANGED','이미 예정일이 정해졌습니다. 새로고침하세요.');}
     audit.changes=[];for(const item of p.items){date(item.date);const plan=s.plans[item.id];must(plan&&plan.status==='planned'&&!s.instructions[item.id],'CLOSED','미집행 요청만 지급 계획을 입력할 수 있습니다.');if(p.unassignedOnly)must(!plan.caseId&&!plan.plannedDate,'SCHEDULE_CHANGED','이미 예정일이 정해졌습니다. 새로고침하세요.');audit.changes.push({paymentId:plan.id,before:plan.plannedDate,after:item.date});plan.plannedDate=item.date;
       if(plan.caseId){const other=s.cases[plan.caseId];other.revision++;hold(s,other,'schedule','지급예정일 변경에 대한 회계 확인 필요');invalidate(s,other,'지급예정일 변경');}}
   } else if(type==='intake') {
@@ -250,6 +294,7 @@ export function command(s,actor,type,p={}) {
     for(const id of p.paymentIds)s.plans[id].plannedDate??=p.plannedDate;
     c={id:uid('CASE'),title:redact(p.title||'판매장려금 지급 검토'),creator:actor.id,paymentIds:p.paymentIds,revision:1,version:0,status:'review',docs:[],holds:{},exceptions:{},conflicts:[],confirmations:{},snapshots:[],approvals:[],needsResubmit:true};
     s.cases[c.id]=c;for(const id of c.paymentIds)s.plans[id].caseId=c.id;
+    for(const id of c.paymentIds)for(const d of s.plans[id].pendingEvidence||[]){must(!c.docs.some(doc=>doc.id===d.id),'DOC_ID','CSV 증빙 ID가 중복됩니다.',400);c.docs.push({...structuredClone(d),revision:c.revision});}
     addDocuments(s,c,actor,p.docs??[]);
     const b=basis(s,c);must(b.validScope,'MIXED_SCOPE','같은 관련자 그룹·지급예정월로 분리해 접수하세요.');
     if(p.declaredTotal!==undefined){money(p.declaredTotal);if(p.declaredTotal!==b.total)exception(s,c,'aggregation','제출 합산액과 서버 재계산 불일치');}
@@ -273,10 +318,12 @@ export function command(s,actor,type,p={}) {
     addDocuments(s,c,actor,[{id:uid('CONCERN'),kind:'uncertain',text:p.reason}]);
     invalidate(s,c,'새로운 판단 사항 확인 필요');
   } else if(type==='documents') {
-    role(actor,'intake','reviewer','reconciler');mutable(c);
+    role(actor,'intake','reviewer','reconciler','treasury');mutable(c);
+    if(can(actor,'treasury'))must(Array.isArray(p.docs)&&p.docs.every(d=>d.kind==='bank')&&assignedWork(s,actor,[c]).some(w=>w.kind==='bank'),'FORBIDDEN','자금팀의 은행 회신 작업에서 은행 원자료만 연결할 수 있습니다.',403);
     const target=p.taskId&&s.tasks[p.taskId];
     if(p.taskId)must(target?.caseId===c.id&&can(actor,target.owner)&&target.status==='open'&&(!target.jobId||s.jobs[target.jobId]?.revision===c.revision),'TASK_CHANGED','현재 담당 작업을 새로고침하세요.');
     c.revision++;addDocuments(s,c,actor,p.docs);
+    if(c.version&&p.docs.some(d=>['account','supplement','narrative','uncertain'].includes(d.kind))&&c.paymentIds.some(id=>!s.instructions[id]))invalidate(s,c,'새 증빙이 제출되어 현재 근거로 재상신이 필요합니다.');
     for(const t of Object.values(s.tasks))if((!target||t===target)&&t.caseId===c.id&&can(actor,t.owner)&&t.status==='open'&&!t.key?.startsWith('hold:')){t.status='responded';t.response={docIds:p.docs.map(d=>d.id),actor:actor.id,at:now()};}
     if(target){audit.taskId=target.id;task(s,c,`response:${c.revision}`,'reviewer','보완 회신을 확인하고 지급 근거를 다시 검토하세요.',{responseTo:target.id});}
   } else if(type==='change') {
@@ -284,7 +331,7 @@ export function command(s,actor,type,p={}) {
     text(p.account,4,100);text(p.owner,1,100);if(p.date)date(p.date);
     const newKey=hash(p.account);must(newKey!==plan.accountKey||p.owner!==plan.owner||p.date&&p.date!==plan.plannedDate,'UNCHANGED','변경된 값이 없습니다.');
     audit.before={accountLabel:plan.accountLabel,owner:plan.owner,date:plan.plannedDate};audit.after={accountLabel:`모의 ****${p.account.slice(-4)}`,owner:p.owner,date:p.date||plan.plannedDate};
-    c.revision++;plan.accountKey=newKey;plan.accountLabel=`모의 ****${p.account.slice(-4)}`;plan.owner=p.owner;plan.evidenceAfterRevision=c.revision;if(p.date)plan.plannedDate=p.date;
+    c.revision++;plan.accountKey=newKey;plan.accountLabel=`모의 ****${p.account.slice(-4)}`;plan.owner=p.owner;plan.evidenceAfterRevision=c.revision;plan.evidenceAfterDate=koreaToday();if(p.date)plan.plannedDate=p.date;
     delete c.confirmations[plan.id];exception(s,c,'account_change','수취계좌 변경 확인');hold(s,c,'changed','지급 조건 변경에 대한 회계 재검토 필요');invalidate(s,c,'수취계좌 변경으로 기존 승인 무효');
     task(s,c,`supplement:${c.revision}`,'intake','새 수취계좌와 명의 확인 증빙 접수');addDocuments(s,c,actor,p.docs??[]);
   } else if(type==='review') {
@@ -292,7 +339,7 @@ export function command(s,actor,type,p={}) {
     if(p.taskId){const target=s.tasks[p.taskId];must(target?.caseId===c.id&&target.owner==='reviewer'&&target.status==='open'&&(!target.jobId||s.jobs[target.jobId]?.revision===c.revision),'TASK_CHANGED','현재 회계 확인 작업을 새로고침하세요.');}
     audit={docIds:p.docIds,confirmPaymentIds:p.confirmPaymentIds??[],resolveKeys:p.resolveKeys??[],taskId:p.taskId};
     if(p.special)exception(s,c,'policy',redact(p.reason));
-    for(const id of p.confirmPaymentIds??[]){must(c.paymentIds.includes(id)&&!s.instructions[id],'PAYMENT','미집행 승인 대상을 확인하세요.');const plan=s.plans[id],a=s.source.agencies.find(a=>a.agency_id===plan.agencyId);
+    for(const id of p.confirmPaymentIds??[]){must(c.paymentIds.includes(id)&&!s.instructions[id],'PAYMENT','미집행 승인 대상을 확인하세요.');must(assessEvidence(s,c).payments.find(r=>r.paymentId===id)?.status!=='conflict','EVIDENCE_CONFLICT','확인된 증빙 불일치를 자료 보완 없이 해제할 수 없습니다.');const plan=s.plans[id],a=s.source.agencies.find(a=>a.agency_id===plan.agencyId);
       must(p.docIds.some(docId=>c.docs.some(d=>d.id===docId&&['account','supplement'].includes(d.kind)&&d.revision>=(plan.evidenceAfterRevision||0))),'STALE_EVIDENCE','현재 지급 조건에 적용되는 계좌·명의 증빙 또는 보완 회신을 연결하세요.');
       must(plan.owner===a.agency_name,'OWNER','명의가 다른 지급은 별도 허용 정책 확정 전 보류합니다.');c.confirmations[id]={at:now(),actor:actor.id,accountKey:plan.accountKey,docIds:p.docIds,reason:redact(p.reason)};
       if(c.holds[`evidence:${id}`]&&!c.holds[`evidence:${id}`].closedAt)closeHold(s,c,`evidence:${id}`,actor,p.reason,p.docIds);
@@ -327,7 +374,8 @@ export function command(s,actor,type,p={}) {
     role(actor,'treasury');const ins=Object.values(s.instructions).find(i=>i.id===p.instructionId);must(ins,'INSTRUCTION','지급 지시가 없습니다.');c=s.cases[ins.caseId];
     text(p.receiptId,1,80);date(p.date);money(p.amount);must(['success','failed'].includes(p.outcome),'BANK','성공 또는 확정 실패를 선택하세요.',400);
     must(!['__proto__','constructor','prototype'].includes(p.receiptId),'RECEIPT_ID','사용할 수 없는 회신 ID입니다.',400);
-    const accountKey=p.account?hash(p.account):ins.accountKey;
+    const accountKey=p.account?hash(p.account.trim()):ins.accountKey;
+    checkSettlementSource(c,ins,{...p,accountKey},'bank');
     const receipt={id:p.receiptId,instructionId:ins.id,date:p.date,amount:p.amount,outcome:p.outcome,accountKey,accountLabel:p.account?`모의 ****${p.account.slice(-4)}`:ins.accountLabel,source:'simulation'};
     const prior=s.receipts[p.receiptId];
     if(prior&&hash(prior)===hash(receipt))return {receipt:prior,duplicate:true};
@@ -341,6 +389,7 @@ export function command(s,actor,type,p={}) {
     }
   } else if(type==='reconcile') {
     role(actor,'reconciler');const ins=Object.values(s.instructions).find(i=>i.id===p.instructionId);must(ins,'INSTRUCTION','지급 지시가 없습니다.');c=s.cases[ins.caseId];const receipt=s.receipts[ins.receiptId];must(receipt?.outcome==='success'||ins.conflict,'BANK_PENDING','성공 회신 또는 확인할 회신 충돌이 있어야 대사할 수 있습니다.');
+    checkSettlementSource(c,ins,p,'voucher');
     text(p.voucherId,1,80);money(p.amount);ins.vouchers??=[];const old=ins.vouchers.find(v=>v.id===p.voucherId);must(!old||old.amount===p.amount,'VOUCHER_CONFLICT','전표 ID의 내용이 충돌합니다.');if(!old)ins.vouchers.push({id:p.voucherId,amount:p.amount,at:now(),by:actor.id,source:'simulation'});
     const match=receipt.amount===ins.amount&&receipt.accountKey===ins.accountKey&&receipt.date.slice(0,7)===ins.date.slice(0,7)&&p.amount===receipt.amount&&!ins.conflict;
     ins.reconciliation=match?'matched':'difference';if(!match)hold(s,c,`voucher:${ins.id}`,'모의 전표·지시·회신 대사 차이 확인 필요','reconciler');
@@ -363,7 +412,10 @@ export function command(s,actor,type,p={}) {
 }
 export function previewSchedule(s,actor,items) {
   role(actor,'intake');
-  must(Array.isArray(items)&&items.length>0&&items.length<=50&&new Set(items.map(i=>i?.id)).size===items.length,'INPUT','예정일을 확인할 요청을 1~50건 선택하세요.',400);
+  const all=items?.mode==='all-recommended';
+  if(all)items=Object.values(s.plans).filter(p=>p.status==='planned'&&!p.caseId&&!p.plannedDate&&!s.instructions[p.id]).map(p=>({id:p.id,date:recommendDate(p.period,koreaToday()).date}));
+  else if(!Array.isArray(items))items=items?.items;
+  must(Array.isArray(items)&&items.length>0&&new Set(items.map(i=>i?.id)).size===items.length,'INPUT','예정일을 확인할 요청을 선택하세요.',400);
   const projected=structuredClone(s);
   for(const item of items){
     date(item.date);const p=projected.plans[item.id];
@@ -371,7 +423,7 @@ export function previewSchedule(s,actor,items) {
     p.plannedDate=item.date;
   }
   const selected=new Set(items.map(i=>i.id));
-  return {source:'rules',saved:false,stateEventId:s.events.at(-1)?.id||null,items,
+  return {source:'rules',saved:false,mode:all?'all-recommended':'selected',asOfDate:koreaToday(),previewHash:hash({items,today:koreaToday(),scheduleVersion}),stateEventId:s.events.at(-1)?.id||null,items,
     groups:intakeGroups(projected).filter(g=>g.paymentIds.some(id=>selected.has(id))).map(g=>{
       const ids=g.paymentIds.filter(id=>selected.has(id)),b=basis(projected,{paymentIds:ids,exceptions:{}});
       return {id:g.id,month:g.month,members:g.members,paymentIds:ids,selectedTotal:b.selectedTotal,total:b.total,missing:b.missing,required:b.required};
@@ -390,7 +442,7 @@ function intakeGroups(s) {
     }
     batches.get(id).paymentIds.push(p.id);
   }
-  return [...batches.values()].map(group=>({...group,workflow:{history:[],
+  return [...batches.values()].map(group=>({...group,selectedTotal:group.paymentIds.reduce((sum,id)=>sum+s.plans[id].amount,0),required:group.month?basis(s,{paymentIds:group.paymentIds,exceptions:{}}).required:[],workflow:{history:[],
     current:{id:'W07I_Receive',title:group.month?'묶음에서 지급 요청 접수':'지급예정일 지정',owner:'intake',ownerName:'일반 영업지원 직원',mine:true},
     next:group.month?{id:'W07I_Review',title:'지급 근거 검토',owner:'reviewer',ownerName:'회계팀',condition:'요청과 증빙을 접수한 후'}:
       {id:'W07I_Receive',title:'묶음에서 지급 요청 접수',owner:'intake',ownerName:'일반 영업지원 직원',condition:'선택 요청의 지급예정일 저장 후'}
@@ -445,7 +497,7 @@ export function publicState(s,actor) {
       const {current,next}=projectWorkflow(result,c,actor,item);
       return [item.id,{current,next}];
     }));
-    return {...c,workflow:projectWorkflow(result,c,actor),workflowByWork};
+    return {...c,evidenceAssessment:c.evidenceAssessment||assessEvidence(s,c),settlementAssessments:c.paymentIds.flatMap(id=>['bank','voucher'].map(kind=>assessSettlement(s,c,id,kind)).filter(Boolean)),workflow:projectWorkflow(result,c,actor),workflowByWork};
   });
   // Account comparison tokens are server-only; values, attachments and diagnostics are masked.
   return JSON.parse(JSON.stringify(result,(key,value)=>['accountKey','passwordHash','registrationFingerprint'].includes(key)?undefined:value));

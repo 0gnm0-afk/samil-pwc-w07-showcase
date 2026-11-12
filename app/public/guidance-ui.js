@@ -2,9 +2,11 @@ import { modules } from './catalog.js';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let generation=0;
 let observer;
+let listeners;
 const activeTimers=new Set();
 export function clearGuidance() {
   generation++;observer?.disconnect();
+  listeners?.abort();
   for(const timer of activeTimers)clearTimeout(timer);
   activeTimers.clear();
 }
@@ -13,6 +15,7 @@ const cache=new Map();
 const area=node=>node.querySelector(':scope > .module-guidance');
 export function moduleHTML(id,content,{open=true,ruleOnly=false}={}) {
   const module=modules[id];
+  if(id==='inbox')return `<section class="work-module"><h2>${esc(module.title)}</h2><p class="source-box source-rules">${esc(module.purpose)} 현재 배정된 작업을 선택하면 원자료·검토 결과와 필요한 행동을 함께 확인할 수 있습니다.</p><div class="module-content">${content}</div></section>`;
   return `<details class="work-module" data-module="${id}" ${ruleOnly?'data-rule-only="true"':''} ${open?'open':''}>
     <summary><span>${esc(module.title)}</span><span class="module-toggle">설명·처리</span></summary>
     <div class="module-purpose source-box source-rules"><span class="source-label">기본 안내</span><p>${esc(module.purpose)}</p></div><div class="module-content">${content}</div>
@@ -42,6 +45,7 @@ function basic(node,result,message) {
 }
 export function mountGuidance({api,getContext,onStale,onNavigate}) {
   clearGuidance();const epoch=generation;
+  listeners=new AbortController();const signal=listeners.signal;
   const nodes=[...document.querySelectorAll('[data-module]')];
   const timers=new Map();
   const requests=new Map();
@@ -85,17 +89,26 @@ export function mountGuidance({api,getContext,onStale,onNavigate}) {
           ${r.howTo?.length?`<h4>이렇게 진행하세요</h4><ol>${r.howTo.map(t=>`<li>${esc(t)}</li>`).join('')}</ol>`:''}
           </div>
           <div class="source-box source-rules"><span class="source-label">기본 안내 · 실행 결과</span><p>${esc(r.effect)}</p></div>
-          <button type="button" data-recommendation="${i}">${r.destination==='inbox'?'내 작업으로 돌아가기':r.interaction==='navigate'?'작업 화면 열기':'해당 입력·버튼 확인'}</button>
+          <button type="button" data-recommendation="${i}">${r.destination==='inbox'?'내 작업으로 돌아가기':['apply','applySource'].includes(r.interaction)?'추천 선택 적용':r.interaction==='navigate'?'작업 화면 열기':'해당 입력·버튼 확인'}</button>
           <details><summary>권장 근거 보기</summary>${r.evidence.map(e=>`<div class="source-box source-rules"><span class="source-label">${e.source==='document'?'제출 자료':'업무 규칙·현재 사실'}</span><p>${esc(e.displayText||e.text)}</p></div>`).join('')}</details></div>`).join('')}
         <div class="source-box source-rules"><span class="source-label">기본 안내 · 다음 담당자</span><p>${esc(answer.nextStep)}</p></div>
         ${answer.checks.length?`<div class="source-box source-ai"><span class="source-label">AI 안내 · 추가 확인</span><ul>${answer.checks.map(text=>`<li>${esc(text)}</li>`).join('')}</ul></div>`:''}`;
       for(const button of area(node).querySelectorAll('[data-recommendation]'))button.onclick=()=>{
         const r=answer.recommendations[Number(button.dataset.recommendation)];
+        if(epoch!==generation||requests.get(node)!==signature)return;
         if(r.destination==='inbox'){onNavigate?.('inbox');return;}
-        const target=r.field?node.querySelector(`[name="${r.field}"]`):node.querySelector(`[data-action="${r.actionId}"]`);
+        if(r.interaction==='applySource'){document.getElementById('applySource')?.click();return;}
+        const target=r.formId?document.getElementById(r.formId)?.querySelector(`[name="${r.field}"]`):r.field?node.querySelector(`[name="${r.field}"]`):node.querySelector(`[data-action="${r.actionId}"]`);
         const fallbackTarget=target||document.querySelector(r.field?`main [name="${r.field}"]`:`main [data-action="${r.actionId}"]`)||(!r.field&&document.querySelector(`[data-action="${r.actionId}"]`));
         if(fallbackTarget){
           if(r.interaction==='navigate'){fallbackTarget.click();return;}
+          if(r.interaction==='apply'){
+            if(fallbackTarget.tagName!=='SELECT'||![...fallbackTarget.options].some(o=>o.value===r.value))return;
+            fallbackTarget.value=r.value;
+            for(const input of document.querySelectorAll('#review [name=docIds]'))if(r.docIds?.includes(input.value))input.checked=true;
+            fallbackTarget.dispatchEvent(new Event('change',{bubbles:true}));
+            button.textContent='선택 적용됨 · 내용 확인 후 직접 저장하세요';
+          }
           for(let parent=fallbackTarget.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;
           fallbackTarget.focus();fallbackTarget.scrollIntoView({block:'center',behavior:'smooth'});fallbackTarget.classList.add('recommended-input');later(()=>fallbackTarget.classList.remove('recommended-input'),3500);
         }
@@ -107,12 +120,12 @@ export function mountGuidance({api,getContext,onStale,onNavigate}) {
   observer=new IntersectionObserver(entries=>{
     for(const entry of entries){if(entry.isIntersecting){visible.add(entry.target);load(entry.target);}else visible.delete(entry.target);}
   },{rootMargin:'80px'});
-  for(const node of nodes){observer.observe(node);node.addEventListener('toggle',()=>load(node));}
+  for(const node of nodes){observer.observe(node);node.addEventListener('toggle',()=>load(node),{signal});}
   const main=document.querySelector('main');
   main?.addEventListener('input',()=>{
     for(const node of nodes){clearTimeout(timers.get(node));requests.delete(node);basic(node,null,'선택 중인 입력입니다. 입력을 마치면 안내를 갱신합니다.');}
-  });
+  },{signal});
   main?.addEventListener('change',()=>{
     for(const node of nodes){clearTimeout(timers.get(node));timers.set(node,later(()=>load(node,true),900));}
-  });
+  },{signal});
 }

@@ -62,7 +62,7 @@
       <bpmn:outgoing>W07I_Flow03</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:userTask id="W07I_Review" name="증빙 취합·합산 지급 근거 검토">
-      <bpmn:documentation>회계가 관련 거래처와 월 합산액, 지급 근거, 이해상충 및 예외를 확인한다. 접수 이후 위험을 새로 식별하면 해당 시점에 양쪽에 알린다.</bpmn:documentation>
+      <bpmn:documentation>원자료에서 명의·전체 계좌·작성일과 기재된 대상·금액·정산월을 추출해 현재 지급 조건과 규칙 대조한다. 필수 항목이 맞으면 자동 증빙 검토를 기록하고 NIM을 생략한다. 최종 상신·승인은 사용자가 수행한다. 회계가 관련 거래처와 월 합산액, 지급 근거, 이해상충 및 예외를 확인한다. 접수 이후 위험을 새로 식별하면 해당 시점에 양쪽에 알린다.</bpmn:documentation>
       <bpmn:incoming>W07I_Flow03</bpmn:incoming>
       <bpmn:incoming>W07I_Flow22</bpmn:incoming>
       <bpmn:outgoing>W07I_Flow04</bpmn:outgoing>
@@ -157,7 +157,7 @@
       <bpmn:outgoing>W07I_Flow22</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:serviceTask id="W07I_AIReview" name="지급보류 · AI 증빙 판단">
-      <bpmn:documentation>증빙 누락, 미등록 상황, 적격 승인 경로 부재를 지급보류로 저장한다. AI가 근거를 인용해 자료 보완 또는 회계 확인과 상위 보고를 제안한다. 서버가 범위·인용·입력 버전을 검증한다.</bpmn:documentation>
+      <bpmn:documentation>규칙으로 확인하지 못한 누락·불일치·오래된 증빙·정책 예외를 지급보류로 저장한다. 추출 항목과 출처, 실패한 규칙, 원문, BPMN과 역할 및 허용 선택지를 NIM에 전달한다. AI가 근거를 인용해 자료 보완 또는 회계 확인과 상위 보고를 제안한다. 서버가 범위·인용·입력 버전을 검증한다.</bpmn:documentation>
       <bpmn:incoming>W07I_Flow27</bpmn:incoming>
       <bpmn:outgoing>W07I_Flow28</bpmn:outgoing>
     </bpmn:serviceTask>

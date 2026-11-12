@@ -25,7 +25,7 @@ test('AC-01 정상 접수부터 3건 대사까지, 중복 없는 합산',()=>{
 test('AC-02·03 변경 보류, 같은 새 버전 이중승인, 접수자·이해상충 권한',()=>{
  const s=initialState(source),id=intake(s);review(s,id);submitApprove(s,id);
  act(s,'intake','change',{caseId:id,paymentId:ids[1],account:'DEMO-NEW-0120',owner:s.plans[ids[1]].owner,docs:[{id:'N-1',kind:'narrative',text:'명의 증빙이 없습니다. 임시 정산계좌로 바꾸었다는 주장만 있습니다.'}]});
- assert.equal(s.cases[id].canPay,false);assert.equal(Object.keys(s.notifications).length,2);assert.equal(Object.keys(s.jobs).length,1);assert.equal(act(s,'treasury','pay',{caseId:id,version:1,paymentId:ids[0]}).denied,true);
+ assert.equal(s.cases[id].canPay,false);assert.equal(Object.keys(s.notifications).length,2);assert.equal(Object.values(s.jobs).filter(j=>j.revision===s.cases[id].revision).length,1);assert.equal(act(s,'treasury','pay',{caseId:id,version:1,paymentId:ids[0]}).denied,true);
  assert.throws(()=>act(s,'intake','decide',{caseId:id,version:1,decision:'approve',reason:'본인 결재'}),{code:'FORBIDDEN'});
  assert.throws(()=>review(s,id),{code:'STALE_EVIDENCE'});
  act(s,'intake','documents',{caseId:id,docs:[{id:'D-NEW',kind:'supplement',text:'모의 새 수취계좌 명의 확인서를 첨부합니다.'}]});
@@ -72,7 +72,7 @@ test('은행 차이 이후 새로 접수한 동일 범위도 보류하며 프로
 test('AC-07·08 AI 인용 검증·실패·지연 응답과 개별 보류',async()=>{
  const store=await openStore({local:'memory'});try{await store.create('qa-ai');const cid=await store.tx('qa-ai',s=>{const id=intake(s);act(s,'intake','documents',{caseId:id,docs:[{id:'DOC-A',kind:'narrative',text:'확인서에는 수취 명의가 가상영업 A로 기록돼 있습니다.'},{id:'DOC-B',kind:'narrative',text:'회신에는 수취 명의가 가상영업 B로 기록돼 있습니다.'}]});return id;});
  assert.deepEqual(await store.pending(),['qa-ai']);await store.recover();
- const state=await store.read('qa-ai'),job=Object.values(state.jobs)[0];const decision={caseId:cid,inputRevision:job.revision,facts:job.docs.filter(d=>d.id.startsWith('DOC')).map(d=>({docId:d.id,quote:d.text,text:d.text})),unknowns:['수취 명의 충돌 확인'],scope:job.basis.members,action:'request_review',owner:'reviewer',reason:'두 증빙의 명의 충돌 확인'};
+ const state=await store.read('qa-ai'),job=Object.values(state.jobs).find(j=>j.status==='pending');const decision={caseId:cid,inputRevision:job.revision,facts:job.docs.filter(d=>d.id.startsWith('DOC')).map(d=>({docId:d.id,quote:d.text,text:d.text})),unknowns:['수취 명의 충돌 확인'],scope:job.basis.members,action:'request_review',owner:'reviewer',reason:'두 증빙의 명의 충돌 확인'};
  assert.throws(()=>validateDecision({...decision,action:'pay'},job),{code:'AI_ACTION'});assert.throws(()=>validateDecision({...decision,facts:[{docId:'DOC-A',quote:'존재하지 않는 인용',text:'오류'}]},job),{code:'AI_CITATION'});
  let release;const waiting=new Promise(r=>release=r);const running=processOne(store,'qa-ai',{call:async()=>{await waiting;return {decision:validateDecision(decision,job),model:'test-adapter'};}});
  await new Promise(r=>setTimeout(r,20));await store.tx('qa-ai',s=>act(s,'reviewer','review',{caseId:cid,docIds:['DOC-A'],reason:'한 사유만 확인',confirmPaymentIds:[],resolveKeys:['document:DOC-A']}));release();await running;

@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="2354" height="1162" viewBox="0 0 2354 1162" role="img" aria-labelledby="title desc">
   <title id="title">W07 판매장려금 지급 개선 BPMN</title>
-  <desc id="desc">영업지원이 직접 입력과 CSV 요청을 묶어서 접수한다. 미정 예정일은 오늘과 정산월 말일 중 늦은 날부터 3영업일 뒤로 규칙 추천하고, 저장 전 월 합산을 확인한다. 회계가 근거를 검토한다. 특별승인은 영업 임원과 재무 임원의 동일 버전 결재가 모두 필요하다. 추가 판단이 필요하면 지급을 보류하고 AI가 영업지원 보완 또는 회계 확인과 상위 보고로 연결한다.</desc>
+  <desc id="desc">영업지원이 직접 입력과 CSV 요청을 묶어서 접수한다. 미정 예정일은 오늘과 정산월 말일 중 늦은 날부터 3영업일 뒤로 규칙 추천하고, 저장 전 월 합산을 확인한다. 원자료 필수 항목을 규칙 대조하고 정상 자료는 자동 검토, 예외는 NIM 권고 후 회계가 확인한다. 특별승인은 영업 임원과 재무 임원의 동일 버전 결재가 모두 필요하다. 추가 판단이 필요하면 지급을 보류하고 AI가 영업지원 보완 또는 회계 확인과 상위 보고로 연결한다.</desc>
   <defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M 0 0 L 9 4.5 L 0 9 z" fill="#425773"/></marker></defs>
   <style>text{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;fill:#172941}.title{font-size:29px;font-weight:700}.subtitle{font-size:16px;fill:#445970}.role{font-size:15px;font-weight:700;text-anchor:middle}.task{font-size:15px;font-weight:600;text-anchor:middle}.small{font-size:13px;text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:6px;stroke-linejoin:round}.wire{fill:none;stroke:#425773;stroke-width:1.7;marker-end:url(#arrow)}</style>
   <rect width="2354" height="1162" fill="#fff"/>
   <text x="23" y="40" class="title">W07 판매장려금 지급 개선 BPMN</text>
-  <text x="23" y="68" class="subtitle">직접·CSV 신규 요청 접수 · 특별승인은 양쪽 임원의 같은 버전 승인 · 미확정 건은 지급보류와 AI 후속 작업</text>
+  <text x="23" y="68" class="subtitle">원자료 규칙 대조 → 정상 자동 검토 / 예외 NIM 권고 · 상신·결재·지급은 담당자 실행 · 특별승인은 양쪽 동일 버전 승인</text>
   <rect x="22" y="90" width="2310" height="118" fill="#fff" stroke="#bdcad9"/>
   <rect x="22" y="90" width="116" height="118" fill="#edf2f8" stroke="#bdcad9"/>
   <text x="80" y="154" class="role"><tspan x="80" dy="-8">일반 영업지원</tspan><tspan x="80" dy="19">직원</tspan></text>
@@ -68,7 +68,7 @@
   <rect x="332" y="511" width="166" height="54" rx="8" fill="#deeeff" stroke="#2463aa" stroke-width="2"/>
   <text x="415" y="534" class="task"><tspan x="415" dy="0">접수 등록</tspan><tspan x="415" dy="19">위험 표시 시 동시 알림</tspan></text>
   <rect x="472" y="355" width="166" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
-  <text x="555" y="378" class="task"><tspan x="555" dy="0">증빙 취합·합산</tspan><tspan x="555" dy="19">지급 근거 검토</tspan></text>
+  <text x="555" y="378" class="task"><tspan x="555" dy="0">원자료 추출·대조</tspan><tspan x="555" dy="19">자동 검토·회계 확인</tspan></text>
   <rect x="623" y="511" width="166" height="54" rx="8" fill="#fff" stroke="#52708f" stroke-width="1.5"/>
   <text x="706" y="534" class="task"><tspan x="706" dy="0">승인권자 결정</tspan><tspan x="706" dy="19">근거 버전 확정</tspan></text>
   <path d="M854,517l21,21 -21,21 -21,-21z" fill="#fff5db" stroke="#795715" stroke-width="1.7"/><path d="M847,531l14,14 M847,545l14,-14" fill="none" stroke="#795715" stroke-width="2"/>

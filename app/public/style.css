@@ -38,3 +38,5 @@ h1,h2,h3,.login-story p{word-break:keep-all}
 .scheduled-highlight{background:#edf7ef}.source-box button{margin-top:8px}input[data-plan-date]{min-width:155px}
 @media(max-width:767px){.work-module>.module-purpose{margin:14px 16px;padding:14px}.source-box{padding:13px}.recommendation>strong{font-size:16px}}
 @media(max-width:767px){.demo-codes{margin-top:20px}.login-shell{min-height:0}.decision-band{padding:12px}}
+
+.date-reason{display:block;max-width:280px;color:#556575;margin-top:4px}.document-list{display:grid;gap:12px}.evidence-original{white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;background:#fff;border:1px solid #ccd4db}.document-card pre{white-space:pre-wrap;overflow-wrap:anywhere}.evidence-check{border-top:1px solid #cbd4df;margin-top:12px;padding-top:12px}#dateBoard input[type=date]{min-width:145px}#dateBoard .row{margin:14px 0}#inlineIntake:empty{display:none}

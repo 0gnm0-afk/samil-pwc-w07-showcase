@@ -28,7 +28,7 @@ test('NIM 권고는 전체 BPMN 문맥으로 생성하고 확정 사실은 서�
     const body=JSON.parse(options.body),sent=JSON.parse(body.messages[1].content);
     assert.equal(sent.process.flows.length,33);assert.equal(sent.module.node,'W07I_FinanceVote');
     assert(!body.messages[1].content.includes('accountKey'));
-    return {ok:true,status:200,json:async()=>({id:'mock-transport',choices:[{message:{content:JSON.stringify({summary:'양쪽 승인이 완료되었습니다.',nextStep:'곧 지급하세요.',recommendations:[{actionId:'approve',reason:'제출된 근거와 담당 지급 조건을 검토한 뒤 승인 여부를 결정하세요.',beforeAction:['현재 자료와 지급 조건을 확인하세요.'],howTo:['화면의 해당 버튼을 확인하세요.'],refs:['R-APPROVAL']}],checks:[]})}}]})};
+    return {ok:true,status:200,json:async()=>({id:'mock-transport',choices:[{message:{content:JSON.stringify({summary:'양쪽 승인이 완료되었습니다.',nextStep:'곧 지급하세요.',recommendations:[{targetId:'decision:approve',reason:'제출된 근거와 담당 지급 조건을 검토한 뒤 승인 여부를 결정하세요.',beforeAction:['현재 자료와 지급 조건을 확인하세요.'],howTo:['화면의 해당 버튼을 확인하세요.'],refs:['R-APPROVAL']}],checks:[]})}}]})};
   }});
   assert.match(answer.summary,/재무 임원: 대기/);
   assert.match(answer.nextStep,/필수 승인 모두 완료/);
@@ -156,8 +156,8 @@ test('안내 API는 인증·공간·역할·입력 형식과 화면 상태 식�
     await post('/api/guidance',null,400);
     const stale=await post('/api/guidance',{moduleId:'inbox',stateEventId:'outdated'},200);
     assert.equal(stale.body.status,'stale');assert.equal(calls,0);
-    const ready=await post('/api/guidance',{moduleId:'inbox'},200);assert.equal(ready.body.status,'ready');
-    const cached=await post('/api/guidance',{moduleId:'inbox'},200);assert.equal(cached.body.cached,true);assert.equal(calls,1);
+    const ready=await post('/api/guidance',{moduleId:'inbox'},200);assert.equal(ready.body.status,'rules');
+    const cached=await post('/api/guidance',{moduleId:'inbox'},200);assert.equal(cached.body.status,'rules');assert.equal(calls,0);
   }finally{await app.close();}
 });
 test('안내 캐시·동시 요청·공간 격리·실패 대체·기존 누적 제한 해제와 오래된 응답',async()=>{
@@ -188,8 +188,8 @@ test('안내 캐시·동시 요청·공간 격리·실패 대체·기존 누적 
     await store.tx('qa-daily',s=>{s.publicDemo={expiresAt:new Date(Date.now()+3600000).toISOString(),aiUsed:0,aiLimit:3};});
     const daily=createGuidanceService(store,{call});
     const dayLimit=await daily('qa-daily',actorFor('intake'),{moduleId:'inbox'});
-    assert.equal(dayLimit.status,'ready');
-    assert.equal((await store.read('qa-daily')).publicDemo.guidanceUsed,1);
+    assert.equal(dayLimit.status,'rules');
+    assert.equal((await store.read('qa-daily')).publicDemo.guidanceUsed??0,0);
     await store.create('qa-stale','boundary',{validation:true});let second;await store.tx('qa-stale',s=>{second=pending(s);});
     const stale=createGuidanceService(store,{call:async()=>{await store.tx('qa-stale',s=>act(s,'executive','decide',{caseId:second,version:1,decision:'approve',reason:'독립 승인'}));return {};}});
     assert.equal((await stale('qa-stale',actor,{...input,caseId:second})).status,'stale');
