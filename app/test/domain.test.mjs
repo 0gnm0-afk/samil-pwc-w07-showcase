@@ -8,7 +8,7 @@ const ids=['RB-00054','RB-00120','RB-00180'];
 const act=(s,user,type,p)=>command(s,actorFor(user),type,p);
 const docs=[{id:'D-ACCOUNT',kind:'account',text:'모의 증빙: 세 지급의 등록 계좌 및 거래처 명의 일치. D-024 회수계좌 차이는 과거 회수 건이며 이번 수취계좌와 구분하여 확인.'}];
 function intake(s,paymentIds=ids){return act(s,'intake','intake',{paymentIds,docs}).caseId;}
-function review(s,id,extra={}){return act(s,'reviewer','review',{caseId:id,docIds:['D-ACCOUNT'],confirmPaymentIds:s.cases[id].paymentIds.filter(p=>!s.instructions[p]),resolveKeys:openHolds(s.cases[id]).filter(h=>!h.key.startsWith('evidence:')).map(h=>h.key),reason:'원본 금액과 모의 명의·수취계좌 증빙 대조 확인',...extra});}
+function review(s,id,extra={}){return act(s,'reviewer','review',{caseId:id,docIds:['D-ACCOUNT'],confirmPaymentIds:s.cases[id].paymentIds.filter(p=>!s.instructions[p]),resolveKeys:openHolds(s.cases[id]).filter(h=>h.key!=='assignee'&&!h.key.startsWith('evidence:')).map(h=>h.key),reason:'원본 금액과 모의 명의·수취계좌 증빙 대조 확인',...extra});}
 function submitApprove(s,id){act(s,'reviewer','submit',{caseId:id});const c=s.cases[id];for(const a of c.approvals.filter(a=>a.version===c.version))act(s,a.userId,'decide',{caseId:id,version:c.version,decision:'approve',reason:'현재 버전 지급 근거 확인'});}
 test('원본 검증, 전이 연결, AC-01a의 결재 대상과 월 합산 분리',()=>{
  assert.deepEqual(source.sources.map(x=>x.count),[50,240,32]);const g=groups(source.agencies);assert.deepEqual(g.components['D-024'],['D-011','D-024','D-037']);
@@ -31,7 +31,7 @@ test('AC-02·03 변경 보류, 같은 새 버전 이중승인, 접수자·이해
  act(s,'intake','documents',{caseId:id,docs:[{id:'D-NEW',kind:'supplement',text:'모의 새 수취계좌 명의 확인서를 첨부합니다.'}]});
  review(s,id,{docIds:['D-NEW']});act(s,'reviewer','submit',{caseId:id});act(s,'executive','decide',{caseId:id,version:2,decision:'approve',reason:'재확인'});assert.equal(s.cases[id].canPay,false);act(s,'finance','decide',{caseId:id,version:2,decision:'approve',reason:'독립 확인'});assert.equal(s.cases[id].canPay,true);
  assert.throws(()=>act(s,'treasury','pay',{caseId:id,version:1,paymentId:ids[0]}),{code:'STALE_VERSION'});
- const t=initialState(source),cid=act(t,'intake','intake',{paymentIds:ids,docs,exception:{kind:'conflict',reason:'영업임원 이해상충 신고',users:['executive']}}).caseId;review(t,cid);act(t,'reviewer','submit',{caseId:cid});assert.equal(t.cases[cid].approvals[0].userId,'alternate');assert.throws(()=>act(t,'executive','decide',{caseId:cid,version:1,decision:'approve',reason:'이해상충'}),{code:'ASSIGNEE'});
+ const t=initialState(source),cid=act(t,'intake','intake',{paymentIds:ids,docs,exception:{kind:'conflict',reason:'영업임원 이해상충 신고',users:['executive']}}).caseId;review(t,cid);assert.throws(()=>act(t,'reviewer','submit',{caseId:cid}),{code:'SUBMIT_BLOCKED'});assert.equal(t.cases[cid].approvals.length,0);assert.equal(t.cases[cid].status,'held');assert.throws(()=>act(t,'executive','decide',{caseId:cid,version:0,decision:'approve',reason:'이해상충'}),{code:'ASSIGNEE'});
 });
 test('AC-04 확인 전 연관 미집행 보류; 215만원 재상신 및 다음 달 변형',()=>{
  for(const date of ['2026-07-10','2026-08-10']){const s=initialState(source,'difference'),main=intake(s,['S-MAIN']),next=intake(s,['S-NEXT']);for(const id of [main,next]){review(s,id);submitApprove(s,id);assert.equal(s.cases[id].currentBasis.total,1950000);}
@@ -51,7 +51,7 @@ test('AC-05 SQL 원자성·동시 지시·변경 선저장·종료 ID',async()=>
  const closed=initialState(source,'closed');for(const id of Object.keys(closed.plans))assert.throws(()=>intake(closed,[id]),{code:'CLOSED_ID'});
 });
 test('200만원 경계, 한쪽 보완/반려가 다른 미결 결재·지급을 닫음',()=>{
- for(const decision of ['supplement','reject']){const s=initialState(source,'boundary');s.plans['S-BOUNDARY'].amount=2000000;const id=act(s,'intake','intake',{paymentIds:['S-BOUNDARY'],docs,exception:{kind:'policy',reason:'정책 예외 검토'}}).caseId;assert.equal(s.cases[id].currentBasis.required[0].role,'sales');review(s,id);act(s,'reviewer','submit',{caseId:id});act(s,'finance','decide',{caseId:id,version:1,decision,reason:'확인 필요'});assert.equal(s.cases[id].approvals.find(a=>a.role==='sales').decision,'closed');assert.equal(s.cases[id].canPay,false);}
+ for(const decision of ['supplement','reject']){const s=initialState(source,'boundary');const id=act(s,'intake','intake',{paymentIds:['S-BOUNDARY'],docs,exception:{kind:'policy',reason:'정책 예외 검토'}}).caseId;assert.equal(s.cases[id].currentBasis.required[0].role,'executive');review(s,id);act(s,'reviewer','submit',{caseId:id});act(s,'finance','decide',{caseId:id,version:1,decision,reason:'확인 필요'});assert.equal(s.cases[id].approvals.find(a=>a.role==='executive').decision,'closed');assert.equal(s.cases[id].canPay,false);}
  const s=initialState(source,'boundary');s.plans['S-BOUNDARY'].amount=2000001;const id=intake(s,['S-BOUNDARY']);assert.equal(s.cases[id].currentBasis.required[0].role,'executive');
 });
 test('AC-06 회신 대기·실패·+1원·충돌과 전표 누락',()=>{

@@ -7,6 +7,8 @@
     <bpmn:documentation>설계 기준은 작업/W07_문제정리.md 22.12절. 결재 요청과 지급 권한은 동일한 근거 버전으로 관리한다.</bpmn:documentation>
     <bpmn:laneSet id="W07I_Lanes">
       <bpmn:lane id="W07I_LaneIntake" name="영업지원">
+        <bpmn:flowNodeRef>W07I_Delegated</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_Supplement</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>W07I_Start</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>W07I_Receive</bpmn:flowNodeRef>
       </bpmn:lane>
@@ -17,6 +19,8 @@
         <bpmn:flowNodeRef>W07I_Finish</bpmn:flowNodeRef>
       </bpmn:lane>
       <bpmn:lane id="W07I_LaneSystem" name="시스템">
+        <bpmn:flowNodeRef>W07I_AIReview</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>W07I_AIRoute</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>W07I_EarlyAlert</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>W07I_Route</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>W07I_Risk</bpmn:flowNodeRef>
@@ -45,8 +49,8 @@
     <bpmn:startEvent id="W07I_Start" name="정산 요청">
       <bpmn:outgoing>W07I_Flow01</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:userTask id="W07I_Receive" name="요청 접수·원본 보관">
-      <bpmn:documentation>요청서와 소명 원본을 건 ID에 연결한다. 접수자가 제출한 이해상충·예외 표시를 영업 임원이 해제할 수 없다.</bpmn:documentation>
+    <bpmn:userTask id="W07I_Receive" name="신규 등록·묶음 접수">
+      <bpmn:documentation>직접 입력·CSV 신규 요청과 기존 미지급 요청을 관련자 그룹·지급예정월로 묶고 이번 결재 대상을 선택한다. 선택 금액과 유효 지급 월 합산액을 각각 기록한다. 요청서와 증빙을 건 ID에 연결한다.</bpmn:documentation>
       <bpmn:incoming>W07I_Flow01</bpmn:incoming>
       <bpmn:outgoing>W07I_Flow02</bpmn:outgoing>
     </bpmn:userTask>
@@ -62,24 +66,30 @@
       <bpmn:outgoing>W07I_Flow04</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:serviceTask id="W07I_Route" name="승인권자 결정 근거 버전 확정">
-      <bpmn:documentation>일반 건은 월 합산액 200만 원 이하이면 영업지원 전결, 초과하면 영업 임원 결재다. 이해상충이 신고되거나 확인된 영업 임원은 회피 처리하고 사전 위임된 비이해관계 영업 임원에게 배정한다. 대체자가 없으면 지급을 보류한다.</bpmn:documentation>
+      <bpmn:documentation>일반 건은 월 합산액 200만 원 이하이면 영업지원 전결, 초과하면 영업 임원 결재다. 특별승인은 금액에 관계없이 영업 임원과 재무 임원이 결재한다. 이해상충 당사자가 필수 승인자이면 적격 경로 부재로 기록하고 지급을 보류한다.</bpmn:documentation>
       <bpmn:incoming>W07I_Flow04</bpmn:incoming>
       <bpmn:outgoing>W07I_Flow05</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:exclusiveGateway id="W07I_Risk" name="예외·이해상충?">
+    <bpmn:exclusiveGateway id="W07I_Risk" name="승인 경로 확정?" default="W07I_Flow27">
       <bpmn:documentation>이해상충, 정상 정책을 벗어난 지급 요청, 관련자 합산 예외 또는 수취계좌 변경을 포함한다. 예외로 등록된 건은 소명 후에도 이번 검토 건의 이중승인을 유지한다.</bpmn:documentation>
       <bpmn:incoming>W07I_Flow05</bpmn:incoming>
       <bpmn:outgoing>W07I_Flow06</bpmn:outgoing>
       <bpmn:outgoing>W07I_Flow07</bpmn:outgoing>
       <bpmn:outgoing>W07I_Flow27</bpmn:outgoing>
+      <bpmn:outgoing>W07I_Flow32</bpmn:outgoing>
     </bpmn:exclusiveGateway>
-    <bpmn:userTask id="W07I_Regular" name="전결 또는 영업 임원 결재">
-      <bpmn:documentation>200만 원 이하 전결권자는 접수자와 다른 사람이어야 한다. 승인, 보완 요청, 반려를 기록한다.</bpmn:documentation>
+    <bpmn:userTask id="W07I_Regular" name="영업 임원 일반 결재">
+      <bpmn:documentation>월 합산 200만 원 초과 일반 건의 승인, 보완 요청, 반려를 기록한다.</bpmn:documentation>
       <bpmn:incoming>W07I_Flow06</bpmn:incoming>
       <bpmn:outgoing>W07I_Flow18</bpmn:outgoing>
     </bpmn:userTask>
+    <bpmn:userTask id="W07I_Delegated" name="영업지원 전결">
+      <bpmn:documentation>200만 원 이하 일반 건을 접수자와 다른 전결 담당자가 결정한다.</bpmn:documentation>
+      <bpmn:incoming>W07I_Flow32</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow33</bpmn:outgoing>
+    </bpmn:userTask>
     <bpmn:serviceTask id="W07I_OpenBoth" name="두 결재 요청 동시 발행">
-      <bpmn:documentation>동일한 검토 버전으로 영업과 재무 양쪽 승인함에 결재 요청을 함께 발행한 뒤 두 결재를 활성화한다. 한쪽 발행이 실패하면 두 결재 모두 활성화하지 않고 재처리한다.</bpmn:documentation>
+      <bpmn:documentation>동일한 검토 버전으로 영업과 재무 양쪽 승인함에 결재 요청을 함께 발행한 뒤 두 결재를 활성화한다. 양쪽 화면에 상대 결재 필요 여부와 상태를 표시한다. 한쪽 발행이 실패하면 두 결재 모두 활성화하지 않고 재처리한다.</bpmn:documentation>
       <bpmn:incoming>W07I_Flow07</bpmn:incoming>
       <bpmn:outgoing>W07I_Flow08</bpmn:outgoing>
     </bpmn:serviceTask>
@@ -131,16 +141,33 @@
       <bpmn:documentation>현재 버전에 필요한 모든 결재가 승인인 경우에만 지급 전 확인으로 간다. 한쪽의 보완 요청이나 반려는 즉시 지급 차단 상태를 기록하고 상대 미결 결재를 닫는다.</bpmn:documentation>
       <bpmn:incoming>W07I_Flow17</bpmn:incoming>
       <bpmn:incoming>W07I_Flow18</bpmn:incoming>
+      <bpmn:incoming>W07I_Flow33</bpmn:incoming>
       <bpmn:outgoing>W07I_Flow19</bpmn:outgoing>
       <bpmn:outgoing>W07I_Flow20</bpmn:outgoing>
       <bpmn:outgoing>W07I_Flow21</bpmn:outgoing>
     </bpmn:exclusiveGateway>
     <bpmn:userTask id="W07I_Rework" name="지급 보류·보완 확인">
-      <bpmn:documentation>회계가 사유를 기록하고 필요한 소명을 영업지원에 요청한다. 증빙 또는 권한 배정이 해결된 뒤 새 검토 버전으로 재검토한다.</bpmn:documentation>
+      <bpmn:documentation>회계가 보완 회신과 AI 인용 근거를 확인한다. 미등록 상황과 적격 승인 경로 부재는 상위 보고 사유를 기록하고 근거와 경로가 확보될 때까지 지급을 보류한다. 확인한 새 근거로 재검토한다.</bpmn:documentation>
       <bpmn:incoming>W07I_Flow20</bpmn:incoming>
       <bpmn:incoming>W07I_Flow23</bpmn:incoming>
-      <bpmn:incoming>W07I_Flow27</bpmn:incoming>
+      <bpmn:incoming>W07I_Flow30</bpmn:incoming>
+      <bpmn:incoming>W07I_Flow31</bpmn:incoming>
       <bpmn:outgoing>W07I_Flow22</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="W07I_AIReview" name="지급보류 · AI 증빙 판단">
+      <bpmn:documentation>증빙 누락, 미등록 상황, 적격 승인 경로 부재를 지급보류로 저장한다. AI가 근거를 인용해 자료 보완 또는 회계 확인과 상위 보고를 제안한다. 서버가 범위·인용·입력 버전을 검증한다.</bpmn:documentation>
+      <bpmn:incoming>W07I_Flow27</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow28</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="W07I_AIRoute" name="보강 자료 있음?" default="W07I_Flow30">
+      <bpmn:incoming>W07I_Flow28</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow29</bpmn:outgoing>
+      <bpmn:outgoing>W07I_Flow30</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="W07I_Supplement" name="영업지원 보완 회신">
+      <bpmn:documentation>AI가 확인한 요청 자료와 근거를 보고 해당 작업에 보완 증빙을 연결한다. 회계팀이 회신을 검토한다.</bpmn:documentation>
+      <bpmn:incoming>W07I_Flow29</bpmn:incoming>
+      <bpmn:outgoing>W07I_Flow31</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:endEvent id="W07I_Rejected" name="반려 종료">
       <bpmn:incoming>W07I_Flow21</bpmn:incoming>
@@ -169,11 +196,11 @@
     <bpmn:sequenceFlow id="W07I_Flow03" sourceRef="W07I_EarlyAlert" targetRef="W07I_Review"/>
     <bpmn:sequenceFlow id="W07I_Flow04" sourceRef="W07I_Review" targetRef="W07I_Route"/>
     <bpmn:sequenceFlow id="W07I_Flow05" sourceRef="W07I_Route" targetRef="W07I_Risk"/>
-    <bpmn:sequenceFlow id="W07I_Flow06" sourceRef="W07I_Risk" targetRef="W07I_Regular" name="일반">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">통제 예외가 없고 적격한 승인권자가 배정됨</bpmn:conditionExpression>
+    <bpmn:sequenceFlow id="W07I_Flow06" sourceRef="W07I_Risk" targetRef="W07I_Regular" name="일반 · 200만 원 초과">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">검토가 완료된 200만 원 초과 일반 건이며 적격 영업 임원이 배정됨</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="W07I_Flow07" sourceRef="W07I_Risk" targetRef="W07I_OpenBoth" name="예외">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">이해상충 또는 예외 지급 플래그가 있고 적격한 승인권자가 배정됨</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">증빙과 합산 검토가 끝났고 특별승인 사유가 있으며 영업·재무의 두 임원이 모두 적격함</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="W07I_Flow08" sourceRef="W07I_OpenBoth" targetRef="W07I_Fork"/>
     <bpmn:sequenceFlow id="W07I_Flow09" sourceRef="W07I_Fork" targetRef="W07I_Business"/>
@@ -204,9 +231,17 @@
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="W07I_Flow25" sourceRef="W07I_Pay" targetRef="W07I_Reconcile"/>
     <bpmn:sequenceFlow id="W07I_Flow26" sourceRef="W07I_Reconcile" targetRef="W07I_Finish"/>
-    <bpmn:sequenceFlow id="W07I_Flow27" sourceRef="W07I_Risk" targetRef="W07I_Rework" name="권한자 미배정">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">적격 승인권자가 배정되지 않음</bpmn:conditionExpression>
+    <bpmn:sequenceFlow id="W07I_Flow27" sourceRef="W07I_Risk" targetRef="W07I_AIReview" name="보류·추가 판단"/>
+    <bpmn:sequenceFlow id="W07I_Flow28" sourceRef="W07I_AIReview" targetRef="W07I_AIRoute"/>
+    <bpmn:sequenceFlow id="W07I_Flow29" sourceRef="W07I_AIRoute" targetRef="W07I_Supplement" name="자료 보완">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">서버가 검증한 AI 판단에서 보강할 자료가 특정됨</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="W07I_Flow30" sourceRef="W07I_AIRoute" targetRef="W07I_Rework" name="회계 확인·상위 보고"/>
+    <bpmn:sequenceFlow id="W07I_Flow31" sourceRef="W07I_Supplement" targetRef="W07I_Rework" name="보완 회신"/>
+    <bpmn:sequenceFlow id="W07I_Flow32" sourceRef="W07I_Risk" targetRef="W07I_Delegated" name="일반 · 200만 원 이하">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">검토가 완료된 200만 원 이하 일반 건이며 접수자와 다른 전결 담당자가 배정됨</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="W07I_Flow33" sourceRef="W07I_Delegated" targetRef="W07I_Outcome"/>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="W07I_Diagram">
     <bpmndi:BPMNPlane id="W07I_Plane" bpmnElement="W07I_Collaboration">
@@ -224,6 +259,7 @@
       <bpmndi:BPMNShape id="W07I_RouteDI" bpmnElement="W07I_Route"><dc:Bounds x="623" y="411" width="166" height="54"/></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="W07I_RiskDI" bpmnElement="W07I_Risk" isMarkerVisible="true"><dc:Bounds x="833" y="417" width="42" height="42"/><bpmndi:BPMNLabel><dc:Bounds x="732" y="461" width="136" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="W07I_RegularDI" bpmnElement="W07I_Regular"><dc:Bounds x="972" y="628" width="166" height="54"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_DelegatedDI" bpmnElement="W07I_Delegated"><dc:Bounds x="835" y="119" width="165" height="54"/></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="W07I_OpenBothDI" bpmnElement="W07I_OpenBoth"><dc:Bounds x="912" y="513" width="166" height="54"/></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="W07I_ForkDI" bpmnElement="W07I_Fork"><dc:Bounds x="1114" y="519" width="42" height="42"/></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="W07I_BusinessDI" bpmnElement="W07I_Business"><dc:Bounds x="1167" y="703" width="166" height="54"/></bpmndi:BPMNShape>
@@ -235,6 +271,9 @@
       <bpmndi:BPMNShape id="W07I_JoinDI" bpmnElement="W07I_Join"><dc:Bounds x="1449" y="519" width="42" height="42"/></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="W07I_OutcomeDI" bpmnElement="W07I_Outcome" isMarkerVisible="true"><dc:Bounds x="1559" y="417" width="42" height="42"/><bpmndi:BPMNLabel><dc:Bounds x="1562" y="461" width="136" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="W07I_ReworkDI" bpmnElement="W07I_Rework"><dc:Bounds x="1497" y="255" width="166" height="54"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_AIReviewDI" bpmnElement="W07I_AIReview"><dc:Bounds x="1166" y="391" width="174" height="44"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_AIRouteDI" bpmnElement="W07I_AIRoute" isMarkerVisible="true"><dc:Bounds x="1380" y="397" width="42" height="42"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="W07I_SupplementDI" bpmnElement="W07I_Supplement"><dc:Bounds x="1195" y="119" width="171" height="54"/></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="W07I_RejectedDI" bpmnElement="W07I_Rejected"><dc:Bounds x="1562" y="522" width="36" height="36"/><bpmndi:BPMNLabel><dc:Bounds x="1523" y="560" width="114" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="W07I_PrepayDI" bpmnElement="W07I_Prepay" isMarkerVisible="true"><dc:Bounds x="1744" y="417" width="42" height="42"/><bpmndi:BPMNLabel><dc:Bounds x="1697" y="461" width="136" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="W07I_PayDI" bpmnElement="W07I_Pay"><dc:Bounds x="1847" y="937" width="166" height="54"/></bpmndi:BPMNShape>
@@ -266,7 +305,13 @@
       <bpmndi:BPMNEdge id="W07I_Flow24DI" bpmnElement="W07I_Flow24"><di:waypoint x="1786" y="438"/><di:waypoint x="1930" y="438"/><di:waypoint x="1930" y="937"/><bpmndi:BPMNLabel><dc:Bounds x="1779" y="413" width="150" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="W07I_Flow25DI" bpmnElement="W07I_Flow25"><di:waypoint x="2013" y="964"/><di:waypoint x="2100" y="964"/><di:waypoint x="2100" y="309"/></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="W07I_Flow26DI" bpmnElement="W07I_Flow26"><di:waypoint x="2183" y="282"/><di:waypoint x="2242" y="282"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="W07I_Flow27DI" bpmnElement="W07I_Flow27"><di:waypoint x="854" y="417"/><di:waypoint x="854" y="325"/><di:waypoint x="1490" y="325"/><di:waypoint x="1490" y="300"/><di:waypoint x="1497" y="300"/><bpmndi:BPMNLabel><dc:Bounds x="1065" y="301" width="150" height="20"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow27DI" bpmnElement="W07I_Flow27"><di:waypoint x="854" y="417"/><di:waypoint x="854" y="367"/><di:waypoint x="1148" y="367"/><di:waypoint x="1148" y="413"/><di:waypoint x="1166" y="413"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow28DI" bpmnElement="W07I_Flow28"><di:waypoint x="1340" y="413"/><di:waypoint x="1360" y="413"/><di:waypoint x="1360" y="418"/><di:waypoint x="1380" y="418"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow29DI" bpmnElement="W07I_Flow29"><di:waypoint x="1401" y="397"/><di:waypoint x="1401" y="146"/><di:waypoint x="1366" y="146"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow30DI" bpmnElement="W07I_Flow30"><di:waypoint x="1422" y="418"/><di:waypoint x="1480" y="418"/><di:waypoint x="1480" y="300"/><di:waypoint x="1497" y="300"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow31DI" bpmnElement="W07I_Flow31"><di:waypoint x="1280" y="173"/><di:waypoint x="1280" y="195"/><di:waypoint x="1520" y="195"/><di:waypoint x="1520" y="255"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow32DI" bpmnElement="W07I_Flow32"><di:waypoint x="842" y="429"/><di:waypoint x="809" y="429"/><di:waypoint x="809" y="146"/><di:waypoint x="835" y="146"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="W07I_Flow33DI" bpmnElement="W07I_Flow33"><di:waypoint x="1000" y="146"/><di:waypoint x="1000" y="106"/><di:waypoint x="1690" y="106"/><di:waypoint x="1690" y="374"/><di:waypoint x="1622" y="374"/><di:waypoint x="1622" y="418"/><di:waypoint x="1597" y="434"/></bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>
