@@ -1,5 +1,16 @@
 // One read model for people and the business AI. It never changes a payment decision.
 const unique=values=>[...new Set(values)];
+export function settlementDifferences(s,instruction){
+  const receipt=s.receipts[instruction.receiptId],voucher=instruction.vouchers?.at(-1),differences=[];
+  if(!receipt)return differences;
+  const won=v=>Number(v).toLocaleString('ko-KR')+'원';
+  if(receipt.amount!==instruction.amount)differences.push({code:'amount',message:`지급액: 승인·지시 ${won(instruction.amount)}, 은행 처리 ${won(receipt.amount)}`});
+  if(receipt.accountKey!==instruction.accountKey)differences.push({code:'account',message:`수취계좌: 승인·지시 ${instruction.accountLabel}, 은행 처리 ${receipt.accountLabel}. 표시된 끝자리가 같더라도 전체 계좌 식별값은 다릅니다.`});
+  if(receipt.date.slice(0,7)!==instruction.date.slice(0,7))differences.push({code:'month',message:`처리월: 승인·지시 ${instruction.date.slice(0,7)}, 은행 처리 ${receipt.date.slice(0,7)}`});
+  if(voucher&&voucher.amount!==receipt.amount)differences.push({code:'voucher',message:`전표 금액: 전표 ${won(voucher.amount)}, 은행 처리 ${won(receipt.amount)}`});
+  if(instruction.conflict)differences.push({code:'conflict',message:'같은 지급 지시에 서로 다른 은행 처리결과가 등록되었습니다. 은행 결과와 근거·이력을 확인해야 합니다.'});
+  return differences;
+}
 export function reviewIssues(assessment){
   const grouped=new Map();
   for(const payment of assessment?.payments||[])for(const check of payment.checks||[]){

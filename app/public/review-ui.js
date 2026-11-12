@@ -44,6 +44,15 @@ export function approvalFormHTML(c,user){
 }
 export function noticeHTML(c){return `<section class="judgment waiting"><h3>예외 사항을 먼저 알려드립니다</h3><p>영업 임원과 재무 임원에게 같은 건을 공개했습니다. 회계팀이 자료와 지급 근거를 확인 중이므로 아직 결재할 수 없습니다. 회계 검토가 끝나면 결재 요청으로 표시됩니다.</p>${Object.values(c.exceptions).map(e=>`<p>${esc(e.reason)}</p>`).join('')}</section>${judgmentHTML(c)}`;}
 
+export function reconciliationFormHTML(instruction,receipt,docs,sourceMode){
+ const voucher=instruction.vouchers?.at(-1),actual=instruction.reconciliation==='difference'&&voucher;
+ const voucherForm=`<form id="reconcile" class="stack"><input type="hidden" name="voucherId" value="VOUCHER-${crypto.randomUUID().slice(0,8)}"><label>전표에 기록된 지급액 (모의)<input name="amount" type="number" min="0" step="1" value="${voucher?.amount??(sourceMode?receipt.amount:'')}" required></label><button class="primary" type="submit">${actual?'수정한 전표로 다시 비교':'전표 기록하고 지급 결과 비교'}</button></form>`;
+ const comparison=`<p>승인·지시 금액 ${won(instruction.amount)} · 은행에서 처리한 금액 ${won(receipt.amount)} · ${esc(receipt.date)} · ${esc(receipt.accountLabel)}</p>`;
+ if(!actual)return comparison+voucherForm;
+ const relevant=docs.filter(d=>!d.paymentIds?.length||d.paymentIds.includes(instruction.paymentId));
+ return comparison+`<section class="judgment"><h3>지급 결과와 전표를 비교했습니다. 차이를 확인해 주세요.</h3><ul>${(instruction.differences||[]).map(d=>`<li>${esc(d.message)}</li>`).join('')}</ul><p>전표에는 ${won(voucher.amount)}이 기록되어 있습니다. 확인한 실제 지급액·처리일과 차이의 근거를 남기면 관련 미지급 요청의 월 합산에도 반영합니다.</p><form id="confirmActual" class="stack"><div class="field-grid"><label>확인한 실제 지급액<input type="number" min="0" step="1" name="amount" value="${receipt.amount}" required></label><label>확인한 실제 처리일<input name="date" type="date" value="${esc(receipt.date)}" required></label><label>대사에 참고한 자료<select name="docId">${(relevant.length?relevant:docs).map(d=>`<option value="${esc(d.id)}">${esc(d.title||({bank:'은행 처리결과 자료',voucher:'회계 전표 자료',account:'수취계좌 확인 자료',supplement:'보완 회신',narrative:'추가 설명자료',source:'연결된 원본 자료'})[d.kind]||'제출 자료')}</option>`).join('')}</select></label></div><label>차이를 확인한 근거와 최종 판단<textarea name="reason" required maxlength="4000" placeholder="어떤 자료와 확인을 통해 실제 지급액·처리일을 확정했는지 적어주세요."></textarea></label><button type="submit" class="primary">확인한 지급 결과 기록</button></form></section><details class="supporting-form"><summary>전표 금액을 수정해야 하는 경우</summary>${voucherForm}</details>${documentCards(relevant.length?relevant:docs)}`;
+}
+
 export function resultHTML(c,s,item,action,reviewAction){
  const instruction=s.instructions.find(i=>i.paymentId===item.paymentId||i.id===item.instructionId);
  const outputs={

@@ -6,7 +6,7 @@ import { koreaToday, scheduleVersion, scheduleRule, dataPeriod } from './public/
 import {normalizeEvidence,assessEvidence,assessSettlement} from './evidence.mjs';
 import {prepareSource,sourcePreview,sourceRecords,assessSource} from './source-data.mjs';
 import {sourceTables} from './public/source-schema.js';
-import {reviewSummary,reviewIssues,latestReviewJob} from './review-summary.mjs';
+import {reviewSummary,reviewIssues,latestReviewJob,settlementDifferences} from './review-summary.mjs';
 export class RuleError extends Error { constructor(code, message, status=409) { super(message); this.code=code; this.status=status; } }
 export const must = (condition, code, message, status) => { if(!condition) throw new RuleError(code,message,status); };
 const canonical = value => Array.isArray(value)?value.map(canonical):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,canonical(value[k])])):value;
@@ -607,7 +607,7 @@ export function publicState(s,actor) {
     publicDemo:s.publicDemo?{...s.publicDemo,aiLimit:null,guidanceLimit:null}:null,source:s.source.sources,
     sourceRevision:s.sourceRevision||0,sourceRows:s.source,sourceHistory:s.sourceHistory||[],schedulePolicy:{version:scheduleVersion,today,period:dataPeriod(s.source.payments),rule:scheduleRule},
     agencies:s.source.agencies,plans:Object.values(s.plans).map(p=>({...p,plannedMonth:paymentMonth(p)})),cases:visible,tasks:Object.values(s.tasks).filter(t=>ids.has(t.caseId)),notifications:Object.values(s.notifications).filter(n=>ids.has(n.caseId)),
-    instructions:Object.values(s.instructions).filter(i=>ids.has(i.caseId)),receipts:Object.values(s.receipts).filter(r=>Object.values(s.instructions).some(i=>ids.has(i.caseId)&&i.id===r.instructionId)),
+    instructions:Object.values(s.instructions).filter(i=>ids.has(i.caseId)).map(i=>({...i,differences:settlementDifferences(s,i)})),receipts:Object.values(s.receipts).filter(r=>Object.values(s.instructions).some(i=>ids.has(i.caseId)&&i.id===r.instructionId)),
     jobs:Object.values(s.jobs).filter(j=>ids.has(j.caseId)).map(({docs,...j})=>j),events:s.events.filter(e=>!e.caseId||ids.has(e.caseId)),conflicts:s.conflicts,
     workItems:assignedWork(s,actor,visible),intakeGroups:can(actor,'intake')?intakeGroups(s):[]};
   result.cases = visible.map(c=>{

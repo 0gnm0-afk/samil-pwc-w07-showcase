@@ -5,8 +5,17 @@ import {source,openStore} from '../store.mjs';
 import {initialState,command,actorFor,publicState} from '../domain.mjs';
 import {previewIntake} from '../batch-intake.mjs';
 import {processOne,promptFor,validateDecision} from '../ai.mjs';
-import {approvalFormHTML} from '../public/review-ui.js';
+import {approvalFormHTML,reconciliationFormHTML} from '../public/review-ui.js';
+import {settlementDifferences} from '../review-summary.mjs';
 const act=(s,u,t,p)=>command(s,actorFor(u),t,p);
+test('대사 차이는 실제 비교값으로 설명하고 입력한 전표는 접어 두며 근거 이름으로 선택한다',()=>{
+ const i={id:'I',paymentId:'P',amount:100,date:'2026-07-10',accountKey:'one',accountLabel:'은행 ****1111',receiptId:'R',reconciliation:'difference',vouchers:[{id:'V',amount:101}]};
+ const r={id:'R',amount:101,date:'2026-08-10',accountKey:'two',accountLabel:'은행 ****1111'};
+ i.differences=settlementDifferences({receipts:{R:r}},i);assert.deepEqual(i.differences.map(d=>d.code),['amount','account','month']);assert(!JSON.stringify(i.differences).includes('accountKey'));
+ const html=reconciliationFormHTML(i,r,[{id:'PRIVATE-DOC-ID',title:'이번 지급의 원본 내역',kind:'source',paymentIds:['P']}],true);
+ assert.match(html,/<details class="supporting-form"><summary>전표 금액을 수정해야 하는 경우<\/summary><form id="reconcile"/);assert.match(html,/value="PRIVATE-DOC-ID">이번 지급의 원본 내역<\/option>/);assert(!html.includes('reasonChoice'));assert.match(html,/확인한 지급 결과 기록/);
+ assert.deepEqual(settlementDifferences({receipts:{R:{...r,amount:100,date:'2026-07-15',accountKey:'one'}}},{...i,vouchers:[{id:'V',amount:100}]}),[]);
+});
 function setup(){const s=initialState(source);act(s,'intake','batchIntake',{...previewIntake(s,actorFor('intake'),{paymentIds:Object.values(s.plans).filter(p=>p.status==='planned').map(p=>p.id),plannedMonth:'2026-07'}),requestId:randomUUID()});return s;}
 const request=(c,action,extra={})=>({caseId:c.id,revision:c.revision,requestId:randomUUID(),action,...extra});
 function decision(job,action='request_review',unknowns=['입금계좌와 정산계좌가 다른 이유를 확인했습니까?']){

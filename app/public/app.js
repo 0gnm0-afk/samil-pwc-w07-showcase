@@ -1,4 +1,4 @@
-import {caseOverview,judgmentHTML,reviewFormHTML,approvalFormHTML,noticeHTML,resultHTML} from './review-ui.js';
+import {caseOverview,judgmentHTML,reviewFormHTML,approvalFormHTML,noticeHTML,resultHTML,reconciliationFormHTML} from './review-ui.js';
 import {sourceHTML,mountSource} from './source-ui.js';
 import {intakeBoard,mountIntake} from './schedule-ui.js';
 import { moduleHTML, mountGuidance, clearGuidance } from './guidance-ui.js';
@@ -386,16 +386,7 @@ function paymentForm(item, c) {
     <label>다른 수취계좌 (차이 있을 때)<input name="account"></label></div>
     <button class="primary" type="submit">은행 회신 저장</button></form>${settlementSource(c,item,"bank")}`;
   const receipt = state.receipts.find(r => r.id === instruction.receiptId);
-  const actual = instruction.reconciliation === 'difference' && instruction.vouchers?.length;
-  return `${details}<p>승인·지시 금액 ${won(instruction.amount)} · 은행에서 처리한 금액 ${won(receipt.amount)} · ${esc(receipt.date)} · ${esc(receipt.accountLabel)}</p>
-    <form id="reconcile" class="stack"><div class="field-grid"><label hidden>모의 전표 ID<input name="voucherId" value="VOUCHER-${crypto.randomUUID().slice(0,8)}" required></label>
-    <label>전표에 기록된 지급액 (모의)<input name="amount" type="number" min="0" step="1" value="${c.reviewMode==='source-1'?receipt.amount:''}" required></label></div><button class="primary" type="submit">전표 기록하고 지급 결과 비교</button></form>
-    ${actual ? `<section class="judgment"><h3>지급 결과에 차이가 있습니다</h3><p>은행 결과와 전표에서 확인한 실제 금액·처리일을 기록해 주세요. 관련 미지급 요청의 월 합산도 다시 확인합니다.</p>`+`<form id="confirmActual" class="stack"><div class="field-grid">
-      <label>확인 금액<input type="number" min="0" step="1" name="amount" value="${receipt.amount}" required></label>
-      <label>실제 처리일<input name="date" type="date" value="${esc(receipt.date)}" required></label>
-      <label>확인 근거<select name="docId">${c.docs.map(d => `<option value="${esc(d.id)}">${esc(d.id)}</option>`).join('')}</select></label>
-      ${reasonFields('actual')}</div><button type="submit">차이 확인 저장</button></form></section>` : ''}
-    ${settlementSource(c,item,"voucher")}`;
+  return details+reconciliationFormHTML(instruction,receipt,c.docs,c.reviewMode==='source-1')+settlementSource(c,item,'voucher');
 }
 
 function settlementSource(c,item,kind){
