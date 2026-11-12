@@ -61,14 +61,6 @@ test('설명자료의 보류만 해소하고 지급 근거가 같으면 기존 �
  act(s,'intake','documents',{caseId:id,docs:[{id:'NOTE',kind:'narrative',text:'수취계좌 변경 없는 별도 설명 자료를 확인해 주세요.'}]});assert.equal(s.cases[id].canPay,false);
  act(s,'reviewer','review',{caseId:id,docIds:['NOTE'],resolveKeys:['document:NOTE'],reason:'지급 조건 변경 없는 설명 확인'});assert.equal(s.cases[id].canPay,true);assert.equal(s.cases[id].version,1);assert.equal(s.cases[id].needsResubmit,false);
 });
-test('전체 권장일은 50건 초과를 원자적으로 저장하며 기존 날짜·기준일·상태 변경을 보호한다',()=>{
- const s=initialState(source,'boundary');for(let n=0;n<65;n++)s.plans['U'+n]={...s.plans['S-BOUNDARY'],id:'U'+n,plannedDate:null};
- const old=s.plans['S-BOUNDARY'].plannedDate,preview=previewSchedule(s,actorFor('intake'),{mode:'all-recommended'});assert.equal(preview.items.length,65);assert.equal(s.plans.U0.plannedDate,null);
- const clone=structuredClone(s);assert.throws(()=>act(clone,'intake','schedule',{items:[{id:'U0',date:'2026-12-01'},{id:'U1',date:'bad'}],unassignedOnly:true}),{code:'DATE'});assert.equal(clone.plans.U0.plannedDate,null);
- assert.throws(()=>act(s,'intake','schedule',{mode:'all-recommended',...preview,asOfDate:'2000-01-01'}),{code:'SCHEDULE_CHANGED'});
- act(s,'intake','schedule',{...preview,mode:'all-recommended'});assert(s.plans.U64.plannedDate);assert.equal(s.plans['S-BOUNDARY'].plannedDate,old);assert.equal(Object.keys(s.cases).length,0);assert.equal(Object.keys(s.jobs).length,0);
- assert.throws(()=>act(s,'intake','schedule',{...preview,mode:'all-recommended'}));
-});
 test('예외 권고는 실제 선택·문서만 적용 대상으로 반환하며 업무 상태를 바꾸지 않는다',()=>{
  const s=initialState(source,'boundary'),id=receive(s,[{id:'M',kind:'account',text:'예금주: 검증상사'}]),before=JSON.stringify(s);
  const {context}=guidanceContext(s,actorFor('reviewer'),{moduleId:'evidence',caseId:id});assert(context.evidenceAssessment.payments[0].checks.some(c=>c.code==='missing_account'));

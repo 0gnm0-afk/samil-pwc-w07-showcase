@@ -1,6 +1,6 @@
 import {sourceTables} from './source-schema.js';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-export function sourceHTML(){return `<div class="source-box source-rules"><h3>원본 세 표로 지급 요청을 준비합니다</h3><p>대리점 마스터에 거래처를 등록하고 장려금 지급표에 요청을 넣으세요. 채권 회수 이력은 참고자료로 연결합니다. 자료가 없는 입금 이력을 만들어 넣을 필요는 없습니다. 입력 내용을 미리 확인한 뒤 저장하면 날짜 지정 목록에 나타납니다.</p></div><label>입력 방식<select id="sourceMode"><option value="direct">표에서 직접 입력·정정</option><option value="csv">원본 CSV 파일 등록</option></select></label><form id="sourceInput" class="stack"><div id="sourceFields"></div><button type="submit" class="primary">등록 전 미리보기</button></form><div id="sourcePreview" aria-live="polite"></div>`;}
+export function sourceHTML(){return `<label>입력 방식<select id="sourceMode"><option value="direct">표에서 직접 입력·정정</option><option value="csv">원본 CSV 파일 등록</option></select></label><form id="sourceInput" class="stack"><div id="sourceFields"></div><button type="submit" class="primary">등록 전 미리보기</button></form><div id="sourcePreview" aria-live="polite"></div>`;}
 export function mountSource({state,api,run,onSaved,onError}){
  const fields=document.getElementById('sourceFields'),form=document.getElementById('sourceInput'),output=document.getElementById('sourcePreview');let epoch=0,payload,preview;
  const reset=()=>{epoch++;payload=preview=null;output.innerHTML='';};

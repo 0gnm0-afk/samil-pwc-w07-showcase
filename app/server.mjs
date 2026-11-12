@@ -7,6 +7,7 @@ import { initAccounts, login, loginRole, authenticate, sessionToken, workspaceTo
 import { command, publicState, previewSchedule, previewSource, businessRoles, can, must, hash, now, RuleError, upgradeWorkflow } from './domain.mjs';
 import { processOne } from './ai.mjs';
 import { createGuidanceService } from './guidance.mjs';
+import {previewIntake} from './batch-intake.mjs';
 const instanceId=randomUUID();
 export async function startServer({store,hashes,port=Number(process.env.PORT||8080),worker=true,secure=process.env.NODE_ENV==='production',guidanceOptions}={}) {
   store??=await openStore();hashes??=JSON.parse(process.env.W07_ACCOUNT_HASHES||'null');await initAccounts(store,hashes);await store.create('demo');await store.recover();
@@ -51,6 +52,12 @@ export async function startServer({store,hashes,port=Number(process.env.PORT||80
       if(url.pathname==='/api/logout'&&req.method==='POST'){await store.query('DELETE FROM w07_sessions WHERE token_hash=$1',[hash(sessionToken(req))]);res.setHeader('set-cookie',`w07_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${secure?'; Secure':''}`);return json(res,200,{ok:true});}
       const workspace=url.searchParams.get('workspace')||actor.workspace||'demo';must(/^(demo|qa-[a-z0-9-]{1,70}|trial-[a-f0-9-]{36})$/.test(workspace),'WORKSPACE','작업공간 오류',400);
       if(actor.publicDemo)must(workspace===actor.workspace,'FORBIDDEN','내 체험 공간에만 접근할 수 있습니다.',403);
+      if(url.pathname==='/api/demo/reset'&&req.method==='POST'){
+        must(actor.publicDemo,'FORBIDDEN','개인 시연에서만 초기화할 수 있습니다.',403);
+        const p=await body(req);must(p.confirm==='RESET_MY_DEMO','CONFIRM','전체 초기화를 확인하세요.',400);
+        return json(res,200,await store.resetTrial(actor.workspace,p.epoch));
+      }
+      if(url.pathname==='/api/intake/preview'&&req.method==='POST')return json(res,200,previewIntake(await store.read(workspace),actor,await body(req)));
       if(url.pathname==='/api/guidance'&&req.method==='POST')return json(res,200,await guide(workspace,actor,await body(req)));
       if(url.pathname==='/api/schedule/preview'&&req.method==='POST')return json(res,200,previewSchedule(await store.read(workspace),actor,await body(req)));
       if(url.pathname==='/api/source/preview'&&req.method==='POST')return json(res,200,previewSource(await store.read(workspace),actor,await body(req)));
@@ -68,6 +75,7 @@ export async function startServer({store,hashes,port=Number(process.env.PORT||80
       }
       if(url.pathname==='/api/command'&&req.method==='POST'){
         const p=await body(req);const result=await store.tx(workspace,(s,meta)=>{
+          if(p.epoch!==undefined||s.resetRequiredEpoch)must(p.epoch===s.epoch,'STALE_WORKSPACE','시연이 초기화되었습니다. 새로고침 후 다시 처리하세요.');
           if(can(actor,'intake')&&p.payload?.caseId)must(s.cases[p.payload.caseId]?.creator===actor.id,'FORBIDDEN','자기 접수 건만 처리할 수 있습니다.',403);
           if(actor.publicDemo)must(s.events.length<1500&&Object.keys(s.cases).length<100&&Object.values(s.cases).reduce((n,c)=>n+c.docs.reduce((m,d)=>m+d.text.length,0),0)<500000,'DEMO_LIMIT','이 공간의 체험 입력 한도에 도달했습니다.',429);
           const prior=new Set(Object.keys(s.jobs));const result=command(s,actor,p.type,p.payload);

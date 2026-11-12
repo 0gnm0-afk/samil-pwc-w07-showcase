@@ -1,3 +1,4 @@
+import {groups} from './domain.mjs';
 import {createHash} from 'node:crypto';
 import {sourceTables} from './public/source-schema.js';
 const digest=v=>createHash('sha256').update(typeof v==='string'?v:JSON.stringify(v)).digest('hex');
@@ -55,7 +56,7 @@ export function prepareSource(s,input){
  }catch(e){errors.push({table:file.table,row:entry.index,message:e.message});}}}catch(e){errors.push({table:file.table,row:1,message:e.message});}}
  for(const item of rows.filter(r=>r.table!=='agencies'))if(!projected.agencies.some(a=>a.agency_id===item.after.agency_id))errors.push({table:item.table,row:item.row,message:'대리점 마스터에 없는 거래처입니다. 마스터를 함께 등록하세요.'});
  const changed=rows.filter(r=>r.kind!=='same'),agencies=new Set(changed.map(r=>r.table==='agencies'?r.id:r.after.agency_id));
- const affectedCases=Object.values(s.cases).filter(c=>!['completed','rejected','cancelled'].includes(c.status)&&c.paymentIds.some(id=>agencies.has(s.plans[id].agencyId))).map(c=>c.id);
+ const affectedCases=Object.values(s.cases).filter(c=>!['completed','rejected','cancelled'].includes(c.status)&&c.paymentIds.some(id=>groups(s.source.agencies).components[s.plans[id].agencyId].some(a=>agencies.has(a)))).map(c=>c.id);
  const revision=s.sourceRevision||0,previewHash=digest({epoch:s.epoch,revision,event:s.events.at(-1)?.id,rows:rows.map(r=>({table:r.table,id:r.id,kind:r.kind,after:r.after}))});
  return {rows,projected,errors,affectedCases,sourceRevision:revision,previewHash};
 }
@@ -72,9 +73,11 @@ export function sourceRecords(s,paymentIds){
  return records;
 }
 export function assessSource(s,c){
- const records=sourceRecords(s,c.paymentIds),payments=c.paymentIds.filter(id=>!s.instructions[id]).map(id=>{
-  const p=s.plans[id],agency=s.source.agencies.find(a=>a.agency_id===p.agencyId),row=s.source.payments.find(r=>r.rebate_id===id),docs=records.filter(r=>r.paymentIds.includes(id)),checks=[];
-  const ref=table=>docs.find(r=>r.table===table)?.id;
+ const graph=groups(s.source.agencies),members=new Set(c.paymentIds.flatMap(id=>graph.components[s.plans[id]?.agencyId]||[]));
+ const relatedIds=Object.values(s.plans).filter(p=>members.has(p.agencyId)).map(p=>p.id);
+ const records=sourceRecords(s,relatedIds),payments=c.paymentIds.filter(id=>!s.instructions[id]).map(id=>{
+  const p=s.plans[id],agency=s.source.agencies.find(a=>a.agency_id===p.agencyId),row=s.source.payments.find(r=>r.rebate_id===id),docs=records.filter(r=>r.paymentIds.includes(id)||r.table!=='payments'&&graph.components[p.agencyId].includes(r.fields.agency_id)),checks=[];
+  const ref=table=>docs.find(r=>r.table===table&&r.fields.agency_id===p.agencyId)?.id;
   const add=(code,status,message,docId,field)=>checks.push({code,status,message,docId,field});
   add('agency',agency?'pass':'fail',agency?'지급 요청과 대리점 마스터의 거래처 ID가 연결되었습니다.':'연결할 대리점 등록정보가 없습니다.',ref('agencies'),'agency_id');
   if(agency){
@@ -85,9 +88,9 @@ export function assessSource(s,c){
   }
   add('request',row?'pass':'unknown',row?'요청 ID로 장려금 지급표의 원본 행을 연결했습니다.':'연결된 지급표 행이 없습니다. 요청 데이터를 등록해야 합니다.',ref('payments'),'rebate_id');
   if(row){add('amount',Number(row.rebate_amount_krw)===p.amount?'pass':'fail','원본 장려금과 이번 요청 금액을 비교했습니다. 지급률 산식은 제공되지 않아 별도 추정하지 않습니다.',ref('payments'),'rebate_amount_krw');add('period',row.period_ym===p.period?'pass':'fail','원본 정산월과 이번 요청의 정산월을 비교했습니다.',ref('payments'),'period_ym');}
-  const collections=s.source.collections.filter(r=>r.agency_id===p.agencyId),different=collections.filter(r=>r.accountKey&&agency?.accountKey&&r.accountKey!==agency.accountKey);
+  const collections=s.source.collections.filter(r=>graph.components[p.agencyId].includes(r.agency_id)),different=collections.filter(r=>{const a=s.source.agencies.find(a=>a.agency_id===r.agency_id);return r.accountKey&&a?.accountKey&&r.accountKey!==a.accountKey;});
   if(!collections.length)add('collection_info','pass','연결된 회수 이력은 없습니다. 회수 이력은 참고자료이므로 이 사유만으로 접수를 막지 않습니다.');
-  for(const r of different)add('collection_account','unknown',`입금 기록 ${r.deposit_id}의 계좌와 마스터 등록계좌가 다릅니다. 입금과 지급은 다른 거래이므로 오류로 단정하지 않고 차이의 사유를 확인합니다.`,docs.find(d=>d.table==='collections'&&d.rowId===r.deposit_id)?.id,'accountLabel');
+  for(const r of different)add('collection_account','unknown',`관련 거래처 ${r.agency_id} 입금 기록 ${r.deposit_id}의 계좌와 마스터 등록계좌가 다릅니다. 입금과 지급은 다른 거래이므로 오류로 단정하지 않고 차이의 사유를 확인합니다.`,docs.find(d=>d.table==='collections'&&d.rowId===r.deposit_id)?.id,'accountLabel');
   const signature=digest({plan:{id:p.id,amount:p.amount,period:p.period,account:p.accountKey,owner:p.owner},rows:docs.map(d=>({id:d.id,fields:d.fields}))});
   const status=checks.some(k=>k.status==='fail')?'conflict':checks.some(k=>k.status==='unknown')?'unknown':'pass',prior=c.confirmations[id];
   const manual=!!prior&&prior.actor!=='rules'&&prior.sourceSignature===signature&&status==='unknown';

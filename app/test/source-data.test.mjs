@@ -3,25 +3,13 @@ import assert from 'node:assert/strict';
 import {initialState,command,actorFor,publicState,previewSource,previewSchedule,openHolds} from '../domain.mjs';
 import {source,openStore} from '../store.mjs';
 import {sourceTables} from '../public/source-schema.js';
-import {recommendDate} from '../public/schedule.js';
 import {guidanceContext,createGuidanceService,validateGuidance} from '../guidance.mjs';
 const act=(s,u,t,p)=>command(s,actorFor(u),t,p);
-const schedule=s=>{const p=previewSchedule(s,actorFor('intake'),{mode:'all-recommended'});act(s,'intake','schedule',{...p,mode:'all-recommended'});return p;};
+const schedule=s=>{const p=previewSchedule(s,actorFor('intake'),{items:Object.values(s.plans).filter(p=>p.status==='planned'&&!p.caseId).map(p=>({id:p.id,date:'2026-07-06'}))});act(s,'intake','schedule',{...p,mode:undefined});return p;};
 const intake=(s,ids)=>act(s,'intake','intake',{paymentIds:ids,docs:[]}).caseId;
 const apply=(s,files,reason='검증용 원본 정정')=>{const input={files},p=previewSource(s,actorFor('intake'),input);assert.deepEqual(p.errors,[]);return act(s,'intake','applySourceRows',{...input,previewHash:p.previewHash,reason});};
 const payment=(id,agency='D-001')=>({rebate_id:id,agency_id:agency,period_ym:'2026-07',sales_performance_krw:'1000000',rebate_amount_krw:'10000',approval_status:'미지급',approver:'NONE',payment_date:'NONE'});
 const agency={agency_id:'NEW-AGENCY',agency_name:'신규 검증상사',representative_name:'신규 대표',address:'신규 주소',bank_account_no:'DEMO-NEW-ACCOUNT',rebate_eligible:'True',registered_date:'2026-07-01'};
-
-test('원본 40건은 접속일과 관계없이 7월 6일·38개 관련자 묶음, 수동 날짜는 유지하고 명시적 재추천만 변경',()=>{
- const s=initialState(source);assert.equal(Object.values(s.plans).filter(p=>p.status==='planned'&&!p.plannedDate).length,40);
- const preview=schedule(s);assert.equal(preview.items.length,40);assert.equal(preview.groups.length,38);assert(preview.items.every(p=>p.date==='2026-07-06'));
- const id=preview.items[0].id;act(s,'intake','schedule',{items:[{id,date:'2026-11-17'}]});assert.equal(s.plans[id].plannedDate,'2026-11-17');
- assert.equal(publicState(s,actorFor('intake')).plans.find(p=>p.id===id).scheduleRecommendation.date,'2026-07-06');
- const p=previewSchedule(s,actorFor('intake'),{mode:'re-recommend',paymentIds:[id]});act(s,'intake','schedule',{...p,mode:'re-recommend',paymentIds:[id]});assert.equal(s.plans[id].plannedDate,'2026-07-06');
- assert.equal(recommendDate('2026-06','2026-12-31').date,recommendDate('2026-06','2026-11-01').date);
- assert.equal(recommendDate('2026-06',{payments:source.payments,agencyId:'UNKNOWN'}).level,'company');
- assert.equal(recommendDate('2026-06',{payments:source.payments.slice(0,1)}).level,'default');
-});
 
 test('원본 세 표만으로 접수·규칙 검토·독립 승인·모의 지급·대사를 완주하며 정상 건의 NIM 호출은 0회',async()=>{
  const store=await openStore({local:'memory'});let calls=0;

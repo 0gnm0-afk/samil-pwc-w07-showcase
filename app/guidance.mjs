@@ -3,7 +3,6 @@ import { publicState, hash, must, redact, can, basis } from './domain.mjs';
 import { workflowModel } from './workflow.mjs';
 import { MODEL } from './ai.mjs';
 import { withNimSlot, checkNimResponse } from './provider.mjs';
-import { recommendDate } from './public/schedule.js';
 import {assessEvidence,assessSettlement,evidenceVersion} from './evidence.mjs';
 import { modules, moduleFields, approvalFocus, reasonChoices, catalogVersion, controlInstructions, roleNames } from './public/catalog.js';
 
@@ -13,7 +12,7 @@ const rules=[
   {id:'R-HOLD',text:'증빙 부족·이해상충·조건 변경·미확인 차이는 지급을 보류한다. 변경 후 유효한 근거와 적격 승인 요건을 확인한다. 보완 회신은 회계 재검토로 이어진다.'},
   {id:'R-AUTHORITY',text:'사용자가 확인·저장·상신·승인·지급을 명시적으로 실행한다. AI 안내는 근거와 다음 행동을 설명하며 서버가 실제 권한과 요건을 검사한다.'}
 ];
-const draftFields=['paymentIds','confirmPaymentIds','docIds','docId','resolveKeys','reasonChoice','decision','exception','special','conflict','kind','text','reason','exceptionReason','amount','plannedDate','date','outcome','agencyId','period','owner','account','paymentId','bankScenario','voucherScenario','csvSelected'];
+const draftFields=['paymentIds','confirmPaymentIds','docIds','docId','resolveKeys','reasonChoice','decision','exception','special','conflict','kind','text','reason','exceptionReason','amount','plannedDate','plannedMonth','date','outcome','agencyId','period','owner','account','paymentId','bankScenario','voucherScenario','csvSelected'];
 function cleanDraft(draft={}) {
   must(draft&&typeof draft==='object'&&!Array.isArray(draft),'INPUT','화면 선택 정보를 확인하세요.',400);
   return Object.fromEntries(draftFields.filter(k=>Object.hasOwn(draft,k)).map(k=>{
@@ -25,6 +24,7 @@ function cleanDraft(draft={}) {
 }
 export function guidanceContext(s,actor,input) {
   must(input&&typeof input==='object'&&!Array.isArray(input),'INPUT','안내 요청 형식을 확인하세요.',400);
+  if(input.epoch!==undefined||s.resetRequiredEpoch)must(input.epoch===s.epoch,'STALE_WORKSPACE','시연이 초기화되었습니다. 화면을 새로고침하세요.');
   let module=Object.hasOwn(modules,input.moduleId)?modules[input.moduleId]:null;
   must(module,'MODULE','업무 모듈을 확인하세요.',400);
   must(!module.capabilities.length||module.capabilities.some(cap=>can(actor,cap)),'FORBIDDEN','이 역할의 안내 범위가 아닙니다.',403);
@@ -126,7 +126,7 @@ export function guidanceContext(s,actor,input) {
     workSummary:input.moduleId==='inbox'?state.cases.map(item=>({id:item.id,title:item.title,status:item.status,workflow:{current:item.workflow.current,next:item.workflow.next}})):[],
     requiredApprovers:required
   };
-  if(input.moduleId==='register')context.scheduleRecommendation=recommendDate(draft.period||state.schedulePolicy.period,{agencyId:draft.agencyId,payments:s.source.payments});
+
   // Data is already actor-scoped and account tokens removed by publicState.
   const evidence=[...rules.map(r=>({ref:r.id,text:r.text})),...workflowModel.nodes.filter(n=>n.id===module.node).map(n=>({ref:n.id,text:`${n.name} · ${n.lane} · ${n.description}`})),
     {ref:'CURRENT',text:JSON.stringify({status:c?.status,checks:c?.checks,required,availableActionIds:context.module.actions.map(a=>a.id),selectedTotal:context.selectedTotal,group,workItems:tasks,progressFacts})},
@@ -254,7 +254,7 @@ const system = `당신은 판매장려금 증빙의 예외를 검토해 사용�
 조작 순서와 실행 전 확인은 서버의 실제 화면 정의로 표시합니다. beforeAction과 howTo는 생성하지 마세요. reason에는 추천 이유만 설명하고 버튼 순서·확인 창을 만들어 내지 마세요. targetId는 outputContract.allowedTargets의 id를 그대로 복사합니다. actionId나 choiceId는 출력하지 마세요. refs도 allowedRefs에 있는 값만 쓰세요. 근거 식별자는 refs 안에만 쓰고 본문은 업무 용어로 설명하세요.
 등록된 계좌 자료와 회계 대조 완료는 다릅니다. 자료가 등록되어 있으면 없다고 말하지 말고 대조를 안내하세요. 보완 회신은 실제 접수된 경우에만 설명합니다. 과거 누락 기록과 이후 제출 자료를 함께 읽고, 변경 후 시점 요건과 내용의 적정성도 구분하세요. 저장 전 원자료를 골라 사실을 꾸미도록 권하지 마세요.
 현재 사용자가 결재자이면 자신에게 승인을 요청하거나 기다리라고 하지 마세요. 다른 임원의 승인 대기 자체는 보완 사유가 아닙니다. 특별승인은 같은 버전의 양쪽 승인과 다른 지급 요건이 충족되어야 지급됩니다.
-현재 최신 전표와 confirmedActual이 최종 대사 사실입니다. 과거 차이를 현재 미해결로 말하지 마세요. 확정 실적은 관련자 월 합산과 미집행 건 재검토에 반영하며 다른 지급 건의 금액 자체를 바꾸지 않습니다. 종료 상태이면 추가 결정을 권고하지 마세요. 지급예정일은 scheduleRecommendation의 규칙 계산을 사용하며 임의로 다른 날짜를 추천하지 마세요.
+현재 최신 전표와 confirmedActual이 최종 대사 사실입니다. 과거 차이를 현재 미해결로 말하지 마세요. 확정 실적은 관련자 월 합산과 미집행 건 재검토에 반영하며 다른 지급 건의 금액 자체를 바꾸지 않습니다. 종료 상태이면 추가 결정을 권고하지 마세요. 지급예정월은 접수자가 지정합니다. 정확한 지급일을 추정하거나 추천하지 마세요.
 '대조했습니다'처럼 사람이 해야 할 확인을 대신 완료했다고 말하지 마세요. reason과 checks에는 원본에서 확인된 사실과 아직 판단할 수 없는 내용만 적습니다. 계좌 표시는 개인정보 보호 때문에 마스킹되어 있으나 서버가 원본 계좌 비교키로 실제 일치 여부를 검사한 결과가 evidenceAssessment입니다. 마스킹을 누락이나 불일치 또는 확인 불가 사유로 해석하지 마세요. assessment=pass이면 누락 필드는 보완되었으며 남은 변경 사유와 승인 요건만 판단하세요. 버튼·화면 이동·조작 순서·담당자에게 보내는 방법 등 업무 사용 안내를 넣지 마세요. 아직 발생하지 않은 가상의 보완 작업을 추가로 권고하지 마세요.`;
 export async function callGuidance(context,{fetcher=fetch,apiKey=process.env.NVIDIA_API_KEY}={}) {
   must(apiKey,'AI_AUTH','NIM 연결 설정이 필요합니다.');
@@ -294,11 +294,11 @@ export function createGuidanceService(store,{call=callGuidance}={}) {
     const work=(async()=>{
       let claim;
       const token=randomUUID();
-      claim=await store.claimGuidance(workspace,key,token);
+      claim=await store.claimGuidance(workspace,key,token,saved.epoch);
       if(!claim.claimed){const {token:unused,...entry}=claim.entry;return {...entry,contextKey:key,fallback,cached:true};}
       let entry;
       try {entry={status:'ready',answer:await withNimSlot(store,{key:`guidance:${workspace}:${key}`},async()=>{await store.countGuidance(workspace);return call(context);})};}
-      catch(error){entry=error.retryAt?{status:'waiting',retryAt:error.retryAt,errorCode:error.code,message:'NVIDIA 호출 순서를 기다리고 있습니다. 기본 안내로 처리할 수 있으며 안내는 자동으로 다시 확인합니다.'}:{status:'fallback',errorCode:error.code||'AI_ERROR',message:'AI 안내를 불러오지 못했습니다. 기본 설명을 확인하고 다시 시도할 수 있습니다.'};}
+      catch(error){entry=error.retryAt?{status:'waiting',retryAt:error.retryAt,errorCode:error.code,message:'AI 검토 순서를 기다리고 있습니다.'}:{status:'fallback',errorCode:error.code||'AI_ERROR',message:'AI 검토를 불러오지 못했습니다. 다시 시도할 수 있습니다.'};}
       const current=guidanceContext(await store.read(workspace),actor,input);
       if(current.key!==key){await store.finishGuidance(workspace,key,token,{status:'stale'});return {status:'stale',contextKey:key,fallback};}
       await store.finishGuidance(workspace,key,token,entry);
@@ -313,6 +313,6 @@ export function createGuidanceService(store,{call=callGuidance}={}) {
     const fallback=result.fallback;
     return {...result,basicGuidance:{source:'rules',purpose:context.module.purpose,summary:fallback.summary,actions:fallback.actions,nextStep:fallback.nextStep},
       review:result.status==='ready'?{source:'ai',status:'ready',recommendations:result.answer.recommendations.map(({label,reason,refs,evidence})=>({label,reason,refs,evidence})),checks:result.answer.checks}:
-        {source:'rules',status:result.status,summary:result.status==='rules'?'연결된 원본과 현재 처리 조건을 규칙으로 확인했습니다. 아래 검사 항목과 실제 입력을 확인한 뒤 담당자의 결정을 저장하세요.':result.message||'현재 원본을 검토하고 있습니다. 기본 안내와 처리 기능은 계속 이용할 수 있습니다.',assessment:context.evidenceAssessment}};
+        {source:'rules',status:result.status,summary:result.status==='rules'?'원본 대조 완료':result.message||'원본 검토 중',assessment:context.evidenceAssessment}};
   };
 }

@@ -1,8 +1,7 @@
 import {sourceHTML,mountSource} from './source-ui.js';
-import {dateBoard,mountDates} from './schedule-ui.js';
+import {intakeBoard,mountIntake} from './schedule-ui.js';
 import { moduleHTML, mountGuidance, clearGuidance } from './guidance-ui.js';
 import { roleNames, modules, approvalFocus, reasonChoices } from './catalog.js';
-import { recommendDate } from './schedule.js';
 import {documentCards,assessmentHTML,documentFields,readDocuments,mountEvidenceForms} from './evidence-ui.js';
 const $ = selector => document.querySelector(selector);
 const root = $('#app');
@@ -43,11 +42,11 @@ async function api(path, payload) {
   const url = new URL(path, location.origin);
   if (workspace) url.searchParams.set('workspace', workspace);
   const options = payload === undefined ? {} : {
-    method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(payload)
+    method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({...payload,...(state?{epoch:state.epoch}:{})})
   };
   const response = await fetch(url, options);
   const body = await response.json();
-  if (!response.ok) throw Object.assign(Error(body.message || '요청을 처리할 수 없습니다.'), {status:response.status});
+  if (!response.ok) throw Object.assign(Error(body.message || '요청을 처리할 수 없습니다.'), {status:response.status,code:body.code});
   return body;
 }
 
@@ -74,6 +73,7 @@ function form(id, action) {
 }
 
 function show(next = {kind:'inbox'}) {
+  if(dirty&&!confirm('저장하지 않은 입력을 버리고 다른 작업으로 이동할까요?'))return;
   clearGuidance();
   view = next;
   dirty = false;
@@ -111,7 +111,7 @@ async function run(type, payload, onSaved) {
   const enabled = [...document.querySelectorAll('main button:not(:disabled)')];
   for (const button of enabled) button.disabled = true;
   try {
-    const result = await api('/api/command', {type,payload});
+    const result = await api('/api/command', {type,payload,epoch:state.epoch});
     const updated = await api('/api/state');
     state = updated.state;
     if (onSaved) view = onSaved(result);
@@ -129,6 +129,7 @@ async function run(type, payload, onSaved) {
   } catch (error) {
     for (const button of enabled) button.disabled = false;
     toast(error.message);
+    if(error.code==='STALE_WORKSPACE')await load();
     if(type==='schedule')document.getElementById('dateForm')?.dispatchEvent(new Event('input',{bubbles:true}));
   } finally {
     busy = false;
@@ -206,7 +207,7 @@ function shell(title, content, toolbar = '') {
       ${state.publicDemo ? `<span>AI 누적 횟수 제한 없음 · NVIDIA 속도 제한 시 자동 대기 · ${date(state.publicDemo.expiresAt)}까지</span>` : ''}</footer>
   </div>`;
   listen('inboxTab', () => show());
-  listen('refresh', load);
+  listen('refresh', () => {if(!dirty||confirm('저장하지 않은 입력을 버리고 새로고침할까요?'))void load();});
   listen('logout', async () => {
     try {
       await api('/api/logout', {});
@@ -221,9 +222,7 @@ function shell(title, content, toolbar = '') {
 }
 
 function prepareModules() {
-  for(const p of document.querySelectorAll('main .module-content p, main .decision-band:not(.ai-card)')){
-    if(!p.closest('.source-box,.ai-card,.history-panel')){p.classList.add('source-box','source-rules');p.dataset.sourceLabel='기본 안내';}
-  }
+  mountModuleNavigation();
   mountEvidenceForms(toast);
   for(const block of document.querySelectorAll('[data-reason]')) {
     const select=block.querySelector('[name="reasonChoice"]');
@@ -281,65 +280,62 @@ function itemName(item) {
 }
 
 function inbox() {
-  const buckets = new Map();
-  for(const item of state.workItems){
-    const name=itemName(item);if(!buckets.has(name))buckets.set(name,[]);buckets.get(name).push(item);
-  }
-  const list=[...buckets].map(([name,items])=>'<section class="task-group"><h2>'+esc(name)+' <small>'+items.length+'건</small></h2><p class="meta">'+esc(modules[{review:'evidence',approval:'approval',supplement:'supplement',pay:'pay',bank:'bank',reconcile:'reconcile'}[items[0].kind]]?.purpose||'배정된 작업을 열어 확인하세요.')+'</p><div class="task-cards">'+items.map(item=>{
-    const c=caseFor(item.caseId);
-    return '<button class="task-card" data-work="'+esc(item.id)+'" data-action="open"><strong>'+esc(c.title)+'</strong><span>'+esc(item.paymentId||c.currentBasis.month)+'</span>'+badge(c.status)+'</button>';
-  }).join('')+'</div></section>').join('')||'<p class="empty">현재 배정된 후속 작업이 없습니다.</p>';
-  const scheduledNotice=view.scheduledGroups?`<div class="source-box source-rules"><span class="source-label">기본 안내 · 예정일 저장 완료</span><p>선택한 요청이 ${view.scheduledGroups.length}개의 지급월 묶음에 반영되었습니다. 아래 강조한 묶음에서 연결된 원본과 요청을 확인하고 접수하세요.</p></div>`:'';
-  shell('내 작업',(has('intake')?dateBoard(state.plans.filter(p=>!p.caseId&&p.status==='planned'),state.agencies):'')+scheduledNotice+moduleHTML('inbox',list)+(has('intake')?intakeQueue():'')+'<div id=inlineIntake></div>',has('intake')?'<button id="sourceData" class="primary">원본 세 표 등록·정정</button><button id="direct">새 요청 직접 입력</button><button id="csv">CSV 등록</button>':'');
-  for(const button of document.querySelectorAll('[data-work]'))button.onclick=()=>show({kind:'task',item:workFor(button.dataset.work)});
-  for(const button of document.querySelectorAll('[data-group]'))button.onclick=()=>{view.inlineId=button.dataset.group;intakeView(true);prepareModules();document.getElementById('inlineIntake').scrollIntoView({block:'start',behavior:'smooth'});};
-  mountDates({api,run,onError:toast,onSaved:ids=>({kind:'inbox',scheduledGroups:state.intakeGroups.filter(g=>g.paymentIds.some(id=>ids.includes(id))).map(g=>g.id)})});
-  if(view.inlineId)intakeView(true);
-  for(const button of document.querySelectorAll('[data-change]'))button.onclick=()=>show({kind:'task',item:{kind:'change',caseId:button.dataset.change}});
-  listen('sourceData',()=>show({kind:'source'}));listen('direct',()=>show({kind:'direct'}));listen('csv',()=>show({kind:'csv'}));
+  const buckets=new Map();for(const item of state.workItems){const name=itemName(item);if(!buckets.has(name))buckets.set(name,[]);buckets.get(name).push(item);}
+  let cards=has('intake')?'<button class="task-card" id="openIntake"><strong>검토 요청 접수</strong><span>'+state.plans.filter(p=>p.status==='planned'&&!p.caseId).length+'건</span></button><button class="task-card" id="sourceData"><strong>원본 자료 등록·정정</strong></button><button class="task-card" id="direct"><strong>새 요청 입력</strong></button><button class="task-card" id="csv"><strong>CSV 요청 등록</strong></button>':'';
+  cards += [...buckets].map(([name,items])=>'<button class="task-card" data-category="'+esc(name)+'"><strong>'+esc(name)+'</strong><span>'+items.length+'건</span></button>').join('');
+  const changes=has('intake')?state.cases.filter(c=>!['completed','rejected','cancelled'].includes(c.status)):[];
+  if(changes.length)cards+='<button class="task-card" id="changes"><strong>지급조건 변경</strong><span>'+changes.length+'건</span></button>';
+  shell('내 작업','<div class="task-cards work-launcher">'+(cards||'<p class="empty">현재 처리할 작업이 없습니다.</p>')+'</div>',state.publicDemo&&state.canReset?'<button id="resetDemo">새 시연 · 전체 초기화</button>':'');
+  listen('openIntake',()=>show({kind:'batch'}));listen('sourceData',()=>show({kind:'source'}));listen('direct',()=>show({kind:'direct'}));listen('csv',()=>show({kind:'csv'}));listen('changes',()=>show({kind:'list',category:'지급조건 변경'}));
+  for(const el of document.querySelectorAll('[data-category]'))el.onclick=()=>show({kind:'list',category:el.dataset.category});
+  listen('resetDemo',async()=>{
+    if(busy||!confirm('내 시연에서 만든 기록과 추가·정정 자료를 모두 지우고 제공 원본으로 돌아갑니다. 전체 초기화할까요?'))return;
+    busy=true;document.getElementById('resetDemo').disabled=true;
+    try{await api('/api/demo/reset',{epoch:state.epoch,confirm:'RESET_MY_DEMO'});clearGuidance(true);view={kind:'inbox'};dirty=false;await load();toast('새 시연을 시작할 수 있습니다.');}catch(e){toast(e.message);document.getElementById('resetDemo')?.removeAttribute('disabled');}finally{busy=false;}
+  });
 }
-
-function intakeQueue() {
-  const batches = state.intakeGroups;
-  const batchRows = values => values.map(g => `<tr class="${view.scheduledGroups?.includes(g.id)?'scheduled-highlight':''}"><td><button class="link-button" data-action="open" data-group="${esc(g.id)}">${esc(g.members.join(' · '))}</button></td>
-    <td>${esc(g.month || '미정')}</td><td>${g.paymentIds.length}건</td><td>${won(g.selectedTotal)}</td><td>${g.month ? won(g.total) : '예정일 지정 필요'}</td><td>${(g.required||[]).map(r=>esc(roles[r.userId])).join(' + ')}<small>예외는 양쪽 임원 승인</small></td></tr>`).join('');
-  const table = values => `<div class="table-wrap"><table><thead><tr><th>관련자 그룹</th><th>지급예정월</th><th>미접수</th><th>묶음 금액</th><th>월 합산액</th><th>예상 승인 경로</th></tr></thead><tbody>${batchRows(values)}</tbody></table></div>`;
-  const scheduled = batches.filter(g => g.month), unscheduled = batches.filter(g => !g.month);
-  const amendable = state.cases.filter(c => !['completed','rejected','cancelled'].includes(c.status)
-    && c.paymentIds.some(id => !state.instructions.some(i => i.paymentId === id)));
-  return `<section class="panel"><h2>2. 관련자·지급월 묶음 확인 후 접수</h2>
-    ${scheduled.length ? table(scheduled) : '<p class="empty">지급예정일이 지정된 미접수 요청이 없습니다.</p>'}
-
-  </section>${amendable.length ? `<details><summary>접수한 요청의 지급조건 변경</summary>
-    <ul class="compact-list">${amendable.map(c => `<li><button class="link-button" data-change="${esc(c.id)}">${esc(c.title)}</button></li>`).join('')}</ul></details>` : ''}`;
+function taskList(){
+  const changes=view.category==='지급조건 변경';
+  const items=changes?state.cases.filter(c=>!['completed','rejected','cancelled'].includes(c.status)).map(c=>({id:c.id,caseId:c.id,kind:'change'})):state.workItems.filter(i=>itemName(i)===view.category);
+  shell(view.category,'<div class="task-cards">'+items.map(i=>{const c=caseFor(i.caseId);return '<button class="task-card" data-work="'+esc(i.id)+'"><strong>'+esc(c.title)+'</strong><span>'+esc(i.paymentId||c.currentBasis.month)+'</span>'+badge(c.status)+'</button>';}).join('')+'</div>');
+  for(const button of document.querySelectorAll('[data-work]'))button.onclick=()=>show({kind:'task',item:items.find(i=>i.id===button.dataset.work)});
+}
+function mountModuleNavigation(){
+  for(const node of [...document.querySelectorAll('[data-module] [data-module]')]){const parent=node.parentElement.closest('[data-module]');parent.after(node);}
+  const nodes=[...document.querySelectorAll('[data-module]')];if(!nodes.length)return;
+  const active=nodes.find(n=>n.dataset.module===view.module)||nodes.find(n=>n.open)||nodes[0];
+  const nav=document.createElement('nav');nav.className='module-nav';nav.setAttribute('aria-label','작업 단계');
+  for(const node of nodes){const button=document.createElement('button');button.type='button';button.textContent=node.querySelector('summary span')?.textContent||node.dataset.module;button.dataset.moduleTarget=node.dataset.module;button.onclick=()=>activateModule(node.dataset.module);nav.append(button);}
+  if(nodes.length>1)document.querySelector('.headline').after(nav);
+  activateModule(active.dataset.module);
+}
+function activateModule(id){
+  view.module=id;
+  for(const node of document.querySelectorAll('[data-module]')){node.hidden=node.dataset.module!==id;node.open=!node.hidden;}
+  for(const button of document.querySelectorAll('[data-module-target]'))button.setAttribute('aria-pressed',String(button.dataset.moduleTarget===id));
+}
+function batchView(){
+  shell('검토 요청 접수',moduleHTML('intake',intakeBoard(state),{ruleOnly:true}));
+  mountIntake({state,api,run,onSaved:result=>({kind:'batchDone',result})});
 }
 
 function registerView(channel) {
   const currentDate = state.schedulePolicy.period;
-  const recommended = recommendDate(currentDate.slice(0,7),{payments:state.sourceRows.payments});
   const options = state.agencies.map(a => `<option value="${esc(a.agency_id)}">${esc(a.agency_id)} · ${esc(a.agency_name)}</option>`).join('');
   const example = 'request_id,agency_id,amount_krw,period_ym,planned_date,evidence_id,evidence_type,evidence_date,evidence_account_holder,evidence_account_no,evidence_amount_krw,evidence_period_ym,evidence_text\n'
-    + `NEW-001,${state.agencies[0].agency_id},100000,${currentDate.slice(0,7)},${recommended.date},,,,,,,,\n`;
+    + `NEW-001,${state.agencies[0].agency_id},100000,${currentDate.slice(0,7)},,,,,,,,,\n`;
   const content = channel === 'direct' ? `<form id="registration" class="panel stack">
     <div class="field-grid"><label>요청 ID<input name="id" value="REQ-${crypto.randomUUID()}" required maxlength="80"></label>
     <label>거래처<select name="agencyId" required><option value="">선택하세요</option>${options}</select></label>
     <label>원 단위 금액<input name="amount" type="number" min="1" step="1" required></label>
     <label>정산월<input name="period" type="month" value="${currentDate.slice(0,7)}" required></label>
-    <label>지급예정일<input name="plannedDate" type="date" value="${recommended.date}" required></label></div>
-    <div class="source-box source-rules"><span class="source-label">기본 안내 · 규칙으로 추천한 지급예정일</span><p id="dateReason">${esc(recommended.reason)}</p><button type="button" id="applyRecommendedDate">추천일 다시 적용</button></div>
+    </div>
     <button class="primary" type="submit">요청 등록</button></form>`
-    : `<form id="registration" class="panel stack"><p>UTF-8 CSV 파일로 최대 50건을 등록합니다. 기존 5개 요청 열은 필수이며 evidence_로 시작하는 열은 원자료가 있을 때만 입력하세요. 계좌·명의·작성일을 원자료 그대로 입력하면 접수 후 규칙 대조합니다. 증빙이 없으면 빈 상태로 등록하고 접수할 때 첨부할 수 있습니다.</p>
+    : `<form id="registration" class="panel stack"><p>UTF-8 CSV 파일로 최대 50건을 등록합니다. 기존 5개 요청 열은 필수이며 evidence_로 시작하는 열은 원자료가 있을 때만 입력하세요. 계좌·명의·작성일을 원자료 그대로 입력하면 접수 후 규칙 대조합니다. planned_date 값은 비워 둘 수 있습니다.</p>
       <a download="w07-requests.csv" href="data:text/csv;charset=utf-8,${encodeURIComponent('\uFEFF'+example)}">CSV 양식 내려받기</a>
       <label>요청 파일<input name="csv" type="file" accept=".csv,text/csv" required></label>
       <button class="primary" type="submit">CSV 요청 등록</button></form>`;
   shell(channel === 'direct' ? '새 지급 요청 등록' : 'CSV 지급 요청 등록', moduleHTML('register',content));
-  if(channel==='direct'){
-    const period=$('[name=period]'),planned=$('[name=plannedDate]');let dateEdited=false;
-    const update=apply=>{const rec=recommendDate(period.value,{agencyId:document.querySelector('[name=agencyId]').value,payments:state.sourceRows.payments});$('#dateReason').textContent=rec.reason+(dateEdited&&!apply?' 직접 지정한 날짜는 유지했습니다.':'');if(apply||!dateEdited)planned.value=rec.date||'';};
-    planned.addEventListener('input',()=>{dateEdited=true;});
-    period.addEventListener('input',()=>update(false));document.querySelector('[name=agencyId]').addEventListener('change',()=>update(false));
-    listen('applyRecommendedDate',()=>{dateEdited=false;update(true);planned.dispatchEvent(new Event('change',{bubbles:true}));});
-  }
   form('registration', async fields => {
     const payload = channel === 'direct'
       ? {rows:[{...Object.fromEntries(fields),amount:Number(fields.get('amount'))}]}
@@ -351,72 +347,9 @@ function registerView(channel) {
 const docFields = documentFields;
 const docsFrom = readDocuments;
 
-function intakeView(inline=false) {
-  const group = state.intakeGroups.find(g => g.id === (inline?view.inlineId:view.id));
-  if (!group) return show();
-  const selected = view.paymentIds || group.paymentIds.slice(0,30);
-  const rows = group.paymentIds.map(planFor).map(p => `<tr><td><label class="checkbox"><input type="checkbox" name="paymentIds" value="${esc(p.id)}" ${selected.includes(p.id) ? 'checked' : ''}>${esc(p.id)}</label></td>
-    <td>${esc(p.agencyId)}</td><td>${esc(p.period)}</td><td>${p.plannedDate?esc(p.plannedDate):`<label><span class="sr-only">${esc(p.id)} 지급예정일</span><input type="date" data-plan-date="${esc(p.id)}" name="schedule:${esc(p.id)}" value="${esc(p.scheduleRecommendation?.date||'')}" required></label><details><summary>추천 근거</summary><p class="source-box source-rules">${esc(p.scheduleRecommendation?.reason)}</p></details>`}</td><td>${won(p.amount)}</td></tr>`).join('');
-  const fields = group.month ? `${assessmentHTML(group.sourceReview)}${documentCards(group.sourceReview?.records||[])}<label>요청 제목<input name="title" required value="${esc(group.month)} 판매장려금 지급 검토"></label>
-    <div class="field-grid"><label>신고·확인 사항<select name="exception"><option value="">없음</option><option value="conflict">영업 임원 이해상충</option>
-    <option value="policy">정책 예외</option><option value="aggregation">합산 예외</option><option value="uncertain">기타 판단 필요</option></select></label>
-    <label>선택 사유<textarea name="exceptionReason" maxlength="4000" readonly></textarea></label></div>`
-    : `<div class="source-box source-rules"><span class="source-label">기본 안내 · 예정일 추천</span><p>${esc(state.schedulePolicy.rule)}로 자동 입력했습니다. 이번에 저장할 요청을 선택하고 필요한 날짜만 수정하세요. 저장 전까지 실제 지급월은 바뀌지 않습니다.</p></div><div id="schedulePreview" class="source-box source-rules" aria-live="polite"></div>`;
-  const intakeContent=moduleHTML('intake', `<section class="panel"><h2>${esc(group.members.join(' · '))} · ${esc(group.month || '지급예정일 미정')}</h2>
-    <form id="intake" class="stack"><div class="table-wrap"><table><thead><tr><th>이번 결재 대상</th><th>거래처</th><th>정산월</th><th>지급예정일</th><th>금액</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <div class="decision-band"><strong>선택 금액 <output id="selectionTotal">0원</output></strong><strong>관련자 월 합산액 ${group.month ? won(group.total) : '예정일 지정 후 계산'}</strong></div>
-      ${group.missing.length ? `<p class="meta">같은 그룹에 예정일 미정 ${group.missing.length}건이 있습니다. 상신 전에 해당 요청의 예정일을 확인하세요.</p>` : ''}
-      ${fields}<button class="primary" type="submit" data-action="${group.month?'intake':'schedule'}">${group.month ? '선택한 요청 접수' : '예정일 저장'}</button></form></section>`,{ruleOnly:!group.month}) + historyPanel();
-  if(inline)document.getElementById('inlineIntake').innerHTML=intakeContent;else shell('묶음에서 지급 요청 선택',intakeContent);
-  const intakeForm=$('#intake');let previewGeneration=0,preview;
-  const scheduleItems=ids=>ids.map(id=>({id,date:[...intakeForm.querySelectorAll('[data-plan-date]')].find(el=>el.dataset.planDate===id).value}));
-  const update = async () => {
-    const generation=++previewGeneration;preview=null;
-    const ids = new FormData($('#intake')).getAll('paymentIds');
-    $('#selectionTotal').textContent = won(ids.reduce((total,id) => total + planFor(id).amount, 0));
-    if(group.month)return;
-    const output=$('#schedulePreview'),button=intakeForm.querySelector('button[type=submit]');button.disabled=true;
-    for(const input of intakeForm.querySelectorAll('[data-plan-date]'))input.required=ids.includes(input.dataset.planDate);
-    if(!ids.length){output.textContent='저장할 요청을 선택하면 지급월별 합산과 예상 승인 담당자를 보여드립니다.';return;}
-    output.textContent='선택한 날짜로 월 합산과 승인 경로를 확인하고 있습니다.';
-    try{
-      const result=await api('/api/schedule/preview',{items:scheduleItems(ids)});
-      if(generation!==previewGeneration||!intakeForm.isConnected)return;
-      preview=result;
-      output.innerHTML='<span class="source-label">기본 안내 · 저장 전 예상 결과</span>'+result.groups.map(g=>`<p><strong>${esc(g.month)}</strong> · 선택 ${g.paymentIds.length}건 ${won(g.selectedTotal)} · 관련자 월 합산 ${won(g.total)} · 일반 결재 ${g.required.map(r=>esc(roles[r.userId])).join(' + ')}${g.missing.length?`<br>미정 ${g.missing.length}건의 날짜도 확인해야 상신할 수 있습니다.`:''}</p>`).join('')+'<p>예외가 있으면 특별승인 경로를 적용합니다. 날짜 저장 후 각 지급월 묶음에서 요청과 증빙을 접수하세요.</p>';
-      button.disabled=false;
-    }catch(error){if(generation===previewGeneration&&intakeForm.isConnected)output.textContent=error.message;}
-  };
-  $('#intake').onchange = event => {
-    void update();
-    if(event.target.name==='exception') {
-      const kind=event.target.value,reason=$('#intake [name=exceptionReason]');
-      reason.readOnly=kind!=='uncertain';reason.value=reasonChoices.exception.find(c=>c[0]===kind)?.[2]||'';
-    }
-  };
-  void update();
-  form('intake', fields => {
-    const paymentIds = fields.getAll('paymentIds');
-    if (!paymentIds.length) return toast('묶음에서 요청을 선택하세요.');
-    if (!group.month) {
-      const items = scheduleItems(paymentIds);
-      if(!preview||JSON.stringify(items)!==JSON.stringify(preview.items))return toast('날짜와 예상 결과를 확인한 뒤 저장하세요.');
-      return run('schedule',{items,unassignedOnly:true,stateEventId:preview.stateEventId},() => {
-        const groups=state.intakeGroups.filter(g=>g.paymentIds.some(id=>paymentIds.includes(id)));
-        return groups.length===1?{kind:'intake',id:groups[0].id,paymentIds}:{kind:'inbox',scheduledGroups:groups.map(g=>g.id)};
-      });
-    }
-    const kind = fields.get('exception');
-    const exception = kind ? {kind,reason:fields.get('exceptionReason')} : undefined;
-    return run('intake',{paymentIds,title:fields.get('title'),docs:docsFrom(fields),exception},result => ({
-      kind:'done',item:{kind:'intake',caseId:result.caseId}
-    }));
-  });
-}
-
 function aiCard(task) {
   if(!task)return '';
-  return '<section class="source-box source-rules"><h3>이 요청에 연결된 후속 작업</h3><p>'+esc(task.owner?roles[task.owner]:'담당자')+'에게 배정된 작업입니다. 자료를 정정하거나 확인 근거를 남긴 뒤 회계 검토로 이어갑니다.</p>'+(task.effect?'<p>'+esc(task.effect)+'</p>':'')+'</section>';
+  return task.reason?'<p class="decision-band">'+esc(task.reason)+'</p>':'';
 }
 
 function approvalSummary(c) {
@@ -446,7 +379,7 @@ function reviewForm(c) {
   const docs=currentDocs.map(d=>'<label class="checkbox"><input type="checkbox" name="docIds" value="'+esc(d.id)+'">'+esc(({account:'계좌·명의 근거',narrative:'서술 자료',supplement:'보완 회신',bank:'은행 자료',voucher:'전표 자료'})[d.kind]||d.kind)+' · '+esc(d.id)+'</label><details><summary>증빙 본문 보기</summary><p class="doc">'+esc(d.text)+'</p></details>').join('');
   const evidence=assessmentHTML(c.evidenceAssessment)+documentCards(currentDocs)+'<fieldset><legend>대조에 사용할 증빙</legend>'+docs+'</fieldset><fieldset><legend>선택 증빙으로 확인한 지급 건</legend>'+pending.map(p=>'<label class="checkbox"><input type="checkbox" name="confirmPaymentIds" value="'+esc(p.id)+'">'+esc(p.id)+' · '+esc(p.accountLabel)+' · '+esc(p.owner)+(c.confirmations[p.id]?' · 확인 기록 있음':'')+'</label>').join('')+'</fieldset>'+reasonFields('review')+'<button type="submit" class="primary" data-action="review">검토 저장</button><button type="button" id="openHolds" data-action="openHolds">보류·예외 처리로 이동</button>';
   const holdList=holds.length?holds.map(h=>openChecks.includes(h)?'<label class="checkbox"><input type="checkbox" name="resolveKeys" form="review" value="'+esc(h.key)+'">'+esc(h.reason)+' 확인 완료</label>':'<p class="hold-item">'+esc(h.reason)+'</p>').join(''):'<p>현재 남은 보류 사유가 없습니다.</p>';
-  const holdContent=holdList+'<label class="checkbox"><input type="checkbox" name="special" form="review">정책 예외로 특별승인 적용</label><p class="meta">확인 완료 항목은 선택 증빙과 검토 사유로 저장합니다. 자료가 부족하면 아래에서 추가 판단을 의뢰하세요.</p><button type="submit" form="review" data-action="review">선택한 확인 결과 저장</button>';
+  const holdContent=holdList+'<label class="checkbox"><input type="checkbox" name="special" form="review">정책 예외로 특별승인 적용</label><button type="submit" form="review" data-action="review">선택한 확인 결과 저장</button>';
   const canSubmit=c.canSubmit&&c.needsResubmit;
   const evidenceModule='<form id="review" class="stack">'+moduleHTML('evidence',evidence,{open:!canSubmit})+'</form>';
   const holdsModule=moduleHTML('holds',holdContent+
@@ -463,20 +396,20 @@ function approvalForm(c) {
 
 function changeForm(c) {
   const pending = c.paymentIds.map(planFor).filter(p => !state.instructions.some(i => i.paymentId === p.id));
-  return `<form id="change" class="stack"><div class="field-grid">
+  return `<form id="changeMonth" class="stack"><label>변경 지급예정월<input name="plannedMonth" type="month" value="${esc(c.currentBasis.month)}" required></label><label>변경 사유<textarea name="reason" required maxlength="4000"></textarea></label><button type="submit" class="primary" data-action="changeMonth">지급월 변경 · 재검토</button></form><details class="supporting-form"><summary>수취계좌 변경</summary><form id="change" class="stack"><div class="field-grid">
     <label>지급 요청<select name="paymentId">${pending.map(p => `<option value="${esc(p.id)}">${esc(p.id)} · ${esc(p.owner)}</option>`).join('')}</select></label>
     <label>변경 수취계좌<input name="account" minlength="4" maxlength="100" required></label>
     <label>수취 명의<input name="owner" value="${esc(pending[0]?.owner)}" required></label>
-    <label>변경 지급예정일 (선택)<input name="date" type="date"></label></div>
-    ${docFields('narrative')}<button type="submit" class="primary">변경 저장 · 지급보류</button></form>`;
+    </div>
+    ${docFields('narrative')}<button type="submit" class="primary">변경 저장 · 지급보류</button></form></details>`;
 }
 
 function paymentForm(item, c) {
   const p = planFor(item.paymentId);
   const instruction = state.instructions.find(i => i.id === item.instructionId);
   const details = assessmentHTML(c.evidenceAssessment)+documentCards(c.docs)+`<p class="decision-band"><strong>${esc(p.id)} · ${won(instruction?.amount ?? p.amount)}</strong>
-    <span>${esc(instruction?.accountLabel ?? p.accountLabel)} · ${esc(instruction?.date ?? p.plannedDate)}</span></p>`;
-  if (item.kind === 'pay') return `${details}<button id="pay" class="primary">현재 승인 버전으로 지급 지시</button>${approvalSummary(c)}`;
+    <span>${esc(instruction?.accountLabel ?? p.accountLabel)} · ${esc(instruction?.date ?? p.plannedDate ?? p.plannedMonth)}</span></p>`;
+  if (item.kind === 'pay') return `${details}<form id="payForm" class="stack"><label>지급일<input name="date" type="date" value="${esc(p.plannedDate||'')}" min="${esc(p.plannedMonth)}-01" max="${esc(p.plannedMonth)}-${new Date(Number(p.plannedMonth.slice(0,4)),Number(p.plannedMonth.slice(5,7)),0).getDate()}" ${p.plannedDate?'readonly':''} required></label><button id="pay" type="submit" class="primary">현재 승인 버전으로 지급 지시</button></form>${approvalSummary(c)}`;
   if (item.kind === 'bank') return `${details}<form id="bank" class="stack"><div class="field-grid">
     <label hidden>모의 회신 ID<input name="receiptId" value="BANK-${crypto.randomUUID().slice(0,8)}" required></label>
     <label>은행 결과<select name="outcome"><option value="success">성공</option><option value="failed">확정 실패</option></select></label>
@@ -498,7 +431,7 @@ function paymentForm(item, c) {
 }
 
 function settlementSource(c,item,kind){
-  if(c.reviewMode==='source-1')return '<p class="source-box source-rules">지급 지시 또는 은행 회신의 실제 값으로 모의 입력 초안을 채웠습니다. 은행·전표 ID는 저장할 때 기록됩니다. 결과와 금액을 확인하고 직접 저장하세요. 실패나 차이 상황은 입력값을 바꾸어 검증할 수 있습니다.</p>';
+  if(c.reviewMode==='source-1')return '<small>모의 입력 · 저장 전 금액과 처리일을 확인하세요.</small>';
   const a=c.settlementAssessments?.find(a=>a.paymentId===item.paymentId&&a.kind===kind);
   return '<section class="source-box source-rules"><h3>제출 원자료 대조</h3>'+ (a?'<ul>'+a.checks.map(k=>'<li>'+esc(k.status==='pass'?'✓ 일치':k.status==='fail'?'! 차이':'? 확인 필요')+' · '+esc(k.message)+'</li>').join('')+'</ul>':'')+(a?.docId?'<button type="button" id="applySource">제출 자료의 추출값 입력</button><p>추출한 실제 값만 입력합니다. 차이가 있으면 그대로 표시하며 저장은 별도입니다.</p>':'')+'</section><details><summary>원자료 연결</summary><form id="documents" class="stack">'+docFields(kind)+'<button type="submit">증빙 저장</button></form></details>';
 }
@@ -521,14 +454,14 @@ function workDetail(item, done) {
   let content = '';
   if (done) content = `<p class="decision-band">${badge(c.status)} <strong>처리 결과가 저장되었습니다.</strong></p><button type="button" id="backToInbox" data-action="open" class="primary">내 작업으로 돌아가기</button>`;
   else if (item.kind === 'review') content = reviewForm(c)+aiCard(task);
-  else if (item.kind === 'approval') content = '<p class="decision-band">'+esc(approvalFocus(user.id,c.currentBasis.required.length===2).purpose)+'</p>'+approvalForm(c);
+  else if (item.kind === 'approval') content = approvalForm(c);
   else if (item.kind === 'supplement') content = aiCard(task) + `<form id="supplement" class="stack">${c.reviewMode==='source-1'?'<p class="source-box source-rules">원본 값이 잘못되었으면 원본 세 표 화면에서 먼저 정정하세요. 이 입력란에는 확인한 차이의 이유나 정정 근거를 남깁니다.</p><button type="button" id="sourceCorrection">원본 세 표 등록·정정 열기</button><input type="hidden" name="kind" value="supplement"><input type="hidden" name="docId" value="REPLY-'+crypto.randomUUID()+'"><label>보완 확인 내용<textarea name="text" required maxlength="4000"></textarea></label>':docFields('supplement')}<button type="submit" class="primary">보완 회신 보내기</button></form>`;
   else if (item.kind === 'change') content = changeForm(c);
   else content = paymentForm(item,c);
 
   if (done) content = moduleHTML('result', content);
   else if (item.kind !== 'review') content = moduleHTML(item.kind === 'approval' ? 'approval' : item.kind, content);
-  shell(done ? '처리 결과' : itemName(item), `<section class="panel work-panel"><h2>${esc(c.title)}</h2>${content}</section>${historyPanel(c,item,done)}`);
+  shell(done ? '처리 결과' : itemName(item), `<section class="panel work-panel"><h2>${esc(c.title)}</h2>${content}</section><details class="supporting-details"><summary>근거·이력 보기</summary>${historyPanel(c,item,done)}</details>`);
   if (done) {listen('backToInbox',()=>show());return;}
   listen('sourceCorrection',()=>show({kind:'source'}));
   if(c.reviewMode!=='source-1'&&['review','supplement','change'].includes(item.kind)){const b=document.createElement('button');b.textContent='원본 데이터 기준으로 재검토';b.onclick=()=>run('recheckSource',{caseId:c.id});document.querySelector('.work-panel').prepend(b);}
@@ -540,10 +473,11 @@ function workDetail(item, done) {
   form('supplement', f => run('documents',{caseId:c.id,taskId:item.taskId,docs:docsFrom(f)}));
   form('decide', f => run('decide',{caseId:c.id,version:c.version,decision:f.get('decision'),reason:f.get('reason')}));
   form('change', f => run('change',{caseId:c.id,paymentId:f.get('paymentId'),account:f.get('account'),owner:f.get('owner'),date:f.get('date') || undefined,docs:docsFrom(f)}));
+  form('changeMonth',f=>run('changeMonth',{caseId:c.id,plannedMonth:f.get('plannedMonth'),reason:f.get('reason')}));
   listen('submit', () => run('submit',{caseId:c.id}));
-  listen('openHolds',()=>{const module=document.querySelector('[data-module=holds]');module.open=true;module.scrollIntoView({block:'start',behavior:'smooth'});});
-  listen('backToEvidence',()=>{const module=document.querySelector('[data-module=evidence]');module.open=true;module.scrollIntoView({block:'start',behavior:'smooth'});});
-  listen('pay', () => run('pay',{caseId:c.id,paymentId:item.paymentId,version:c.version}));
+  listen('openHolds',()=>{activateModule('holds');});
+  listen('backToEvidence',()=>{activateModule('evidence');});
+  form('payForm',f=>run('pay',{caseId:c.id,paymentId:item.paymentId,version:c.version,date:f.get('date')}));
   form('bank', f => run('bank',{...Object.fromEntries(f),amount:Number(f.get('amount')),instructionId:item.instructionId}));
   form('reconcile', f => run('reconcile',{instructionId:item.instructionId,voucherId:f.get('voucherId'),amount:Number(f.get('amount'))}));
   form('confirmActual', f => run('confirmActual',{instructionId:item.instructionId,amount:Number(f.get('amount')),date:f.get('date'),reason:f.get('reason'),docIds:[f.get('docId')]}));
@@ -553,7 +487,9 @@ function workDetail(item, done) {
 
 function render() {
   if(view.kind==='source'){shell('원본 자료 등록·정정',moduleHTML('register',sourceHTML(),{ruleOnly:true}));mountSource({state,api,run,onError:toast,onSaved:()=>({kind:'inbox'})});return;}
-  if (view.kind === 'intake') return intakeView();
+  if(view.kind==='batch')return batchView();
+  if(view.kind==='list')return taskList();
+  if(view.kind==='batchDone'){shell('접수 완료','<p class="decision-band">'+view.result.count+'건을 '+view.result.groups+'개 검토 건으로 접수했습니다.</p><p>다음 담당: 회계팀</p><button id="batchBack">내 작업</button>');listen('batchBack',()=>show());return;}
   if (['direct','csv'].includes(view.kind)) return registerView(view.kind);
   if (view.kind === 'done') return workDetail(view.item,true);
   if (view.kind === 'task') {
@@ -568,6 +504,7 @@ function render() {
 for (const type of ['input','change']) root.addEventListener(type,event => {
   if (event.target.closest('main form')) dirty = true;
 });
+root.addEventListener('invalid',event=>{const module=event.target.closest('[data-module]');if(module?.hidden)activateModule(module.dataset.module);},true);
 await load();
 setInterval(() => {
   if (!user || dirty || busy || document.querySelector('main form :focus')) return;
