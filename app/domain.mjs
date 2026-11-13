@@ -367,7 +367,7 @@ function reviewAction(s,actor,p){
       const docIds=[...new Set([...(c.evidenceAssessment?.payments||[]).filter(r=>pending.includes(r.paymentId)).flatMap(r=>r.docIds||[]),...c.docs.filter(d=>['supplement','narrative','account'].includes(d.kind)).map(d=>d.id)])];
       const resolveKeys=openHolds(c).filter(h=>h.owner==='reviewer'&&!h.key.startsWith('evidence:')&&h.key!=='assignee'&&!/^(recon:|conflict:|voucher:|month:)/.test(h.key)).map(h=>h.key);
       command(draft,actor,'review',{caseId:c.id,reason,docIds,confirmPaymentIds:pending.filter(id=>!['pass','manual'].includes(c.evidenceAssessment?.payments.find(r=>r.paymentId===id)?.status)),resolveKeys});
-      c.reviewRecord={jobId:job?.id,reason:redact(reason),actor:actor.id,at:now()};
+      c.reviewRecord={action:p.action,jobId:job?.id,reason:redact(reason),actor:actor.id,at:now()};
     }
     command(draft,actor,'submit',{caseId:c.id});
     // Submission completes any remaining review/response task for this version.

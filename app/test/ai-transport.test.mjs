@@ -44,3 +44,18 @@ test('원본 모드의 인용은 계좌·명의·행 식별자를 포함한 원�
  const job={mode:'source',focus:['M','B'],docs:[{id:'M',text:'계좌: 은행 ****1234\n거래처: D-024\n명의: 성일상사'},{id:'B',text:'계좌: 은행 ****5678\n입금: DP-13'}],basis:{members:['D-024']}};
  assert.deepEqual(promptFor(job).citationChoices.map(q=>q.quote),job.docs.map(d=>d.text));
 });
+test('원본 모드는 서버가 요청 범위를 연결하고 응답에 명시된 범위 오류는 거부한다',async()=>{
+ const job={caseId:'CASE-SOURCE',revision:2,mode:'source',focus:['REPLY'],basis:{members:['D-024']},
+   docs:[{id:'REPLY',kind:'supplement',text:'등록 정산계좌와 수금계좌의 사용 목적이 다릅니다.'}]};
+ const judgment={facts:[{ref:'Q1',text:'계좌 용도를 구분한 회신'}],action:'recommend_proceed',
+   reason:'보완 회신이 계좌 사용 목적의 차이를 설명합니다.',unknowns:[],escalation:false};
+ const invoke=answer=>nimCall(job,{apiKey:'test-only',fetcher:async()=>new Response(JSON.stringify({
+   choices:[{message:{content:JSON.stringify(answer)}}]
+ }))});
+ const {decision}=await invoke(judgment);
+ assert.equal(decision.caseId,job.caseId);
+ assert.equal(decision.inputRevision,2);
+ assert.deepEqual(decision.scope,['D-024']);
+ await assert.rejects(invoke({...judgment,scope:['basis.members']}),{code:'AI_SCOPE'});
+ await assert.rejects(invoke({...judgment,unknowns:['계좌 사유 미확인']}),{code:'AI_ACTION'});
+});

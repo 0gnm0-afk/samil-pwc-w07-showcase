@@ -5,7 +5,7 @@ import {source,openStore} from '../store.mjs';
 import {initialState,command,actorFor,publicState} from '../domain.mjs';
 import {previewIntake} from '../batch-intake.mjs';
 import {processOne,promptFor,validateDecision} from '../ai.mjs';
-import {approvalFormHTML,reconciliationFormHTML} from '../public/review-ui.js';
+import {approvalFormHTML,reconciliationFormHTML,reviewFormHTML} from '../public/review-ui.js';
 import {settlementDifferences,proceedEvidenceGaps} from '../review-summary.mjs';
 const act=(s,u,t,p)=>command(s,actorFor(u),t,p);
 test('대사 차이는 실제 비교값으로 설명하고 입력한 전표는 접어 두며 근거 이름으로 선택한다',()=>{
@@ -55,7 +55,17 @@ test('AI 진행 권고는 검증된 근거 수용 후에만 상신하며 미확�
  act(s,'intake','documents',{caseId:c.id,taskId:replyTask.id,docs:[{id:'REPLY-ACCEPT',kind:'supplement',text:'모의 회신: 채권 수금은 공동 운영계좌로 하고 장려금은 각 거래처 등록 정산계좌로 수취합니다.'}]});
  const revised=s.cases[c.id],newJob=Object.values(s.jobs).find(j=>j.caseId===c.id&&j.revision===revised.revision);
  newJob.decision=decision(newJob,'recommend_proceed',[]);newJob.status='applied';
+ const html=reviewFormHTML(publicState(s,actorFor('reviewer')).cases.find(x=>x.id===c.id));
+ const opinion=html.split('<section class="judgment ai">')[1].split('</section>')[0];
+ assert.match(opinion,/AI 권고 · 결재 요청 가능/);
+ assert.match(opinion,/data-review="accept"/);
+ assert.doesNotMatch(html,/id="reviewConfirm"/);
  const p=request(revised,'accept',{jobId:newJob.id});act(s,'reviewer','reviewAction',p);assert.equal(s.cases[c.id].version,1);assert.equal(act(s,'reviewer','reviewAction',p).duplicate,true);
+ const submitted=publicState(s,actorFor('executive')).cases.find(x=>x.id===c.id);
+ assert.equal(submitted.reviewRecord.action,'accept');
+ assert.equal(submitted.reviewSummary.acceptedOpinion.action,'recommend_proceed');
+ assert.equal(submitted.status,'approval_pending');
+ assert.equal(submitted.canPay,false);
  const other=setup(),blocked=Object.values(other.cases).find(c=>c.canSubmit);other.plans[blocked.paymentIds[0]].accountKey=null;
  const old=JSON.stringify(other);assert.throws(()=>act(other,'reviewer','reviewAction',request(blocked,'confirm',{reason:'계좌 없이 임의로 확인하려는 시도입니다.'})),{code:'REVIEW_BLOCKED'});assert.equal(JSON.stringify(other),old);
 });

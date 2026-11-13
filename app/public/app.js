@@ -403,7 +403,7 @@ function historyPanel(c) {
   const tasks=step=>(step.tasks||[]).map(t=>'<p class="flow-task">'+esc(roles[t.owner])+' · '+esc(t.reason)+(t.jobId?' · AI 후속 작업':'')+'</p>').join('');
   const past=flow.history.map(h=>'<details class="flow-step past"><summary><span class="flow-phase">✓ 진행 이력</span><strong>'+esc(h.title)+'</strong><span>'+esc(h.ownerName)+' · '+esc(h.result)+'</span><small>'+date(h.at)+'</small>'+branches(h)+'</summary><div class="flow-details">'+h.records.map(r=>'<p>'+esc(labels[r.type]||r.type)+' · '+esc(r.detail?.reason||r.detail?.decision||r.detail?.status||'처리 기록')+'</p>').join('')+(h.docs||[]).map(d=>'<p class="doc">'+esc(d.text)+'</p>').join('')+tasks(h)+'</div></details>').join('');
   const current=flow.current;
-  return '<section class="history-panel"><h2>업무 진행 흐름</h2><p class="meta">초록 · 진행 이력　파랑 · 현재 작업　보라 · 다음 한 단계</p><div class="workflow-strip" tabindex="0" aria-label="왼쪽에서 오른쪽으로 이어지는 업무 흐름">'+past+'<article class="flow-step current" data-current aria-current="step"><span class="flow-phase">● '+(current.terminal?'처리 결과':'현재 작업')+'</span><strong>'+esc(current.title)+'</strong><span>'+esc(current.ownerName)+'</span><p>'+esc(current.condition)+'</p>'+branches(current)+tasks(current)+'</article>'+(flow.next?'<article class="flow-step next"><span class="flow-phase">→ 다음 단계</span><strong>'+esc(flow.next.title)+'</strong><span>'+esc(flow.next.ownerName)+'</span><p>'+esc(flow.next.condition)+'</p>'+branches(flow.next)+'</article>':'')+'</div></section>';
+  return '<section class="history-panel"><h2>업무 진행 흐름</h2><div class="workflow-strip" tabindex="0" aria-label="왼쪽에서 오른쪽으로 이어지는 업무 흐름">'+past+'<article class="flow-step current" data-current aria-current="step"><span class="flow-phase">● '+(current.terminal?'처리 결과':'현재 작업')+'</span><strong>'+esc(current.title)+'</strong><span>'+esc(current.ownerName)+'</span><p>'+esc(current.condition)+'</p>'+branches(current)+tasks(current)+'</article>'+(flow.next?'<article class="flow-step next"><span class="flow-phase">→ 다음 단계</span><strong>'+esc(flow.next.title)+'</strong><span>'+esc(flow.next.ownerName)+'</span><p>'+esc(flow.next.condition)+'</p>'+branches(flow.next)+'</article>':'')+'</div></section>';
 }
 
 function workDetail(item, done) {
@@ -420,7 +420,7 @@ function workDetail(item, done) {
   else content = paymentForm(item,c);
 
   if (!done) content = caseOverview(c,state,item.paymentId)+content;
-  shell(done ? '처리 결과' : itemName(item), `<section class="panel work-panel">${content}</section><details class="supporting-details"><summary>근거·이력 보기</summary>${historyPanel(c,item,done)}</details>`);
+  shell(done ? '처리 결과' : itemName(item), `<section class="panel work-panel">${content}</section>${historyPanel(c)}`);
   if (done) {
     listen('backToInbox',()=>show());
     const next=state.workItems.find(w=>w.caseId===c.id&&w.id!==item.id);
