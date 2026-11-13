@@ -6,7 +6,7 @@ import {initialState,command,actorFor,publicState} from '../domain.mjs';
 import {previewIntake} from '../batch-intake.mjs';
 import {processOne,promptFor,validateDecision} from '../ai.mjs';
 import {approvalFormHTML,reconciliationFormHTML} from '../public/review-ui.js';
-import {settlementDifferences} from '../review-summary.mjs';
+import {settlementDifferences,proceedEvidenceGaps} from '../review-summary.mjs';
 const act=(s,u,t,p)=>command(s,actorFor(u),t,p);
 test('대사 차이는 실제 비교값으로 설명하고 입력한 전표는 접어 두며 근거 이름으로 선택한다',()=>{
  const i={id:'I',paymentId:'P',amount:100,date:'2026-07-10',accountKey:'one',accountLabel:'은행 ****1111',receiptId:'R',reconciliation:'difference',vouchers:[{id:'V',amount:101}]};
@@ -43,10 +43,30 @@ test('중복 계좌 차이를 한 쟁점으로 묶고 AI 확인 질문은 사람
 test('AI 진행 권고는 검증된 근거 수용 후에만 상신하며 미확인 사항·필수값 누락은 우회 불가',()=>{
  const s=setup(),c=Object.values(s.cases).find(c=>c.paymentIds.includes('RB-00120')),job=Object.values(s.jobs).find(j=>j.caseId===c.id);
  assert.throws(()=>decision(job,'recommend_proceed',['추가 사실 확인 필요']),{code:'AI_ACTION'});
- job.decision=decision(job,'recommend_proceed',[]);job.status='applied';
- const p=request(c,'accept',{jobId:job.id});act(s,'reviewer','reviewAction',p);assert.equal(s.cases[c.id].version,1);assert.equal(act(s,'reviewer','reviewAction',p).duplicate,true);
+ assert.throws(()=>decision(job,'recommend_proceed',[]),{code:'AI_ACTION'});
+ assert.equal(promptFor(job).missingProceedEvidence.length,1);
+ // Previously stored, schema-valid hallucinations must also lose the accept action.
+ job.decision={...decision(job),action:'recommend_proceed',unknowns:[],reason:'입금계좌와 등록계좌가 일치합니다.'};job.status='applied';
+ const blockedSummary=publicState(s,actorFor('reviewer')).cases.find(x=>x.id===c.id).reviewSummary;
+ assert.equal(blockedSummary.canAccept,false);assert.equal(blockedSummary.canRetry,true);assert.equal(blockedSummary.opinion,null);assert.match(blockedSummary.failureReason,/보완 근거가 없습니다/);
+ assert.throws(()=>act(s,'reviewer','reviewAction',request(c,'accept',{jobId:job.id})),{code:'AI_NOT_READY'});
+ act(s,'reviewer','reviewAction',request(c,'supplement',{reason:'입금계좌와 정산계좌가 다른 사유를 회신해 주세요.'}));
+ const replyTask=Object.values(s.tasks).find(t=>t.caseId===c.id&&t.owner==='intake'&&t.status==='open');
+ act(s,'intake','documents',{caseId:c.id,taskId:replyTask.id,docs:[{id:'REPLY-ACCEPT',kind:'supplement',text:'모의 회신: 채권 수금은 공동 운영계좌로 하고 장려금은 각 거래처 등록 정산계좌로 수취합니다.'}]});
+ const revised=s.cases[c.id],newJob=Object.values(s.jobs).find(j=>j.caseId===c.id&&j.revision===revised.revision);
+ newJob.decision=decision(newJob,'recommend_proceed',[]);newJob.status='applied';
+ const p=request(revised,'accept',{jobId:newJob.id});act(s,'reviewer','reviewAction',p);assert.equal(s.cases[c.id].version,1);assert.equal(act(s,'reviewer','reviewAction',p).duplicate,true);
  const other=setup(),blocked=Object.values(other.cases).find(c=>c.canSubmit);other.plans[blocked.paymentIds[0]].accountKey=null;
  const old=JSON.stringify(other);assert.throws(()=>act(other,'reviewer','reviewAction',request(blocked,'confirm',{reason:'계좌 없이 임의로 확인하려는 시도입니다.'})),{code:'REVIEW_BLOCKED'});assert.equal(JSON.stringify(other),old);
+});
+
+test('계좌 차이 진행 권고는 해당 지급의 최신 담당자 회신을 인용해야 한다',()=>{
+ const s=setup(),c=Object.values(s.cases).find(c=>c.paymentIds.includes('RB-00120')),job=Object.values(s.jobs).find(j=>j.caseId===c.id);
+ const reply={id:'EXPLANATION',kind:'supplement',by:'intake',revision:1,paymentIds:c.paymentIds,text:'수금용 계좌와 정산용 계좌를 별도 운영한다는 모의 확인 회신'};
+ const docs=[...job.docs,reply],facts=[{docId:reply.id}];
+ assert.equal(proceedEvidenceGaps(job.progress.evidenceAssessment,docs,facts).length,0);
+ for(const altered of [{...reply,paymentIds:[c.paymentIds[0]]},{...reply,revision:0},{...reply,by:'nim'},{...reply,sourceRecord:true}])assert.equal(proceedEvidenceGaps(job.progress.evidenceAssessment,[...job.docs,altered],facts).length,1);
+ assert.equal(proceedEvidenceGaps(job.progress.evidenceAssessment,docs,[]).length,1);
 });
 test('통합 처리 도중 상신 실패는 확인·작업·승인 변경 전체를 되돌리며 오래된 요청을 거부',()=>{
  const s=setup(),c=Object.values(s.cases).find(c=>c.paymentIds.includes('RB-00120')),job=Object.values(s.jobs).find(j=>j.caseId===c.id);job.status='failed';

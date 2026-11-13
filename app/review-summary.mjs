@@ -27,18 +27,32 @@ export function reviewIssues(assessment){
   return [...grouped.values()].map(i=>({...i,docIds:unique(i.docIds),paymentIds:unique(i.paymentIds)}));
 }
 export function latestReviewJob(s,c){return Object.values(s.jobs).findLast(j=>j.caseId===c.id&&j.revision===c.revision&&j.status!=='stale');}
+// A model cannot explain an account difference by repeating the two source values.
+// Require a current, linked human reply and its citation before one-click acceptance.
+export function proceedEvidenceGaps(assessment,docs,facts){
+  const cited=facts?new Set(facts.map(f=>f.docId)):null;
+  return reviewIssues(assessment).filter(i=>i.code==='collection_account').filter(issue=>{
+    const sourceRevision=Math.max(0,...docs.filter(d=>issue.docIds.includes(d.id)).map(d=>d.revision||0));
+    const replies=docs.filter(d=>!d.sourceRecord&&['supplement','narrative'].includes(d.kind)&&['intake','reviewer'].includes(d.by)&&
+      d.revision>=sourceRevision&&(!cited||cited.has(d.id)));
+    return issue.paymentIds.some(id=>!replies.some(d=>d.paymentIds?.includes(id)));
+  });
+}
 export function reviewSummary(s,c){
   const a=c.evidenceAssessment,issues=reviewIssues(a),job=latestReviewJob(s,c);
   const holds=Object.values(c.holds).filter(h=>!h.closedAt);
   const hardIssues=issues.filter(i=>i.status==='fail'||c.reviewMode==='source-1'&&i.code!=='collection_account');
   const fixedHolds=holds.filter(h=>h.key==='assignee'||/^(recon:|conflict:|month:|voucher:)/.test(h.key));
   const canConfirm=!hardIssues.length&&!fixedHolds.length;
-  const decision=job?.status==='applied'?job.decision:null;
+  const storedDecision=job?.status==='applied'?job.decision:null;
+  const rejectedProceed=storedDecision?.action==='recommend_proceed'&&proceedEvidenceGaps(a,c.docs,storedDecision.facts).length>0;
+  const decision=rejectedProceed?null:storedDecision;
   const awaiting=job&&['pending','running'].includes(job.status);
   const supplement=Object.values(s.tasks).find(t=>t.caseId===c.id&&t.owner==='intake'&&t.status==='open'&&(!t.jobId||s.jobs[t.jobId]?.revision===c.revision));
   const recipients=c.currentBasis.required.map(r=>({sales:'영업지원팀장',executive:'영업 임원',finance:'재무 임원'})[r.userId]||r.userId);
   return {revision:c.revision,jobId:job?.id??null,jobStatus:job?.status??null,
-    status:c.canSubmit?'ready':awaiting?'analyzing':job?.status==='failed'?'failed':decision?'opinion':'needs_review',
+    status:c.canSubmit?'ready':awaiting?'analyzing':job?.status==='failed'||rejectedProceed?'failed':decision?'opinion':'needs_review',
+    failureReason:rejectedProceed?'AI가 진행을 권고했지만 계좌 차이의 사유를 뒷받침하는 보완 근거가 없습니다. 이 권고는 사용할 수 없습니다.':null,
     source:c.canSubmit?(Object.values(c.confirmations).some(v=>v.actor!=='rules')?'person':'rules'):decision?'ai':'rules',
     recipients,issues,blockers:[...hardIssues.map(i=>i.message),...fixedHolds.map(h=>h.reason)],
     holds:holds.filter(h=>!/^evidence:|^auto-evidence:/.test(h.key)).map(h=>({key:h.key,reason:h.key.startsWith('document:')?'추가로 등록된 설명자료의 사실관계와 지급 조건을 확인해야 합니다.':h.key.startsWith('month:')?'지급예정월을 정하지 않은 관련 요청이 있어 월 합산을 확정할 수 없습니다. 영업직원이 해당 요청의 지급예정월을 정해야 합니다.':h.reason})),
@@ -46,7 +60,7 @@ export function reviewSummary(s,c){
     acceptedOpinion:c.reviewRecord?.jobId?s.jobs[c.reviewRecord.jobId]?.decision??null:null,
     requestedSupplement:supplement?{id:supplement.id,reason:supplement.reason}:null,
     canConfirm,canAccept:canConfirm&&decision?.action==='recommend_proceed'&&!decision.unknowns.length,
-    canRetry:job?.status==='failed',canSubmit:c.canSubmit&&c.needsResubmit,
+    canRetry:job?.status==='failed'||rejectedProceed,canSubmit:c.canSubmit&&c.needsResubmit,
     comparison:`거래처 등록정보와 지급 요청의 연결, 지급 대상 여부, 수취 명의·계좌, 원본 금액·정산월을 비교했습니다. 관련 거래처의 지급액을 합산해 필요한 결재권자를 정했습니다.`,
     limitation:'제공 자료 사이의 일치 여부를 확인한 결과입니다. 계약에 따른 장려금 산식이나 실제 계좌 명의를 별도로 검증한 결과는 아닙니다.'};
 }

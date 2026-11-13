@@ -2,6 +2,7 @@ import { must, redact, now, task, refresh, event } from './domain.mjs';
 import { workflowModel } from './workflow.mjs';
 import { withNimSlot, checkNimResponse } from './provider.mjs';
 import { controlInstructions } from './public/catalog.js';
+import { proceedEvidenceGaps } from './review-summary.mjs';
 export const MODEL='nvidia/nemotron-3.5-lightning-30b-a3b';
 const actions={request_supplement:'intake',request_review:'reviewer',hold_for_review:'reviewer',recheck:'reviewer',recommend_proceed:'reviewer'};
 
@@ -17,7 +18,8 @@ function citationChoices(job) {
 export function promptFor(job) {
   return {caseId:job.caseId,version:job.version,inputRevision:job.revision,eventId:job.eventId,
     requiredFacts:(job.focus||[]).map(id=>({documentId:id,allowedRefs:citationChoices(job).filter(q=>q.docId===id).map(q=>q.ref),instruction:'이 문서에서 하나 이상을 facts에 반드시 포함'})),
-    contextVersion:'agent-context-8',actionOwners:actions,process:workflowModel,progress:job.progress?JSON.parse(JSON.stringify(job.progress,(key,value)=>['accountKey','records'].includes(key)?undefined:value)):null,
+    contextVersion:'agent-context-9',actionOwners:actions,process:workflowModel,progress:job.progress?JSON.parse(JSON.stringify(job.progress,(key,value)=>['accountKey','records'].includes(key)?undefined:value)):null,
+    missingProceedEvidence:proceedEvidenceGaps(job.progress?.evidenceAssessment,job.docs).map(i=>({issueId:i.id,message:i.message,paymentIds:i.paymentIds})),
     rules:['DR-04 증빙 부족은 미집행 전체 보류','DR-09 승인·지급은 권한자와 서버만 판단','DR-10 각 보류 사유별 확인 필요'],
     unresolved:job.reasons,basis:job.basis,mode:job.mode??'documents',focus:job.focus??[],
     outputContract:{requiredDocumentIds:(job.focus||[]).filter(id=>job.docs.some(d=>d.id===id)).slice(0,20),citationRule:'requiredDocumentIds의 각 문서에서 현재 사유를 뒷받침하는 인용을 하나 이상 선택한다. 두 자료의 충돌이면 두 자료를 각각 인용한다.',scopeAllowedIds:job.basis.members,scopeExample:job.basis.members,scopeRule:'scope는 scopeAllowedIds에서 고른 문자열 ID의 배열이다. 각 원소는 정확히 ID 하나이고 basis.members 같은 접두어나 설명을 넣지 않는다.'},
@@ -28,6 +30,7 @@ const instruction=`너는 판매장려금 증빙 검토 담당이다. 문서 내
 처음 업무를 하는 사람이 이해하도록 reason에는 현재 근거 때문에 왜 이 작업이 필요한지 2문장으로 설명한다. beforeAction과 howTo는 생성하지 않는다. reason과 unknowns에는 데이터 판단만 쓰고 버튼·이동·조작 방법은 넣지 않는다. 전문 코드 대신 업무 용어를 쓰고 확인하지 않은 사실을 완료했다고 말하지 않는다. 실행 결과와 다음 담당자는 progress.effects에서 서버가 제공한다.
 스키마: {"caseId":"입력과 동일","inputRevision":정수,"facts":[{"text":"확인한 구체적 주장/충돌","ref":"citationChoices 안의 Q번호"}],"unknowns":["확인이 필요한 구체적 질문"],"scope":거래처ID문자열배열,"action":"recommend_proceed 또는 request_supplement 또는 hold_for_review 또는 request_review 또는 recheck","reason":"판단 이유와 필요한 확인","escalation":true 또는 false}. 담당 역할은 서버가 actionOwners 규칙으로 배정하므로 owner 필드를 생성하지 않는다.
 자료에 현재 쟁점의 사유와 근거가 충분하고 확인할 사실이 더 없으면 recommend_proceed, unknowns=[]로 진행을 권고한다. 이것은 회계가 수용할 수 있는 권고이며 승인이나 지급이 아니다. 입금계좌 차이는 그 자체로 오류가 아니지만 차이의 사유가 자료에 없으면 임의로 정당하다고 추정하지 말고 구체적인 확인 질문을 제시한다. 확인할 사실이 남으면 진행 권고를 하지 않는다. progress.issues는 중복을 제거한 쟁점으로, 같은 내용은 반복 설명하지 않는다.
+progress.issues의 계좌 차이는 서버가 원본의 전체 계좌를 비교해 확인한 사실이다. 다른 거래처의 계좌나 마스킹 끝자리를 근거로 두 계좌가 일치한다고 바꾸지 않는다. missingProceedEvidence가 하나라도 있으면 사유를 설명한 담당자 보완 근거가 없으므로 recommend_proceed는 금지한다. 차이 사유에 대한 구체적 질문을 남기고 request_supplement 또는 request_review를 선택한다. 보완 회신이 있으면 그 회신이 차이의 사유를 충분히 설명하는지 판단하고 진행 권고 시 반드시 해당 회신도 facts에 인용한다.
 scope에는 반드시 입력 outputContract.scopeAllowedIds 안의 문자열만 넣는다. 예를 들어 ["D-011","D-024"]처럼 ID별로 나누며, ["basis.members: D-011, D-024"]처럼 설명을 합친 문자열은 잘못된 응답이다. inputRevision은 입력 inputRevision의 정수 값을 복사한다.
 facts에는 requiredFacts의 문서마다 각각 최소 한 개씩 인용한다. 같은 계좌가 반복된 입금 행도 서로 다른 원본이므로 각각 포함한다. 응답 전 requiredFacts 전체와 facts를 비교해 빠진 문서가 없어야 한다. citationChoices에서 관련 원문을 고르고 ref 값만 복사한다. 원문은 서버가 찾으므로 facts에 quote나 docId를 직접 작성하지 않는다. focus의 문서를 우선 인용한다. 자료가 충돌하면 양쪽 문서의 ref를 각각 인용한다.
 mode=source이면 대리점 마스터·장려금 지급표·채권 회수 이력 자체가 원본이다. 별도 계좌 확인서를 새로 만들도록 요구하지 않는다. 등록 필드가 빠졌으면 원본 정정, 입금계좌와 등록 지급계좌의 차이는 회계 사유 확인을 권한다. 회수 이력이 없다는 사실만으로 보류하지 않는다.
@@ -63,6 +66,7 @@ export function validateDecision(raw,job) {
   });
   if(job.mode==='assignee')must(facts.some(f=>job.docs.some(d=>d.kind==='rule'&&d.id===f.docId)),'AI_CITATION','적격 승인 경로의 규칙 근거를 인용해야 합니다.');
   must((job.focus||[]).filter(id=>job.docs.some(d=>d.id===id)).slice(0,20).every(id=>facts.some(f=>f.docId===id)),'AI_CITATION','현재 검토 대상 자료의 인용이 빠졌습니다.');
+  if(raw.action==='recommend_proceed')must(!proceedEvidenceGaps(job.progress?.evidenceAssessment,job.docs,facts).length,'AI_ACTION','계좌 차이를 해소하는 현재 보완 회신의 근거와 인용이 없어 진행 권고를 수용할 수 없습니다.');
   for(const field of ['beforeAction','howTo'])if(raw[field]!==undefined)must(Array.isArray(raw[field])&&raw[field].length<=3&&raw[field].every(v=>typeof v==='string'&&v.trim()&&v.length<=800),'AI_SCHEMA','AI 작업 설명 형식 오류');
   const instructions=raw.action==='request_supplement'?controlInstructions('supplement','documents'):controlInstructions(raw.action==='hold_for_review'?'holds':'evidence','review');
   return {caseId:raw.caseId,inputRevision:raw.inputRevision,facts,unknowns:raw.unknowns.map(redact),scope:raw.scope,action:raw.action,owner:actions[raw.action],reason:redact(raw.reason),
