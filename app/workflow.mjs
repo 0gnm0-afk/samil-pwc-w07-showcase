@@ -47,7 +47,17 @@ export function projectWorkflow(state,c,actor,selectedWork) {
   }
   let current,next=null;
   const terminal=['completed','rejected','cancelled'].includes(c.status);
-  const activeTasks=state.tasks.filter(t=>t.caseId===c.id&&t.status==='open'&&(!t.jobId||state.jobs.some(j=>j.id===t.jobId&&j.revision===c.revision)));
+  const activeJobs=new Map(state.jobs.filter(j=>j.caseId===c.id&&j.revision===c.revision&&['applied','failed'].includes(j.status)).map(j=>[j.id,j]));
+  const activeTasks=state.tasks.filter(t=>{
+    if(t.caseId!==c.id||t.status!=='open')return false;
+    if(!t.jobId)return true;
+    const job=activeJobs.get(t.jobId);
+    return job&&(!job.taskIds||job.taskIds.includes(t.id));
+  });
+  const reviewStage=()=>c.reviewSummary?.canAccept
+    ?stage('W07I_Review','AI 권고와 근거 확인','reviewer','회계가 권고를 수용하면 결재 요청까지 함께 기록합니다.')
+    :stage('W07I_Review',c.canSubmit?'검토 결과·결재 요청':'증빙·보류 사유 확인','reviewer','',
+      {tasks:activeTasks.filter(t=>t.owner==='reviewer')});
   const instructions=state.instructions.filter(i=>i.caseId===c.id);
   const ownWork=selectedWork||state.workItems.find(w=>w.caseId===c.id);
   if(terminal) current=stage('W07I_Finish',c.status==='completed'?'처리 완료':c.status==='rejected'?'반려 · 종료':'취소 · 종료','', '',{terminal:true});
@@ -68,9 +78,9 @@ export function projectWorkflow(state,c,actor,selectedWork) {
       current=stage('W07I_Supplement','원본 정정·보완 회신','intake','요청받은 자료를 해당 작업에 연결하세요.',{tasks:supplement});
       next=review();
     } else {
-      current=review();current.title=c.canSubmit?'검토 결과·결재 상신':'증빙·보류 사유 확인';
-      current.tasks=activeTasks.filter(t=>['reviewer','reconciler'].includes(t.owner));
-      next=c.canSubmit?approvalStage(c):stage('W07I_Rework','보류 사유 재검토','reviewer','자료와 적격 승인 경로를 확인하면 상신할 수 있습니다.');
+      current=reviewStage();
+      if(!c.reviewSummary?.canAccept)current.tasks.push(...activeTasks.filter(t=>t.owner==='reconciler'));
+      next=c.canSubmit||c.reviewSummary?.canAccept?approvalStage(c):stage('W07I_Rework','보류 사유 재검토','reviewer','자료와 적격 승인 경로를 확인하면 결재를 요청할 수 있습니다.');
     }
   }
   if(!terminal&&ownWork){
@@ -86,8 +96,8 @@ export function projectWorkflow(state,c,actor,selectedWork) {
     } else if(ownWork.kind==='change') {
       current=stage('W07I_Prepay','지급조건 변경','intake');next=stage('W07I_Rework','변경 조건 재검토','reviewer','변경 저장 후 기존 승인과 지급 조건을 재검사합니다.');
     } else if(ownWork.kind==='review') {
-      current=stage('W07I_Review',c.canSubmit?'검토 결과·결재 상신':'증빙·보류 사유 확인','reviewer','',{tasks:activeTasks.filter(t=>t.owner==='reviewer')});
-      next=c.canSubmit?approvalStage(c):activeTasks.some(t=>t.owner==='intake')?stage('W07I_Supplement','원본 정정·보완 회신','intake','요청받은 보완 자료를 제출하면 회계팀이 재검토합니다.'):stage('W07I_Rework','보류 사유 재검토','reviewer','근거와 적격 승인 경로를 확인한 후 상신합니다.');
+      current=reviewStage();
+      next=c.canSubmit||c.reviewSummary?.canAccept?approvalStage(c):activeTasks.some(t=>t.owner==='intake')?stage('W07I_Supplement','원본 정정·보완 회신','intake','요청받은 보완 자료를 제출하면 회계팀이 재검토합니다.'):stage('W07I_Rework','보류 사유 재검토','reviewer','근거와 적격 승인 경로를 확인한 후 결재를 요청합니다.');
     }
     current.paymentId=ownWork.paymentId;
   }

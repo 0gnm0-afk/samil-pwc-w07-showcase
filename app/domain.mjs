@@ -611,13 +611,15 @@ export function publicState(s,actor) {
     jobs:Object.values(s.jobs).filter(j=>ids.has(j.caseId)).map(({docs,...j})=>j),events:s.events.filter(e=>!e.caseId||ids.has(e.caseId)),conflicts:s.conflicts,
     workItems:assignedWork(s,actor,visible),intakeGroups:can(actor,'intake')?intakeGroups(s):[]};
   result.cases = visible.map(c=>{
+    const summary=reviewSummary(s,c);
+    const caseView={...c,reviewSummary:summary};
     const assigned=result.workItems.filter(item=>item.caseId===c.id);
     if(can(actor,'intake')&&!['completed','rejected','cancelled'].includes(c.status)&&c.paymentIds.some(id=>!s.instructions[id]))assigned.push({id:'change',kind:'change'});
     const workflowByWork=Object.fromEntries(assigned.map(item=>{
-      const {current,next}=projectWorkflow(result,c,actor,item);
+      const {current,next}=projectWorkflow(result,caseView,actor,item);
       return [item.id,{current,next}];
     }));
-    return {...c,reviewSummary:reviewSummary(s,c),evidenceAssessment:c.evidenceAssessment||assessEvidence(s,c),settlementAssessments:c.paymentIds.flatMap(id=>['bank','voucher'].map(kind=>assessSettlement(s,c,id,kind)).filter(Boolean)),workflow:projectWorkflow(result,c,actor),workflowByWork};
+    return {...caseView,evidenceAssessment:c.evidenceAssessment||assessEvidence(s,c),settlementAssessments:c.paymentIds.flatMap(id=>['bank','voucher'].map(kind=>assessSettlement(s,c,id,kind)).filter(Boolean)),workflow:projectWorkflow(result,caseView,actor),workflowByWork};
   });
   // Account comparison tokens are server-only; values, attachments and diagnostics are masked.
   return JSON.parse(JSON.stringify(result,(key,value)=>['accountKey','passwordHash','registrationFingerprint'].includes(key)?undefined:value));

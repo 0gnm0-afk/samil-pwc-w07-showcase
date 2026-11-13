@@ -55,7 +55,10 @@ test('AI 진행 권고는 검증된 근거 수용 후에만 상신하며 미확�
  act(s,'intake','documents',{caseId:c.id,taskId:replyTask.id,docs:[{id:'REPLY-ACCEPT',kind:'supplement',text:'모의 회신: 채권 수금은 공동 운영계좌로 하고 장려금은 각 거래처 등록 정산계좌로 수취합니다.'}]});
  const revised=s.cases[c.id],newJob=Object.values(s.jobs).find(j=>j.caseId===c.id&&j.revision===revised.revision);
  newJob.decision=decision(newJob,'recommend_proceed',[]);newJob.status='applied';
- const html=reviewFormHTML(publicState(s,actorFor('reviewer')).cases.find(x=>x.id===c.id));
+ const ready=publicState(s,actorFor('reviewer')).cases.find(x=>x.id===c.id);
+ const html=reviewFormHTML(ready);
+ assert.equal(ready.workflow.current.title,'AI 권고와 근거 확인');
+ assert.equal(ready.workflow.next.id,'W07I_Outcome');
  const opinion=html.split('<section class="judgment ai">')[1].split('</section>')[0];
  assert.match(opinion,/AI 권고 · 결재 요청 가능/);
  assert.match(opinion,/data-review="accept"/);
