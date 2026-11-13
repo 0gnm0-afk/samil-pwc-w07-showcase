@@ -48,7 +48,7 @@ test('AI 진행 권고는 검증된 근거 수용 후에만 상신하며 미확�
  // Previously stored, schema-valid hallucinations must also lose the accept action.
  job.decision={...decision(job),action:'recommend_proceed',unknowns:[],reason:'입금계좌와 등록계좌가 일치합니다.'};job.status='applied';
  const blockedSummary=publicState(s,actorFor('reviewer')).cases.find(x=>x.id===c.id).reviewSummary;
- assert.equal(blockedSummary.canAccept,false);assert.equal(blockedSummary.canRetry,true);assert.equal(blockedSummary.opinion,null);assert.match(blockedSummary.failureReason,/보완 근거가 없습니다/);
+ assert.equal(blockedSummary.canAccept,false);assert.equal(blockedSummary.canRetry,true);assert.equal(blockedSummary.opinion,null);assert.match(blockedSummary.failureReason,/보완 회신이 연결되어 있지 않습니다/);
  assert.throws(()=>act(s,'reviewer','reviewAction',request(c,'accept',{jobId:job.id})),{code:'AI_NOT_READY'});
  act(s,'reviewer','reviewAction',request(c,'supplement',{reason:'입금계좌와 정산계좌가 다른 사유를 회신해 주세요.'}));
  const replyTask=Object.values(s.tasks).find(t=>t.caseId===c.id&&t.owner==='intake'&&t.status==='open');
@@ -105,9 +105,30 @@ test('보완 회신 저장 뒤 새 자료만으로 AI를 다시 판단하고 화
  const store=await openStore({url:'',local:'memory'});try{
   await store.create('qa-review-actions');let caseId,taskId;
   await store.tx('qa-review-actions',s=>{Object.assign(s,setup());caseId=Object.values(s.cases).find(c=>c.paymentIds.includes('RB-00120')).id;});
-  let calls=0;await processOne(store,'qa-review-actions',{call:async j=>{calls++;return {decision:decision(j,'request_supplement',['계좌 차이의 사업상 사유를 알려주세요.'])};}});
-  await store.tx('qa-review-actions',s=>{taskId=Object.values(s.tasks).find(t=>t.caseId===caseId&&t.owner==='intake'&&t.status==='open').id;act(s,'intake','documents',{caseId,taskId,docs:[{id:'REPLY-TEST',kind:'supplement',text:'모의 회신: 수금 전용 계좌와 정산 계좌를 구분해서 사용하며 요청의 장려금은 등록된 정산 계좌로 받습니다.'}]});});
+  const question='계좌 차이의 사업상 사유를 알려주세요.';
+  let calls=0;
+  const initial=async j=>{
+   calls++;
+   if(!j.validationFeedback)throw Object.assign(Error('현재 회신 인용이 없습니다.'),{code:'AI_ACTION',metadata:{httpStatus:200}});
+   assert.match(promptFor(j).validationFeedback.message,/회신 인용/);
+   return {decision:decision(j,'request_supplement',[question])};
+  };
+  await processOne(store,'qa-review-actions',{call:initial});
+  await processOne(store,'qa-review-actions',{call:initial});
+  await store.tx('qa-review-actions',s=>{
+   const caseView=publicState(s,actorFor('reviewer')).cases.find(c=>c.id===caseId);
+   assert.equal(caseView.reviewSummary.opinion.action,'request_supplement');
+   assert.match(reviewFormHTML(caseView),/id="reviewSupplement"[\s\S]*계좌 차이의 사업상 사유를 알려주세요/);
+   assert(!Object.values(s.tasks).some(t=>t.caseId===caseId&&t.owner==='intake'&&t.status==='open'));
+   const action=request(caseView,'supplement',{jobId:caseView.reviewSummary.jobId,reason:question});
+   act(s,'reviewer','reviewAction',action);
+   assert.equal(act(s,'reviewer','reviewAction',action).duplicate,true);
+   const tasks=Object.values(s.tasks).filter(t=>t.caseId===caseId&&t.owner==='intake'&&t.status==='open');
+   assert.equal(tasks.length,1);assert.equal(tasks[0].reason,question);
+   taskId=tasks[0].id;
+   act(s,'intake','documents',{caseId,taskId,docs:[{id:'REPLY-TEST',kind:'supplement',text:'모의 회신: 수금 전용 계좌와 정산 계좌를 구분해서 사용하며 요청의 장려금은 등록된 정산 계좌로 받습니다.'}]});
+  });
   await processOne(store,'qa-review-actions',{call:async j=>{calls++;return {decision:decision(j,'recommend_proceed',[])};}});
-  const s=await store.read('qa-review-actions');for(let i=0;i<3;i++)publicState(s,actorFor('reviewer'));assert.equal(calls,2);assert.equal(publicState(s,actorFor('reviewer')).cases.find(c=>c.id===caseId).reviewSummary.canAccept,true);
+  const s=await store.read('qa-review-actions');for(let i=0;i<3;i++)publicState(s,actorFor('reviewer'));assert.equal(calls,3);assert.equal(publicState(s,actorFor('reviewer')).cases.find(c=>c.id===caseId).reviewSummary.canAccept,true);
  }finally{await store.close();}
 });

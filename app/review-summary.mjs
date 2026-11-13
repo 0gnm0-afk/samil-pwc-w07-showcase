@@ -45,6 +45,7 @@ export function reviewSummary(s,c){
   const fixedHolds=holds.filter(h=>h.key==='assignee'||/^(recon:|conflict:|month:|voucher:)/.test(h.key));
   const canConfirm=!hardIssues.length&&!fixedHolds.length;
   const storedDecision=job?.status==='applied'?job.decision:null;
+  const missingReplies=proceedEvidenceGaps(a,c.docs);
   const rejectedProceed=storedDecision?.action==='recommend_proceed'&&proceedEvidenceGaps(a,c.docs,storedDecision.facts).length>0;
   const decision=rejectedProceed?null:storedDecision;
   const awaiting=job&&['pending','running'].includes(job.status);
@@ -53,12 +54,20 @@ export function reviewSummary(s,c){
   const reviewedJob=c.reviewRecord?.jobId?s.jobs[c.reviewRecord.jobId]:null;
   const accepted=c.reviewRecord?.action==='accept'||(!c.reviewRecord?.action&&reviewedJob&&
     s.events.some(e=>e.caseId===c.id&&e.type==='review_action'&&e.detail?.action==='accept'&&e.detail.jobId===reviewedJob.id));
+  const failed=job?.status==='failed'||rejectedProceed;
+  const missingReplyNotice=failed&&missingReplies.length
+    ? '입금계좌와 등록 정산계좌가 다른 이유를 설명하는 보완 회신이 연결되어 있지 않습니다.'
+    : null;
+  const supplementQuestions=decision?.action==='request_supplement'
+    ? [...new Set(decision.unknowns.map(question=>question.trim()).filter(Boolean))]
+    : [];
   return {revision:c.revision,jobId:job?.id??null,jobStatus:job?.status??null,
     status:c.canSubmit?'ready':awaiting?'analyzing':job?.status==='failed'||rejectedProceed?'failed':decision?'opinion':'needs_review',
-    failureReason:rejectedProceed?'AI가 진행을 권고했지만 계좌 차이의 사유를 뒷받침하는 보완 근거가 없습니다. 이 권고는 사용할 수 없습니다.':
+    failureReason:missingReplyNotice||(rejectedProceed?'AI가 진행을 권고했지만 현재 보완 회신을 근거로 인용하지 않았습니다.':
       job?.status==='failed'&&job.error?.code==='AI_ACTION'&&job.error?.validationDetail?.action==='recommend_proceed'
         ?'AI가 진행을 권고했지만 확인이 남았거나 진행 조건을 충족하지 않아 수용할 수 없습니다.':
-      job?.status==='failed'&&job.error?.code==='AI_CITATION'?'AI가 판단에 필요한 자료를 빠뜨렸거나 근거 인용이 원본과 맞지 않습니다.':null,
+      job?.status==='failed'&&job.error?.code==='AI_CITATION'?'AI가 판단에 필요한 자료를 빠뜨렸거나 근거 인용이 원본과 맞지 않습니다.':null),
+    supplementQuestions,missingReplyNotice,
     confirmedReason:c.reviewRecord?.reason??null,
     source:c.canSubmit?(Object.values(c.confirmations).some(v=>v.actor!=='rules')?'person':'rules'):decision?'ai':'rules',
     recipients,issues,blockers:[...hardIssues.map(i=>i.message),...fixedHolds.map(h=>h.reason)],
@@ -66,7 +75,7 @@ export function reviewSummary(s,c){
     opinion:decision?{action:decision.action,reason:decision.reason,unknowns:decision.unknowns,facts:decision.facts}:null,
     acceptedOpinion:accepted&&reviewedJob?.status==='applied'?reviewedJob.decision:null,
     requestedSupplement:supplement?{id:supplement.id,reason:supplement.reason}:null,
-    canConfirm,canAccept:c.needsResubmit&&canConfirm&&decision?.action==='recommend_proceed'&&!decision.unknowns.length,
+    canConfirm,canAccept:c.needsResubmit&&canConfirm&&!supplement&&decision?.action==='recommend_proceed'&&!decision.unknowns.length,
     canRetry:job?.status==='failed'||rejectedProceed,canSubmit:c.canSubmit&&c.needsResubmit,
     comparison:`거래처 등록정보와 지급 요청의 연결, 지급 대상 여부, 수취 명의·계좌, 원본 금액·정산월을 비교했습니다. 관련 거래처의 지급액을 합산해 필요한 결재권자를 정했습니다.`,
     limitation:'제공 자료 사이의 일치 여부를 확인한 결과입니다. 계약에 따른 장려금 산식이나 실제 계좌 명의를 별도로 검증한 결과는 아닙니다.'};

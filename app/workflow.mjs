@@ -95,9 +95,14 @@ export function projectWorkflow(state,c,actor,selectedWork) {
       current=payment('현재 버전 승인과 수취 조건 확인');next=stage('W07I_Pay','은행 회신 등록','treasury','해당 지급 지시 생성 후');
     } else if(ownWork.kind==='change') {
       current=stage('W07I_Prepay','지급조건 변경','intake');next=stage('W07I_Rework','변경 조건 재검토','reviewer','변경 저장 후 기존 승인과 지급 조건을 재검사합니다.');
-    } else if(ownWork.kind==='review') {
+    } else if(ownWork.kind==='review'&&!c.reviewSummary?.requestedSupplement) {
       current=reviewStage();
-      next=c.canSubmit||c.reviewSummary?.canAccept?approvalStage(c):activeTasks.some(t=>t.owner==='intake')?stage('W07I_Supplement','원본 정정·보완 회신','intake','요청받은 보완 자료를 제출하면 회계팀이 재검토합니다.'):stage('W07I_Rework','보류 사유 재검토','reviewer','근거와 적격 승인 경로를 확인한 후 결재를 요청합니다.');
+      if(c.reviewSummary?.opinion?.action==='request_supplement'){
+        current=stage('W07I_Review','AI가 제안한 보완 질문 확인','reviewer','질문을 확인한 뒤 영업에 자료를 요청합니다.');
+        next=stage('W07I_Supplement','보완 회신','intake','회신이 등록되면 AI가 새 자료를 검토합니다.');
+      } else {
+        next=c.canSubmit||c.reviewSummary?.canAccept?approvalStage(c):activeTasks.some(t=>t.owner==='intake')?stage('W07I_Supplement','원본 정정·보완 회신','intake','요청받은 보완 자료를 제출하면 회계팀이 재검토합니다.'):stage('W07I_Rework','보류 사유 재검토','reviewer','근거와 적격 승인 경로를 확인한 후 결재를 요청합니다.');
+      }
     }
     current.paymentId=ownWork.paymentId;
   }

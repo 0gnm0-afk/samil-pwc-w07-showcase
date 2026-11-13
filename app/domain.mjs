@@ -343,7 +343,7 @@ function reviewAction(s,actor,p){
   let result={caseId:c.id,action:p.action};
   if(p.action==='retry'){
     must(summary.canRetry&&p.jobId===job.id,'AI_CHANGED','다시 시도할 AI 작업이 없습니다.');
-    job.status='pending';job.error=null;job.finishedAt=null;delete job.retryAt;
+    job.status='pending';job.error=null;job.finishedAt=null;delete job.retryAt;delete job.validationFeedback;
   }else if(p.action==='supplement'||p.action==='hold'){
     text(p.reason,4,4000);must(c.needsResubmit,'REVIEW_CHANGED','이미 결재를 요청했습니다. 최신 상태를 확인하세요.');
     hold(draft,c,'accounting_review',redact(p.reason));

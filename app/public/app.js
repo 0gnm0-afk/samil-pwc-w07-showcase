@@ -471,6 +471,7 @@ function workDetail(item, done) {
   const reviewCommand=(action,reason)=>run('reviewAction',{caseId:c.id,revision:c.revision,jobId:c.reviewSummary.jobId,requestId,action,reason});
   for(const button of document.querySelectorAll('[data-review]'))button.onclick=()=>reviewCommand(button.dataset.review);
   form('reviewConfirm',f=>reviewCommand('confirm',f.get('reason')));
+  form('reviewSupplement',f=>reviewCommand('supplement',f.get('reason')));
   const followup=document.getElementById('reviewFollowup');
   if(followup)followup.onsubmit=e=>{e.preventDefault();void reviewCommand(e.submitter.value,new FormData(followup).get('reason'));};
   const decisionChoice=document.getElementById('decisionChoice');

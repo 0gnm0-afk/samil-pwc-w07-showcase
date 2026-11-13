@@ -9,8 +9,10 @@ export function aiReviewLabel(review) {
  if(!review?.jobId&&!review?.opinion)return null;
  if(review.canAccept&&!review.canSubmit)return 'AI 권고 · 결재 요청 가능';
  if(review.status==='analyzing')return 'AI 검토 중';
+ if(review.requestedSupplement)return '영업 회신 대기';
+ if(review.opinion?.action==='request_supplement')return 'AI 의견 · 자료 보완 필요';
+ if(review.missingReplyNotice)return '자료 보완 필요';
  if(review.status==='failed'||review.canRetry)return 'AI 재검토 필요';
- if(review.opinion?.action==='request_supplement'||review.requestedSupplement)return 'AI 의견 · 자료 보완 필요';
  if(review.opinion?.action==='hold_for_review')return 'AI 의견 · 지급 보류 검토';
  if(review.opinion)return 'AI 의견 · 회계 확인 필요';
  return null;
@@ -24,7 +26,7 @@ export function judgmentHTML(c,reviewAction=''){
  const r=c.reviewSummary,opinion=r.opinion||r.acceptedOpinion;
  let body='';
  if(r.status==='analyzing')body='<section class="judgment waiting" role="status"><h3>자동 대조로 결론을 내리기 어려운 내용을 AI가 검토하고 있습니다</h3><p>아래 확인 사항과 연결된 원본을 전달했습니다. 결과가 도착하면 이 화면에 표시됩니다.</p></section>';
- else if(r.status==='failed')body=`<section class="judgment waiting"><h3>AI 검토 의견을 그대로 사용할 수 없습니다</h3><p>${esc(r.failureReason||'검토에 사용할 수 있는 AI 응답을 받지 못했습니다.')} 자동으로 통과시키지 않았습니다. 다시 검토를 요청하거나 회계 담당자가 원본을 확인하고 판단 근거를 기록할 수 있습니다.</p></section>`;
+ else if(r.status==='failed')body=`<section class="judgment waiting"><h3>AI 검토 의견을 그대로 사용할 수 없습니다</h3><p>${esc(r.failureReason||'검토에 사용할 수 있는 AI 응답을 받지 못했습니다.')}</p>${reviewAction}</section>`;
  if(r.status==='ready')body+=`<section class="judgment checked"><span class="eyebrow">${r.source==='person'?'회계 담당자 확인':'자료 자동 대조'}</span><h3>${r.source==='person'?'회계 담당자가 아래 근거로 지급 요청을 확인했습니다':'자동으로 대조한 항목에서 차이가 발견되지 않았습니다'}</h3>${r.confirmedReason?`<p class="confirmation-reason">${esc(r.confirmedReason)}</p>`:''}<p>${esc(r.comparison)}</p><p class="meta">${esc(r.limitation)}</p></section>`;
  if(opinion)body+=`<section class="judgment ai"><span class="eyebrow">${r.opinion?'AI 검토 의견':'회계 담당자가 확인한 AI 의견'}</span><h3>${({recommend_proceed:'AI 권고 · 결재 요청 가능',request_supplement:'자료를 보완한 뒤 다시 검토할 것을 권고합니다',hold_for_review:'지급을 보류하고 추가 판단할 것을 권고합니다',request_review:'회계 담당자의 사실 확인이 필요합니다',recheck:'새로 받은 근거를 확인해야 합니다'})[opinion.action]||'AI가 확인한 내용'}</h3><p>${esc(opinion.reason)}</p>${opinion.unknowns?.length?'<h4>아직 확인할 내용</h4><ul>'+[...new Set(opinion.unknowns)].map(t=>`<li>${esc(t)}</li>`).join('')+'</ul>':''}<details><summary>AI가 판단에 사용한 근거</summary>${(opinion.facts||[]).map(f=>`<blockquote><p>${esc(f.text)}</p><details><summary>원본 인용 보기</summary><p>${esc(f.quote)}</p></details></blockquote>`).join('')}</details>${reviewAction}</section>`;
  if(r.issues.length)body+=`<section class="judgment"><h3>확인할 사항 ${r.issues.length}개</h3>${r.issues.map(i=>`<article class="review-issue"><p>${esc(i.message)}</p><details><summary>관련 자료 ${i.docIds.length}개 · 영향을 받는 지급 ${i.paymentIds.length}건</summary><p>${esc(i.paymentIds.join(' · '))}</p></details></article>`).join('')}</section>`;
@@ -38,15 +40,27 @@ export function reviewFormHTML(c){
  const accept=r.canAccept&&!r.canSubmit
   ?`<p>근거를 확인한 뒤 수용하면 회계 확인과 결재 요청이 함께 기록됩니다.</p><button class="primary" data-review="accept">AI 권고 수용 후 ${esc(to)}에게 결재 요청</button>`
   :'';
+ const showRequest=!r.canSubmit&&r.status!=='analyzing'&&!r.requestedSupplement
+  &&(r.opinion?.action==='request_supplement'||r.missingReplyNotice);
+ const draft=(r.supplementQuestions||[]).join('\n').slice(0,4000)||(r.missingReplyNotice
+  ?'입금계좌와 등록 정산계좌의 용도, 두 계좌가 다른 이유와 그 이유를 확인한 근거를 알려주세요.'
+  :'');
+ const request=showRequest?`<form id="reviewSupplement" class="stack">
+  <label>영업직원에게 요청할 내용<textarea name="reason" required minlength="4" maxlength="4000">${esc(draft)}</textarea></label>
+  <div><button class="primary" type="submit">영업직원에게 자료 요청</button></div>
+ </form>`:'';
+ const sent=r.requestedSupplement?`<p class="action-note">영업직원에게 자료를 요청했습니다. 회신이 등록되면 AI가 다시 검토합니다.</p>`:'';
  if(r.canSubmit)actions=`<button class="primary" data-review="submit">확인 후 ${esc(to)}에게 결재 요청</button><p>검토한 자료와 합산 결과를 함께 보냅니다. 결재권자의 승인이 완료되면 자금팀이 지급합니다.</p>`;
  else if(r.status==='analyzing')actions='<p>검토 결과를 기다리고 있습니다. 입력이나 검토 의뢰를 반복할 필요가 없습니다.</p>';
  else{
-  if(!accept&&r.canConfirm)actions+=`<form id="reviewConfirm" class="stack"><label>확인한 사실과 판단 근거<textarea name="reason" required minlength="8" maxlength="4000" placeholder="위 질문에 대해 확인한 내용과 그 근거를 적어주세요."></textarea></label><button class="primary" type="submit">확인한 내용으로 ${esc(to)}에게 결재 요청</button></form>`;
-  if(r.canRetry)actions+='<button data-review="retry">AI 검토 다시 요청</button>';
-  if(r.requestedSupplement)actions+=`<p class="action-note">영업직원에게 자료를 요청했습니다. ${esc(r.requestedSupplement.reason)} 회신을 받으면 다시 검토합니다.</p>`;
+  if(!accept&&r.canConfirm&&!r.requestedSupplement){
+   const form=`<form id="reviewConfirm" class="stack"><label>확인한 사실과 판단 근거<textarea name="reason" required minlength="8" maxlength="4000" placeholder="위 질문에 대해 확인한 내용과 그 근거를 적어주세요."></textarea></label><button class="primary" type="submit">확인한 내용으로 ${esc(to)}에게 결재 요청</button></form>`;
+   actions+=request?`<details class="supporting-form"><summary>회계 담당자가 직접 확인한 근거 기록</summary>${form}</details>`:form;
+  }
+  if(r.canRetry&&!r.requestedSupplement)actions+='<button data-review="retry">AI 검토 다시 요청</button>';
  }
- if(r.status!=='analyzing')actions+=`<details class="supporting-form"><summary>추가 자료가 필요하거나 진행할 수 없는 경우</summary><form id="reviewFollowup" class="stack"><label>필요한 자료 또는 진행할 수 없는 이유<textarea name="reason" required minlength="4" maxlength="4000"></textarea></label><div class="row">${!r.requestedSupplement?'<button name="action" value="supplement" type="submit">영업직원에게 자료 요청</button>':''}<button name="action" value="hold" type="submit">사유 기록 후 지급 보류</button></div></form></details>`;
- return judgmentHTML(c,accept)+`<section class="${accept?'review-alternatives':'decision-panel'}">${accept?'':'<h3>회계 담당자 결정</h3>'}${actions}</section><details class="supporting-details"><summary>자료에 없는 새로운 문제를 발견한 경우</summary><form id="flag" class="stack"><label>새로 확인한 내용과 근거<textarea name="reason" required maxlength="4000"></textarea></label><label class="checkbox"><input type="checkbox" name="conflict">영업 임원에게 이해상충이 있음</label><label class="checkbox"><input type="checkbox" name="policy">일반 정책을 벗어나는 예외 지급 요청임</label><button type="submit">새 확인사항 등록</button></form></details>`;
+ if(r.status!=='analyzing')actions+=`<details class="supporting-form"><summary>추가 자료가 필요하거나 진행할 수 없는 경우</summary><form id="reviewFollowup" class="stack"><label>필요한 자료 또는 진행할 수 없는 이유<textarea name="reason" required minlength="4" maxlength="4000"></textarea></label><div class="row">${!r.requestedSupplement&&!request?'<button name="action" value="supplement" type="submit">영업직원에게 자료 요청</button>':''}<button name="action" value="hold" type="submit">사유 기록 후 지급 보류</button></div></form></details>`;
+ return judgmentHTML(c,accept+request+sent)+`<section class="${accept||request?'review-alternatives':'decision-panel'}">${accept||request?'':'<h3>회계 담당자 결정</h3>'}${actions}</section><details class="supporting-details"><summary>자료에 없는 새로운 문제를 발견한 경우</summary><form id="flag" class="stack"><label>새로 확인한 내용과 근거<textarea name="reason" required maxlength="4000"></textarea></label><label class="checkbox"><input type="checkbox" name="conflict">영업 임원에게 이해상충이 있음</label><label class="checkbox"><input type="checkbox" name="policy">일반 정책을 벗어나는 예외 지급 요청임</label><button type="submit">새 확인사항 등록</button></form></details>`;
 }
 export function approvalFormHTML(c,user){
  const special=c.currentBasis.required.length===2;
