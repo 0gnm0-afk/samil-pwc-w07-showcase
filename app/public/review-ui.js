@@ -4,6 +4,17 @@ const won=v=>Number(v||0).toLocaleString('ko-KR')+'원';
 const names={sales:'영업지원팀장',executive:'영업 임원',finance:'재무 임원'};
 const agencyName=(s,id)=>s.agencies.find(a=>a.agency_id===id)?.agency_name||id;
 const recipient=c=>c.reviewSummary.recipients.join('·');
+
+export function aiReviewLabel(review) {
+ if(!review?.jobId&&!review?.opinion)return null;
+ if(review.canAccept&&!review.canSubmit)return 'AI 권고 · 결재 요청 가능';
+ if(review.status==='analyzing')return 'AI 검토 중';
+ if(review.status==='failed'||review.canRetry)return 'AI 재검토 필요';
+ if(review.opinion?.action==='request_supplement'||review.requestedSupplement)return 'AI 의견 · 자료 보완 필요';
+ if(review.opinion?.action==='hold_for_review')return 'AI 의견 · 지급 보류 검토';
+ if(review.opinion)return 'AI 의견 · 회계 확인 필요';
+ return null;
+}
 export function caseOverview(c,s,paymentId){
  const b=c.currentBasis,plans=(paymentId?[paymentId]:c.paymentIds).map(id=>s.plans.find(p=>p.id===id));
  const selectedAmount=plans.reduce((sum,p)=>sum+p.amount,0),approved=!c.needsResubmit&&c.currentBasis.required.every(r=>c.approvals.some(a=>a.version===c.version&&a.userId===r.userId&&a.decision==='approve'));

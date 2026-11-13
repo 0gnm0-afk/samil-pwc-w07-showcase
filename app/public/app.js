@@ -1,4 +1,4 @@
-import {caseOverview,judgmentHTML,reviewFormHTML,approvalFormHTML,noticeHTML,resultHTML,reconciliationFormHTML} from './review-ui.js';
+import {aiReviewLabel,caseOverview,judgmentHTML,reviewFormHTML,approvalFormHTML,noticeHTML,resultHTML,reconciliationFormHTML} from './review-ui.js';
 import {sourceHTML,mountSource} from './source-ui.js';
 import {intakeBoard,mountIntake} from './schedule-ui.js';
 import { moduleHTML, mountGuidance, clearGuidance } from './guidance-ui.js';
@@ -275,13 +275,45 @@ function itemName(item) {
   return labels[item.kind];
 }
 
+const aiLabelFor = item => item.kind==='review'?aiReviewLabel(caseFor(item.caseId)?.reviewSummary):null;
+const aiListTitle = 'AI 검토';
+const aiPriority = item => caseFor(item.caseId).reviewSummary.canAccept?1:0;
+const aiWorkItems = () => state.workItems.filter(aiLabelFor).sort((a,b)=>aiPriority(b)-aiPriority(a));
+
+function taskCard(item, status) {
+  const c=caseFor(item.caseId);
+  const plans=(item.paymentId?[item.paymentId]:c.paymentIds).map(planFor);
+  const names=[...new Set(plans.map(plan=>state.agencies.find(a=>a.agency_id===plan.agencyId)?.agency_name||plan.agencyId))];
+  const amount=item.paymentId?plans[0].amount:c.currentBasis.selectedTotal;
+  return `<button class="task-card" data-work="${esc(item.id)}"><strong>${esc(names.join(' · '))}</strong><span>${won(amount)} · ${esc(c.currentBasis.month)} 지급 예정</span><span class="pill">${esc(status)}</span></button>`;
+}
+
+function mountTaskCards(items) {
+  for(const button of document.querySelectorAll('[data-work]')) {
+    button.onclick=()=>show({kind:'task',item:items.find(i=>i.id===button.dataset.work)});
+  }
+}
+
 function inbox() {
-  const buckets=new Map();for(const item of state.workItems){const name=itemName(item);if(!buckets.has(name))buckets.set(name,[]);buckets.get(name).push(item);}
+  const aiItems=aiWorkItems();
+  const aiIds=new Set(aiItems.map(item=>item.id));
+  const buckets=new Map();
+  for(const item of state.workItems){
+    if(aiIds.has(item.id))continue;
+    const name=itemName(item);
+    if(!buckets.has(name))buckets.set(name,[]);
+    buckets.get(name).push(item);
+  }
+  const aiSection=has('reviewer')?`<section class="inbox-ai"><h2>AI 검토</h2>
+    ${aiItems.length?`<div class="task-cards">${aiItems.slice(0,3).map(item=>taskCard(item,aiLabelFor(item))).join('')}</div>`
+      :'<p class="meta">현재 확인할 AI 권고나 AI 검토 건이 없습니다.</p>'}
+    ${aiItems.length>3?`<button data-category="${aiListTitle}">AI 검토 전체 ${aiItems.length}건 보기</button>`:''}</section>`:'';
   let cards=has('intake')?'<button class="task-card" id="openIntake"><strong>회계팀에 검토 요청</strong><span>접수할 수 있는 요청 '+state.plans.filter(p=>p.status==='planned'&&!p.caseId).length+'건</span></button>':'';
   cards += [...buckets].map(([name,items])=>'<button class="task-card" data-category="'+esc(name)+'"><strong>'+esc(name)+'</strong><span>'+items.length+'건</span></button>').join('');
   const changes=has('intake')?state.cases.filter(c=>!['completed','rejected','cancelled'].includes(c.status)):[];
   if(changes.length)cards+='<button class="task-card" id="changes"><strong>지급조건 변경</strong><span>'+changes.length+'건</span></button>';
-  shell('내 작업','<div class="task-cards work-launcher">'+(cards||'<p class="empty">현재 처리할 작업이 없습니다.</p>')+'</div>'+(has('intake')?'<details class="supporting-details"><summary>자료 추가·수정</summary><div class="row"><button id="direct">새 요청 직접 입력</button><button id="csv">새 요청 CSV 등록</button><button id="sourceData">원본 자료 등록·정정</button></div></details>':''),state.publicDemo&&state.canReset?'<button id="resetDemo">새 시연 · 전체 초기화</button>':'');
+  shell('내 작업',aiSection+'<div class="task-cards work-launcher">'+(cards||(!aiItems.length?'<p class="empty">현재 처리할 작업이 없습니다.</p>':''))+'</div>'+(has('intake')?'<details class="supporting-details"><summary>자료 추가·수정</summary><div class="row"><button id="direct">새 요청 직접 입력</button><button id="csv">새 요청 CSV 등록</button><button id="sourceData">원본 자료 등록·정정</button></div></details>':''),state.publicDemo&&state.canReset?'<button id="resetDemo">새 시연 · 전체 초기화</button>':'');
+  mountTaskCards(aiItems);
   listen('openIntake',()=>show({kind:'batch'}));listen('sourceData',()=>show({kind:'source'}));listen('direct',()=>show({kind:'direct'}));listen('csv',()=>show({kind:'csv'}));listen('changes',()=>show({kind:'list',category:'지급조건 변경'}));
   for(const el of document.querySelectorAll('[data-category]'))el.onclick=()=>show({kind:'list',category:el.dataset.category});
   listen('resetDemo',async()=>{
@@ -292,9 +324,16 @@ function inbox() {
 }
 function taskList(){
   const changes=view.category==='지급조건 변경';
-  const items=changes?state.cases.filter(c=>!['completed','rejected','cancelled'].includes(c.status)).map(c=>({id:c.id,caseId:c.id,kind:'change'})):state.workItems.filter(i=>itemName(i)===view.category);
-  shell(view.category,'<div class="task-cards">'+items.map(i=>{const c=caseFor(i.caseId),ids=i.paymentId?[i.paymentId]:c.paymentIds;return '<button class="task-card" data-work="'+esc(i.id)+'"><strong>'+esc([...new Set(ids.map(id=>state.agencies.find(a=>a.agency_id===planFor(id).agencyId)?.agency_name||planFor(id).agencyId))].join(' · '))+'</strong><span>'+won(i.paymentId?planFor(i.paymentId).amount:c.currentBasis.selectedTotal)+' · '+esc(c.currentBasis.month)+' 지급 예정</span><span class="pill">'+esc(({pay:'지급일 입력',bank:'은행 처리결과 입력',reconcile:'전표 금액 확인',difference:'대사 차이 확인'})[i.kind]||labels[c.status]||c.status)+'</span></button>';}).join('')+'</div>');
-  for(const button of document.querySelectorAll('[data-work]'))button.onclick=()=>show({kind:'task',item:items.find(i=>i.id===button.dataset.work)});
+  const ai=view.category===aiListTitle;
+  const items=changes?state.cases.filter(c=>!['completed','rejected','cancelled'].includes(c.status)).map(c=>({id:c.id,caseId:c.id,kind:'change'})):
+    ai?aiWorkItems():state.workItems.filter(item=>!aiLabelFor(item)&&itemName(item)===view.category);
+  const workLabels={pay:'지급일 입력',bank:'은행 처리결과 입력',reconcile:'전표 금액 확인',difference:'대사 차이 확인'};
+  const cards=items.map(item=>{
+    const status=caseFor(item.caseId).status;
+    return taskCard(item,aiLabelFor(item)||workLabels[item.kind]||labels[status]||status);
+  }).join('');
+  shell(view.category,`<div class="task-cards">${cards||'<p class="empty">현재 이 목록에 남은 작업이 없습니다.</p>'}</div>`);
+  mountTaskCards(items);
 }
 function mountModuleNavigation(){
   for(const node of [...document.querySelectorAll('[data-module] [data-module]')]){const parent=node.parentElement.closest('[data-module]');parent.after(node);}
