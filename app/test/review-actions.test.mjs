@@ -83,6 +83,7 @@ test('예외 사전 알림은 두 임원에게 열람 작업이며 회계 상신
  const job=Object.values(s.jobs).find(j=>j.caseId===c.id);job.status='failed';
  act(s,'reviewer','reviewAction',request(s.cases[c.id],'confirm',{jobId:job.id,reason:'예외 지급 요청의 계약 및 사업상 사유를 확인하고 독립된 두 임원에게 결재를 요청합니다.'}));
  for(const who of ['executive','finance'])assert(publicState(s,actorFor(who)).workItems.some(w=>w.caseId===c.id&&w.kind==='approval'));
+ assert.match(approvalFormHTML(publicState(s,actorFor('finance')).cases.find(x=>x.id===c.id),actorFor('finance')),/예외 지급 요청의 계약 및 사업상 사유를 확인하고 독립된 두 임원에게 결재를 요청합니다/);
  act(s,'executive','decide',{caseId:c.id,version:1,decision:'approve',reason:'사업상 사유 확인'});assert.equal(s.cases[c.id].canPay,false);
  assert.match(approvalFormHTML(publicState(s,actorFor('finance')).cases.find(x=>x.id===c.id),actorFor('finance')),/승인하면 두 임원의 결재가 모두 완료/);
  act(s,'finance','decide',{caseId:c.id,version:1,decision:'approve',reason:'독립된 지급 조건 확인'});assert.equal(s.cases[c.id].canPay,true);

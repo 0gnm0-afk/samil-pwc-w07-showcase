@@ -53,6 +53,7 @@ export function reviewSummary(s,c){
   return {revision:c.revision,jobId:job?.id??null,jobStatus:job?.status??null,
     status:c.canSubmit?'ready':awaiting?'analyzing':job?.status==='failed'||rejectedProceed?'failed':decision?'opinion':'needs_review',
     failureReason:rejectedProceed?'AI가 진행을 권고했지만 계좌 차이의 사유를 뒷받침하는 보완 근거가 없습니다. 이 권고는 사용할 수 없습니다.':null,
+    confirmedReason:c.reviewRecord?.reason??null,
     source:c.canSubmit?(Object.values(c.confirmations).some(v=>v.actor!=='rules')?'person':'rules'):decision?'ai':'rules',
     recipients,issues,blockers:[...hardIssues.map(i=>i.message),...fixedHolds.map(h=>h.reason)],
     holds:holds.filter(h=>!/^evidence:|^auto-evidence:/.test(h.key)).map(h=>({key:h.key,reason:h.key.startsWith('document:')?'추가로 등록된 설명자료의 사실관계와 지급 조건을 확인해야 합니다.':h.key.startsWith('month:')?'지급예정월을 정하지 않은 관련 요청이 있어 월 합산을 확정할 수 없습니다. 영업직원이 해당 요청의 지급예정월을 정해야 합니다.':h.reason})),
