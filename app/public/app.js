@@ -293,7 +293,7 @@ function inbox() {
 function taskList(){
   const changes=view.category==='지급조건 변경';
   const items=changes?state.cases.filter(c=>!['completed','rejected','cancelled'].includes(c.status)).map(c=>({id:c.id,caseId:c.id,kind:'change'})):state.workItems.filter(i=>itemName(i)===view.category);
-  shell(view.category,'<div class="task-cards">'+items.map(i=>{const c=caseFor(i.caseId);return '<button class="task-card" data-work="'+esc(i.id)+'"><strong>'+esc([...new Set(c.paymentIds.map(id=>state.agencies.find(a=>a.agency_id===planFor(id).agencyId)?.agency_name||planFor(id).agencyId))].join(' · '))+'</strong><span>'+won(i.paymentId?planFor(i.paymentId).amount:c.currentBasis.selectedTotal)+' · '+esc(i.paymentId||c.currentBasis.month)+'</span>'+badge(c.status)+'</button>';}).join('')+'</div>');
+  shell(view.category,'<div class="task-cards">'+items.map(i=>{const c=caseFor(i.caseId),ids=i.paymentId?[i.paymentId]:c.paymentIds;return '<button class="task-card" data-work="'+esc(i.id)+'"><strong>'+esc([...new Set(ids.map(id=>state.agencies.find(a=>a.agency_id===planFor(id).agencyId)?.agency_name||planFor(id).agencyId))].join(' · '))+'</strong><span>'+won(i.paymentId?planFor(i.paymentId).amount:c.currentBasis.selectedTotal)+' · '+esc(c.currentBasis.month)+' 지급 예정</span><span class="pill">'+esc(({pay:'지급일 입력',bank:'은행 처리결과 입력',reconcile:'전표 금액 확인',difference:'대사 차이 확인'})[i.kind]||labels[c.status]||c.status)+'</span></button>';}).join('')+'</div>');
   for(const button of document.querySelectorAll('[data-work]'))button.onclick=()=>show({kind:'task',item:items.find(i=>i.id===button.dataset.work)});
 }
 function mountModuleNavigation(){
