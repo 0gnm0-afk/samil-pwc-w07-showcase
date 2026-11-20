@@ -1,7 +1,9 @@
 import pg from 'pg';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { initialState, must, now, uid } from './domain.mjs';
-export const source=JSON.parse(readFileSync(new URL('./data/source.json',import.meta.url),'utf8'));
+// 대회 원본에서 만든 data/source.json은 공개본에 없습니다. 없으면 합성 시드(scripts/make-synthetic-seed.mjs)를 씁니다.
+const original=new URL('./data/source.json',import.meta.url);
+export const source=JSON.parse(readFileSync(existsSync(original)?original:new URL('./data/synthetic-source.json',import.meta.url),'utf8'));
 const schema=`
 CREATE TABLE IF NOT EXISTS w07_workspaces (id text PRIMARY KEY, state jsonb NOT NULL, validation boolean NOT NULL DEFAULT false, updated_at timestamptz NOT NULL DEFAULT now());
 CREATE TABLE IF NOT EXISTS w07_users (id text PRIMARY KEY, password_hash text NOT NULL);

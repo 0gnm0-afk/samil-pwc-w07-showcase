@@ -1,0 +1,9 @@
+# 합성 시드(app/data/synthetic-source.json)의 accountKey는 가짜 계좌번호의 SHA-256 비교값입니다.
+# 비밀값이 아니므로 `"accountKey": "<64자리 16진수>"` 형태의 줄만 예외로 둡니다. 나머지는 gitleaks 기본 규칙을 그대로 씁니다.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Synthetic seed: accountKey values are SHA-256 hashes of made-up account numbers"
+regexTarget = "line"
+regexes = ['''^\s*"accountKey": "[0-9a-f]{64}",?\s*$''']

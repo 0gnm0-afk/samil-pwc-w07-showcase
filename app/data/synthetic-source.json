@@ -1,0 +1,5152 @@
+{
+  "version": "synthetic-v1",
+  "synthetic": true,
+  "notice": "공개 저장소 테스트용 합성 데이터입니다. 대회 제공 원본이 아니며 거래처·계좌·금액은 실제 값이 아닙니다.",
+  "importedAt": "2026-11-20T00:00:00.000Z",
+  "sources": [
+    {
+      "kind": "synthetic",
+      "file": "synthetic/agencies",
+      "count": 50,
+      "sha256": "7e258c2615d619d0d7722b9f3e1a64461a0a1774c8864c5dbc0edaf21c88d74a"
+    },
+    {
+      "kind": "synthetic",
+      "file": "synthetic/payments",
+      "count": 240,
+      "sha256": "a31409c09262aec7f660e43ef0a40a4e23c28bbc1e46d440fec685253182d004"
+    },
+    {
+      "kind": "synthetic",
+      "file": "synthetic/collections",
+      "count": 32,
+      "sha256": "cb9b5b156690a8738bf4b2a8afe2bb25e900afe6acd08ec6be0e1b4f8a36f29c"
+    }
+  ],
+  "agencies": [
+    {
+      "agency_id": "D-001",
+      "agency_name": "합성상사01",
+      "representative_name": "합성대표01",
+      "address": "가상시 합성로 10",
+      "rebate_eligible": "True",
+      "registered_date": "2021-02-25",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 2,
+        "id": "D-001",
+        "kind": "synthetic"
+      },
+      "accountKey": "c821433a72e2e0853ab2ea93a24e58134e17c755127d6caec51648fe6f014d5d",
+      "accountLabel": "모의은행 ****7919"
+    },
+    {
+      "agency_id": "D-002",
+      "agency_name": "합성상사02",
+      "representative_name": "합성대표02",
+      "address": "가상시 합성로 20",
+      "rebate_eligible": "True",
+      "registered_date": "2022-03-17",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 3,
+        "id": "D-002",
+        "kind": "synthetic"
+      },
+      "accountKey": "91dc75e1bb3f71d4b9c9fe7111a2af9e4e3debdcecc1757e1a363a18dd50361d",
+      "accountLabel": "모의은행 ****5838"
+    },
+    {
+      "agency_id": "D-003",
+      "agency_name": "합성상사03",
+      "representative_name": "합성대표03",
+      "address": "가상시 합성로 30",
+      "rebate_eligible": "True",
+      "registered_date": "2023-04-18",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 4,
+        "id": "D-003",
+        "kind": "synthetic"
+      },
+      "accountKey": "7c4059c79a86a050c9ed6a5172c46e94dcea7b0a1f9900e2f7921b68bfe715e6",
+      "accountLabel": "모의은행 ****3757"
+    },
+    {
+      "agency_id": "D-004",
+      "agency_name": "합성상사04",
+      "representative_name": "합성대표04",
+      "address": "가상시 합성로 40",
+      "rebate_eligible": "True",
+      "registered_date": "2020-05-20",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 5,
+        "id": "D-004",
+        "kind": "synthetic"
+      },
+      "accountKey": "781ac2aadc0fd034f726bb5e03427f31e716c4c255d206891afa41bc19683fdf",
+      "accountLabel": "모의은행 ****1676"
+    },
+    {
+      "agency_id": "D-005",
+      "agency_name": "합성상사05",
+      "representative_name": "합성대표05",
+      "address": "가상시 합성로 50",
+      "rebate_eligible": "False",
+      "registered_date": "2021-06-06",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 6,
+        "id": "D-005",
+        "kind": "synthetic"
+      },
+      "accountKey": "cfa322935b124cf2716c6e5b065431181ded66a09d14db9614b864654d28076a",
+      "accountLabel": "모의은행 ****9595"
+    },
+    {
+      "agency_id": "D-006",
+      "agency_name": "합성상사06",
+      "representative_name": "합성대표06",
+      "address": "가상시 합성로 60",
+      "rebate_eligible": "True",
+      "registered_date": "2022-07-17",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 7,
+        "id": "D-006",
+        "kind": "synthetic"
+      },
+      "accountKey": "f80d4d673b86d4d20b6ef9361e718d823f8c3a6d5c7da79e5799f1d5d4cf4e9b",
+      "accountLabel": "모의은행 ****7514"
+    },
+    {
+      "agency_id": "D-007",
+      "agency_name": "합성상사07",
+      "representative_name": "합성대표07",
+      "address": "가상시 합성로 70",
+      "rebate_eligible": "True",
+      "registered_date": "2023-08-27",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 8,
+        "id": "D-007",
+        "kind": "synthetic"
+      },
+      "accountKey": "f583f10558f402ce5f48837d2d8ddf1245796297838f3df349188287d8460efe",
+      "accountLabel": "모의은행 ****5433"
+    },
+    {
+      "agency_id": "D-008",
+      "agency_name": "합성상사08",
+      "representative_name": "합성대표08",
+      "address": "가상시 합성로 80",
+      "rebate_eligible": "True",
+      "registered_date": "2020-09-17",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 9,
+        "id": "D-008",
+        "kind": "synthetic"
+      },
+      "accountKey": "463d0bafb63108a4f8eb4c7e1d71108d63498340fd06324eb8723e85f6b6d35f",
+      "accountLabel": "모의은행 ****3352"
+    },
+    {
+      "agency_id": "D-009",
+      "agency_name": "합성상사09",
+      "representative_name": "합성대표09",
+      "address": "가상시 합성로 90",
+      "rebate_eligible": "True",
+      "registered_date": "2021-10-23",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 10,
+        "id": "D-009",
+        "kind": "synthetic"
+      },
+      "accountKey": "2a2a880b4189d4f5f7f1ade976708690e5837aba8ca0f1c3862fc8c72a6f21b5",
+      "accountLabel": "모의은행 ****1271"
+    },
+    {
+      "agency_id": "D-010",
+      "agency_name": "합성상사10",
+      "representative_name": "합성대표10",
+      "address": "가상시 합성로 100",
+      "rebate_eligible": "False",
+      "registered_date": "2022-11-03",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 11,
+        "id": "D-010",
+        "kind": "synthetic"
+      },
+      "accountKey": "2e62563295fa21604e8bfcc746dcf717e93d71f1e4e0495f1261c698bb0d101a",
+      "accountLabel": "모의은행 ****9190"
+    },
+    {
+      "agency_id": "D-011",
+      "agency_name": "합성상사11",
+      "representative_name": "합성대표11",
+      "address": "가상시 합성로 110",
+      "rebate_eligible": "True",
+      "registered_date": "2023-12-19",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 12,
+        "id": "D-011",
+        "kind": "synthetic"
+      },
+      "accountKey": "bed6015f9188dabcd3e7ac100681b037dfe277638824b427b4526be74282e4ee",
+      "accountLabel": "모의은행 ****7109"
+    },
+    {
+      "agency_id": "D-012",
+      "agency_name": "합성상사12",
+      "representative_name": "합성대표12",
+      "address": "가상시 합성로 120",
+      "rebate_eligible": "True",
+      "registered_date": "2020-01-24",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 13,
+        "id": "D-012",
+        "kind": "synthetic"
+      },
+      "accountKey": "7025e460f10818b0cc3fec40b923edb51e3db19ca0d365ca9d51a87e68e7bffa",
+      "accountLabel": "모의은행 ****5028"
+    },
+    {
+      "agency_id": "D-013",
+      "agency_name": "합성상사13",
+      "representative_name": "합성대표13",
+      "address": "가상시 합성로 130",
+      "rebate_eligible": "True",
+      "registered_date": "2021-02-04",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 14,
+        "id": "D-013",
+        "kind": "synthetic"
+      },
+      "accountKey": "89acb9cd333e53893809292bde859bc6e50a1dba63829733873097d269c89415",
+      "accountLabel": "모의은행 ****2947"
+    },
+    {
+      "agency_id": "D-014",
+      "agency_name": "합성상사14",
+      "representative_name": "합성대표14",
+      "address": "가상시 합성로 140",
+      "rebate_eligible": "True",
+      "registered_date": "2022-03-13",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 15,
+        "id": "D-014",
+        "kind": "synthetic"
+      },
+      "accountKey": "ea11194140c6081461a539f53c4861ff91528229d9deb4a178d02c9b792c6c2d",
+      "accountLabel": "모의은행 ****0866"
+    },
+    {
+      "agency_id": "D-015",
+      "agency_name": "합성상사15",
+      "representative_name": "합성대표15",
+      "address": "가상시 합성로 150",
+      "rebate_eligible": "False",
+      "registered_date": "2023-04-28",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 16,
+        "id": "D-015",
+        "kind": "synthetic"
+      },
+      "accountKey": "2d09bb789180f0c59eaaca15cc7fbe0fcd7cb1e7ed9ad1fe973aceb9f62c2ded",
+      "accountLabel": "모의은행 ****8785"
+    },
+    {
+      "agency_id": "D-016",
+      "agency_name": "합성상사16",
+      "representative_name": "합성대표16",
+      "address": "가상시 합성로 160",
+      "rebate_eligible": "True",
+      "registered_date": "2020-05-08",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 17,
+        "id": "D-016",
+        "kind": "synthetic"
+      },
+      "accountKey": "dcd6becce8ece2bba09d36a98f6e1cee7a22078619971439ab155086116ab709",
+      "accountLabel": "모의은행 ****6704"
+    },
+    {
+      "agency_id": "D-017",
+      "agency_name": "합성상사17",
+      "representative_name": "합성대표17",
+      "address": "가상시 합성로 170",
+      "rebate_eligible": "True",
+      "registered_date": "2021-06-15",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 18,
+        "id": "D-017",
+        "kind": "synthetic"
+      },
+      "accountKey": "45bc94e042a18929cdbdcd671dde66074bb0c9e0ec67d0f856ed770b00869c4e",
+      "accountLabel": "모의은행 ****4623"
+    },
+    {
+      "agency_id": "D-018",
+      "agency_name": "합성상사18",
+      "representative_name": "합성대표18",
+      "address": "가상시 합성로 180",
+      "rebate_eligible": "True",
+      "registered_date": "2022-07-10",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 19,
+        "id": "D-018",
+        "kind": "synthetic"
+      },
+      "accountKey": "62ec86fce0e1d267d7ad139f122a5c7071d7814dee1b9136b1485b3bba7eed1b",
+      "accountLabel": "모의은행 ****2542"
+    },
+    {
+      "agency_id": "D-019",
+      "agency_name": "합성상사19",
+      "representative_name": "합성대표19",
+      "address": "가상시 합성로 190",
+      "rebate_eligible": "True",
+      "registered_date": "2023-08-12",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 20,
+        "id": "D-019",
+        "kind": "synthetic"
+      },
+      "accountKey": "ed613b3489369ab10242fefefd28cb5c0681b595d83c45c959d63baa4115ff6e",
+      "accountLabel": "모의은행 ****0461"
+    },
+    {
+      "agency_id": "D-020",
+      "agency_name": "합성상사20",
+      "representative_name": "합성대표20",
+      "address": "가상시 합성로 200",
+      "rebate_eligible": "False",
+      "registered_date": "2020-09-24",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 21,
+        "id": "D-020",
+        "kind": "synthetic"
+      },
+      "accountKey": "9cc12f29626e72ddbce4b281c781f95dd3464964cd7767ae3be1b1505b0ccadc",
+      "accountLabel": "모의은행 ****8380"
+    },
+    {
+      "agency_id": "D-021",
+      "agency_name": "합성상사21",
+      "representative_name": "합성대표21",
+      "address": "가상시 합성로 210",
+      "rebate_eligible": "True",
+      "registered_date": "2021-10-22",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 22,
+        "id": "D-021",
+        "kind": "synthetic"
+      },
+      "accountKey": "88acbc5d4985f21243c05d3752fa6e7299f106e5c431d4f791624207fde2e7fd",
+      "accountLabel": "모의은행 ****6299"
+    },
+    {
+      "agency_id": "D-022",
+      "agency_name": "합성상사22",
+      "representative_name": "합성대표22",
+      "address": "가상시 합성로 220",
+      "rebate_eligible": "True",
+      "registered_date": "2022-11-04",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 23,
+        "id": "D-022",
+        "kind": "synthetic"
+      },
+      "accountKey": "c4b979326427d1633de55d1ab78f9fcb31459c00ef69d025e9fef15df33e02bf",
+      "accountLabel": "모의은행 ****4218"
+    },
+    {
+      "agency_id": "D-023",
+      "agency_name": "합성상사23",
+      "representative_name": "합성대표23",
+      "address": "가상시 합성로 230",
+      "rebate_eligible": "True",
+      "registered_date": "2023-12-01",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 24,
+        "id": "D-023",
+        "kind": "synthetic"
+      },
+      "accountKey": "7c6495e59d96aa16afd1f2d5e8167d07dadca63adba7b44a0d1841cc0f945b4c",
+      "accountLabel": "모의은행 ****2137"
+    },
+    {
+      "agency_id": "D-024",
+      "agency_name": "합성상사24",
+      "representative_name": "합성대표11",
+      "address": "가상시 합성로 110",
+      "rebate_eligible": "True",
+      "registered_date": "2020-01-15",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 25,
+        "id": "D-024",
+        "kind": "synthetic"
+      },
+      "accountKey": "0b3b92749ab74eb951c79a6c0686d93de5a5f759f4d847bdbe088ec7a5146465",
+      "accountLabel": "모의은행 ****0056"
+    },
+    {
+      "agency_id": "D-025",
+      "agency_name": "합성상사25",
+      "representative_name": "합성대표25",
+      "address": "가상시 합성로 250",
+      "rebate_eligible": "False",
+      "registered_date": "2021-02-27",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 26,
+        "id": "D-025",
+        "kind": "synthetic"
+      },
+      "accountKey": "5e6562274ca6b8381fac992edebfaa7c2ce41692635c57935b3f297bbcecde30",
+      "accountLabel": "모의은행 ****7975"
+    },
+    {
+      "agency_id": "D-026",
+      "agency_name": "합성상사26",
+      "representative_name": "합성대표26",
+      "address": "가상시 합성로 260",
+      "rebate_eligible": "True",
+      "registered_date": "2022-03-13",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 27,
+        "id": "D-026",
+        "kind": "synthetic"
+      },
+      "accountKey": "eff00299e7983df7b1c3b438c7f95ef31e08b8d9be9af119dc194169ec55c6e2",
+      "accountLabel": "모의은행 ****5894"
+    },
+    {
+      "agency_id": "D-027",
+      "agency_name": "합성상사27",
+      "representative_name": "합성대표27",
+      "address": "가상시 합성로 270",
+      "rebate_eligible": "True",
+      "registered_date": "2023-04-21",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 28,
+        "id": "D-027",
+        "kind": "synthetic"
+      },
+      "accountKey": "3fa2ade30996912b11dc1dd8eac426475b933df54cfdb704bd2e9aadb6151e14",
+      "accountLabel": "모의은행 ****3813"
+    },
+    {
+      "agency_id": "D-028",
+      "agency_name": "합성상사28",
+      "representative_name": "합성대표28",
+      "address": "가상시 합성로 280",
+      "rebate_eligible": "True",
+      "registered_date": "2020-05-12",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 29,
+        "id": "D-028",
+        "kind": "synthetic"
+      },
+      "accountKey": "89c7776fe7209ad5863b14ce19758ab67371976921cef88f96557ce20fff884c",
+      "accountLabel": "모의은행 ****1732"
+    },
+    {
+      "agency_id": "D-029",
+      "agency_name": "합성상사29",
+      "representative_name": "합성대표29",
+      "address": "가상시 합성로 290",
+      "rebate_eligible": "True",
+      "registered_date": "2021-06-23",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 30,
+        "id": "D-029",
+        "kind": "synthetic"
+      },
+      "accountKey": "8f2d1d4f882ef939d640fd2fe83fb1c7359955198b12a6fc52451e03887397a1",
+      "accountLabel": "모의은행 ****9651"
+    },
+    {
+      "agency_id": "D-030",
+      "agency_name": "합성상사30",
+      "representative_name": "합성대표30",
+      "address": "가상시 합성로 300",
+      "rebate_eligible": "False",
+      "registered_date": "2022-07-07",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 31,
+        "id": "D-030",
+        "kind": "synthetic"
+      },
+      "accountKey": "25f4b18239db31608bb71f918603565249c62b4718cfccbfe36bf7da8f2afbf4",
+      "accountLabel": "모의은행 ****7570"
+    },
+    {
+      "agency_id": "D-031",
+      "agency_name": "합성상사31",
+      "representative_name": "합성대표31",
+      "address": "가상시 합성로 310",
+      "rebate_eligible": "True",
+      "registered_date": "2023-08-03",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 32,
+        "id": "D-031",
+        "kind": "synthetic"
+      },
+      "accountKey": "3174f53c0e1ef5f47e94f5a9783a72ccade9154a749ae60b0df16c033e837643",
+      "accountLabel": "모의은행 ****5489"
+    },
+    {
+      "agency_id": "D-032",
+      "agency_name": "합성상사32",
+      "representative_name": "합성대표32",
+      "address": "가상시 합성로 320",
+      "rebate_eligible": "True",
+      "registered_date": "2020-09-08",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 33,
+        "id": "D-032",
+        "kind": "synthetic"
+      },
+      "accountKey": "4982bc3f5726e6361479a3994bc0ff7f6a93d770ce1436a911db433efb35f36c",
+      "accountLabel": "모의은행 ****3408"
+    },
+    {
+      "agency_id": "D-033",
+      "agency_name": "합성상사33",
+      "representative_name": "합성대표33",
+      "address": "가상시 합성로 330",
+      "rebate_eligible": "True",
+      "registered_date": "2021-10-15",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 34,
+        "id": "D-033",
+        "kind": "synthetic"
+      },
+      "accountKey": "181f66107fbf3c5d517aa8571c705f8b10802eb15e6c22ad83f6bdc3cb3dcab4",
+      "accountLabel": "모의은행 ****1327"
+    },
+    {
+      "agency_id": "D-034",
+      "agency_name": "합성상사34",
+      "representative_name": "합성대표34",
+      "address": "가상시 합성로 340",
+      "rebate_eligible": "True",
+      "registered_date": "2022-11-28",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 35,
+        "id": "D-034",
+        "kind": "synthetic"
+      },
+      "accountKey": "2064771042cf9b84de26806e1c3ec6335c9497b3253e86714492be2511e0679e",
+      "accountLabel": "모의은행 ****9246"
+    },
+    {
+      "agency_id": "D-035",
+      "agency_name": "합성상사35",
+      "representative_name": "합성대표35",
+      "address": "가상시 합성로 350",
+      "rebate_eligible": "False",
+      "registered_date": "2023-12-19",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 36,
+        "id": "D-035",
+        "kind": "synthetic"
+      },
+      "accountKey": "6b79728fb87a91382e333dbbaaec3230fb15bfa4be7ed1cabb560e81394e62c6",
+      "accountLabel": "모의은행 ****7165"
+    },
+    {
+      "agency_id": "D-036",
+      "agency_name": "합성상사36",
+      "representative_name": "합성대표36",
+      "address": "가상시 합성로 360",
+      "rebate_eligible": "True",
+      "registered_date": "2020-01-14",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 37,
+        "id": "D-036",
+        "kind": "synthetic"
+      },
+      "accountKey": "b157460e92ad0c332a37b549ede904fff920067342923cd64d20af128ab10b0c",
+      "accountLabel": "모의은행 ****5084"
+    },
+    {
+      "agency_id": "D-037",
+      "agency_name": "합성상사37",
+      "representative_name": "합성대표11",
+      "address": "가상시 합성로 370",
+      "rebate_eligible": "True",
+      "registered_date": "2021-02-02",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 38,
+        "id": "D-037",
+        "kind": "synthetic"
+      },
+      "accountKey": "bed6015f9188dabcd3e7ac100681b037dfe277638824b427b4526be74282e4ee",
+      "accountLabel": "모의은행 ****7109"
+    },
+    {
+      "agency_id": "D-038",
+      "agency_name": "합성상사38",
+      "representative_name": "합성대표38",
+      "address": "가상시 합성로 380",
+      "rebate_eligible": "True",
+      "registered_date": "2022-03-11",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 39,
+        "id": "D-038",
+        "kind": "synthetic"
+      },
+      "accountKey": "4bdfdd7bc845d2c82cbefe651a332ad7d416e570aedd59dd7be2a5515db57591",
+      "accountLabel": "모의은행 ****0922"
+    },
+    {
+      "agency_id": "D-039",
+      "agency_name": "합성상사39",
+      "representative_name": "합성대표39",
+      "address": "가상시 합성로 390",
+      "rebate_eligible": "True",
+      "registered_date": "2023-04-17",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 40,
+        "id": "D-039",
+        "kind": "synthetic"
+      },
+      "accountKey": "abfd6f719ddab8c996629a9cce4fb2c551677c3e0950bea1ca1ad8d6afaedc7e",
+      "accountLabel": "모의은행 ****8841"
+    },
+    {
+      "agency_id": "D-040",
+      "agency_name": "합성상사40",
+      "representative_name": "합성대표40",
+      "address": "가상시 합성로 400",
+      "rebate_eligible": "False",
+      "registered_date": "2020-05-20",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 41,
+        "id": "D-040",
+        "kind": "synthetic"
+      },
+      "accountKey": "70e1924fc3faccc399766efe2c955929490abdf59f63a3457c5d0b3fd37503d4",
+      "accountLabel": "모의은행 ****6760"
+    },
+    {
+      "agency_id": "D-041",
+      "agency_name": "합성상사41",
+      "representative_name": "합성대표41",
+      "address": "가상시 합성로 410",
+      "rebate_eligible": "True",
+      "registered_date": "2021-06-07",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 42,
+        "id": "D-041",
+        "kind": "synthetic"
+      },
+      "accountKey": "fe67de3c4d8d5b1fe1a0f4dc36fe2c536b866af92fe5a5bf1d6043a383428831",
+      "accountLabel": "모의은행 ****4679"
+    },
+    {
+      "agency_id": "D-042",
+      "agency_name": "합성상사42",
+      "representative_name": "합성대표42",
+      "address": "가상시 합성로 420",
+      "rebate_eligible": "True",
+      "registered_date": "2022-07-28",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 43,
+        "id": "D-042",
+        "kind": "synthetic"
+      },
+      "accountKey": "37bd152b7b4f3d48b000e514d6765bc8002048083c792df94bb156cd39b1b970",
+      "accountLabel": "모의은행 ****2598"
+    },
+    {
+      "agency_id": "D-043",
+      "agency_name": "합성상사43",
+      "representative_name": "합성대표43",
+      "address": "가상시 합성로 430",
+      "rebate_eligible": "True",
+      "registered_date": "2023-08-24",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 44,
+        "id": "D-043",
+        "kind": "synthetic"
+      },
+      "accountKey": "f656256c0932f020e5e929f166ae4ed412c038bbd7a6aa08e7109293e2fadacf",
+      "accountLabel": "모의은행 ****0517"
+    },
+    {
+      "agency_id": "D-044",
+      "agency_name": "합성상사44",
+      "representative_name": "합성대표44",
+      "address": "가상시 합성로 440",
+      "rebate_eligible": "True",
+      "registered_date": "2020-09-20",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 45,
+        "id": "D-044",
+        "kind": "synthetic"
+      },
+      "accountKey": "641ce81799b3b0ba76bc1c33858ee0fd80e0fd442d01245fd3ef85e102df633f",
+      "accountLabel": "모의은행 ****8436"
+    },
+    {
+      "agency_id": "D-045",
+      "agency_name": "합성상사45",
+      "representative_name": "합성대표45",
+      "address": "가상시 합성로 450",
+      "rebate_eligible": "False",
+      "registered_date": "2021-10-27",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 46,
+        "id": "D-045",
+        "kind": "synthetic"
+      },
+      "accountKey": "2dc43cfce540ae46a9331be0cba4e1fd4db4bbd9b64368cfe027facf38fa5281",
+      "accountLabel": "모의은행 ****6355"
+    },
+    {
+      "agency_id": "D-046",
+      "agency_name": "합성상사46",
+      "representative_name": "합성대표46",
+      "address": "가상시 합성로 460",
+      "rebate_eligible": "True",
+      "registered_date": "2022-11-10",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 47,
+        "id": "D-046",
+        "kind": "synthetic"
+      },
+      "accountKey": "8be91df630e8e5e72bd205f115c44bfa33ced6bdff65827aba77df13b975c55f",
+      "accountLabel": "모의은행 ****4274"
+    },
+    {
+      "agency_id": "D-047",
+      "agency_name": "합성상사47",
+      "representative_name": "합성대표47",
+      "address": "가상시 합성로 470",
+      "rebate_eligible": "True",
+      "registered_date": "2023-12-07",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 48,
+        "id": "D-047",
+        "kind": "synthetic"
+      },
+      "accountKey": "c63f4bf3491f5dfca0878f9593640b853ac45725c733ee43ad827f9d794bf599",
+      "accountLabel": "모의은행 ****2193"
+    },
+    {
+      "agency_id": "D-048",
+      "agency_name": "합성상사48",
+      "representative_name": "합성대표48",
+      "address": "가상시 합성로 480",
+      "rebate_eligible": "True",
+      "registered_date": "2020-01-24",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 49,
+        "id": "D-048",
+        "kind": "synthetic"
+      },
+      "accountKey": "a374e03098b703e1fdf45b776bff4162c28ec41d0154429fc82ab50ab47c0239",
+      "accountLabel": "모의은행 ****0112"
+    },
+    {
+      "agency_id": "D-049",
+      "agency_name": "합성상사49",
+      "representative_name": "합성대표49",
+      "address": "가상시 합성로 490",
+      "rebate_eligible": "True",
+      "registered_date": "2021-02-22",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 50,
+        "id": "D-049",
+        "kind": "synthetic"
+      },
+      "accountKey": "13a5a1a62cb7479a31a2eecf2c1fed2f61dad381b976692415d47dfba02bb9a9",
+      "accountLabel": "모의은행 ****8031"
+    },
+    {
+      "agency_id": "D-050",
+      "agency_name": "합성상사50",
+      "representative_name": "합성대표50",
+      "address": "가상시 합성로 500",
+      "rebate_eligible": "False",
+      "registered_date": "2022-03-19",
+      "source": {
+        "file": "synthetic/agencies",
+        "row": 51,
+        "id": "D-050",
+        "kind": "synthetic"
+      },
+      "accountKey": "054834629c90126383e8e954baacab03229ecfe6fb9235ba5fe2c7e5efa09d01",
+      "accountLabel": "모의은행 ****5950"
+    }
+  ],
+  "payments": [
+    {
+      "rebate_id": "RB-00001",
+      "agency_id": "D-001",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "9000000",
+      "rebate_amount_krw": "1000000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 2,
+        "id": "RB-00001",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00002",
+      "agency_id": "D-001",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "9240000",
+      "rebate_amount_krw": "1320000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-03",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 3,
+        "id": "RB-00002",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00003",
+      "agency_id": "D-001",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "12560000",
+      "rebate_amount_krw": "1570000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 4,
+        "id": "RB-00003",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00004",
+      "agency_id": "D-001",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "3900000",
+      "rebate_amount_krw": "390000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-10",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 5,
+        "id": "RB-00004",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00005",
+      "agency_id": "D-001",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "13410000",
+      "rebate_amount_krw": "1490000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 6,
+        "id": "RB-00005",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00006",
+      "agency_id": "D-001",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "10200000",
+      "rebate_amount_krw": "1020000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 7,
+        "id": "RB-00006",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00007",
+      "agency_id": "D-002",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "13500000",
+      "rebate_amount_krw": "1500000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 8,
+        "id": "RB-00007",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00008",
+      "agency_id": "D-002",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "8800000",
+      "rebate_amount_krw": "880000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 9,
+        "id": "RB-00008",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00009",
+      "agency_id": "D-002",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "3410000",
+      "rebate_amount_krw": "310000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 10,
+        "id": "RB-00009",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00010",
+      "agency_id": "D-002",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "12800000",
+      "rebate_amount_krw": "1280000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 11,
+        "id": "RB-00010",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00011",
+      "agency_id": "D-002",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "6000000",
+      "rebate_amount_krw": "750000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 12,
+        "id": "RB-00011",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00012",
+      "agency_id": "D-002",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "9590000",
+      "rebate_amount_krw": "1370000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 13,
+        "id": "RB-00012",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00013",
+      "agency_id": "D-003",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "5250000",
+      "rebate_amount_krw": "750000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 14,
+        "id": "RB-00013",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00014",
+      "agency_id": "D-003",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "13500000",
+      "rebate_amount_krw": "1350000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-09",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 15,
+        "id": "RB-00014",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00015",
+      "agency_id": "D-003",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "13410000",
+      "rebate_amount_krw": "1490000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 16,
+        "id": "RB-00015",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00016",
+      "agency_id": "D-003",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "2790000",
+      "rebate_amount_krw": "310000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 17,
+        "id": "RB-00016",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00017",
+      "agency_id": "D-003",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "7020000",
+      "rebate_amount_krw": "780000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 18,
+        "id": "RB-00017",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00018",
+      "agency_id": "D-003",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "7490000",
+      "rebate_amount_krw": "1070000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 19,
+        "id": "RB-00018",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00019",
+      "agency_id": "D-004",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "5670000",
+      "rebate_amount_krw": "810000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 20,
+        "id": "RB-00019",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00020",
+      "agency_id": "D-004",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "11900000",
+      "rebate_amount_krw": "1190000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 21,
+        "id": "RB-00020",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00021",
+      "agency_id": "D-004",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "4900000",
+      "rebate_amount_krw": "490000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 22,
+        "id": "RB-00021",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00022",
+      "agency_id": "D-004",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "3920000",
+      "rebate_amount_krw": "490000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 23,
+        "id": "RB-00022",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00023",
+      "agency_id": "D-004",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "10710000",
+      "rebate_amount_krw": "1190000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-10",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 24,
+        "id": "RB-00023",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00024",
+      "agency_id": "D-004",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "10150000",
+      "rebate_amount_krw": "1450000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 25,
+        "id": "RB-00024",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00025",
+      "agency_id": "D-006",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "13640000",
+      "rebate_amount_krw": "1240000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-11",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 26,
+        "id": "RB-00025",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00026",
+      "agency_id": "D-006",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "13100000",
+      "rebate_amount_krw": "1310000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-03",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 27,
+        "id": "RB-00026",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00027",
+      "agency_id": "D-006",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "5000000",
+      "rebate_amount_krw": "500000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-10",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 28,
+        "id": "RB-00027",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00028",
+      "agency_id": "D-006",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "7600000",
+      "rebate_amount_krw": "760000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-09",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 29,
+        "id": "RB-00028",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00029",
+      "agency_id": "D-006",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "9400000",
+      "rebate_amount_krw": "940000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-11",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 30,
+        "id": "RB-00029",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00030",
+      "agency_id": "D-006",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "2880000",
+      "rebate_amount_krw": "360000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 31,
+        "id": "RB-00030",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00031",
+      "agency_id": "D-007",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "6400000",
+      "rebate_amount_krw": "800000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-02",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 32,
+        "id": "RB-00031",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00032",
+      "agency_id": "D-007",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "4480000",
+      "rebate_amount_krw": "560000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 33,
+        "id": "RB-00032",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00033",
+      "agency_id": "D-007",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "10560000",
+      "rebate_amount_krw": "1320000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 34,
+        "id": "RB-00033",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00034",
+      "agency_id": "D-007",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "7920000",
+      "rebate_amount_krw": "990000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 35,
+        "id": "RB-00034",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00035",
+      "agency_id": "D-007",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "6660000",
+      "rebate_amount_krw": "740000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-02",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 36,
+        "id": "RB-00035",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00036",
+      "agency_id": "D-007",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "8610000",
+      "rebate_amount_krw": "1230000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 37,
+        "id": "RB-00036",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00037",
+      "agency_id": "D-008",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "15600000",
+      "rebate_amount_krw": "1560000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-03",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 38,
+        "id": "RB-00037",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00038",
+      "agency_id": "D-008",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "7400000",
+      "rebate_amount_krw": "740000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-02",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 39,
+        "id": "RB-00038",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00039",
+      "agency_id": "D-008",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "10100000",
+      "rebate_amount_krw": "1010000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 40,
+        "id": "RB-00039",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00040",
+      "agency_id": "D-008",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "10640000",
+      "rebate_amount_krw": "1330000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 41,
+        "id": "RB-00040",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00041",
+      "agency_id": "D-008",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "12480000",
+      "rebate_amount_krw": "1560000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-03",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 42,
+        "id": "RB-00041",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00042",
+      "agency_id": "D-008",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "7110000",
+      "rebate_amount_krw": "790000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 43,
+        "id": "RB-00042",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00043",
+      "agency_id": "D-009",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "4400000",
+      "rebate_amount_krw": "550000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 44,
+        "id": "RB-00043",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00044",
+      "agency_id": "D-009",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "17160000",
+      "rebate_amount_krw": "1560000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 45,
+        "id": "RB-00044",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00045",
+      "agency_id": "D-009",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "9450000",
+      "rebate_amount_krw": "1350000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 46,
+        "id": "RB-00045",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00046",
+      "agency_id": "D-009",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "8640000",
+      "rebate_amount_krw": "1080000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-09",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 47,
+        "id": "RB-00046",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00047",
+      "agency_id": "D-009",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "11430000",
+      "rebate_amount_krw": "1270000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 48,
+        "id": "RB-00047",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00048",
+      "agency_id": "D-009",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "11100000",
+      "rebate_amount_krw": "1110000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 49,
+        "id": "RB-00048",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00049",
+      "agency_id": "D-011",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "5500000",
+      "rebate_amount_krw": "500000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-02",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 50,
+        "id": "RB-00049",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00050",
+      "agency_id": "D-011",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "4560000",
+      "rebate_amount_krw": "570000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 51,
+        "id": "RB-00050",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00051",
+      "agency_id": "D-011",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "5120000",
+      "rebate_amount_krw": "640000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 52,
+        "id": "RB-00051",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00052",
+      "agency_id": "D-011",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "8190000",
+      "rebate_amount_krw": "1170000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-09",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 53,
+        "id": "RB-00052",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00053",
+      "agency_id": "D-011",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "7200000",
+      "rebate_amount_krw": "720000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 54,
+        "id": "RB-00053",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00054",
+      "agency_id": "D-011",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "15108665",
+      "rebate_amount_krw": "1373515",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 55,
+        "id": "RB-00054",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00055",
+      "agency_id": "D-012",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "3120000",
+      "rebate_amount_krw": "390000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-10",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 56,
+        "id": "RB-00055",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00056",
+      "agency_id": "D-012",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "4860000",
+      "rebate_amount_krw": "540000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 57,
+        "id": "RB-00056",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00057",
+      "agency_id": "D-012",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "9000000",
+      "rebate_amount_krw": "900000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-02",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 58,
+        "id": "RB-00057",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00058",
+      "agency_id": "D-012",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "5300000",
+      "rebate_amount_krw": "530000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-04",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 59,
+        "id": "RB-00058",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00059",
+      "agency_id": "D-012",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "10920000",
+      "rebate_amount_krw": "1560000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-10",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 60,
+        "id": "RB-00059",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00060",
+      "agency_id": "D-012",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "6800000",
+      "rebate_amount_krw": "680000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 61,
+        "id": "RB-00060",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00061",
+      "agency_id": "D-013",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "5280000",
+      "rebate_amount_krw": "480000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 62,
+        "id": "RB-00061",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00062",
+      "agency_id": "D-013",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "15400000",
+      "rebate_amount_krw": "1400000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 63,
+        "id": "RB-00062",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00063",
+      "agency_id": "D-013",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "3630000",
+      "rebate_amount_krw": "330000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 64,
+        "id": "RB-00063",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00064",
+      "agency_id": "D-013",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "12510000",
+      "rebate_amount_krw": "1390000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-02",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 65,
+        "id": "RB-00064",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00065",
+      "agency_id": "D-013",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "4680000",
+      "rebate_amount_krw": "520000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 66,
+        "id": "RB-00065",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00066",
+      "agency_id": "D-013",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "11000000",
+      "rebate_amount_krw": "1100000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 67,
+        "id": "RB-00066",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00067",
+      "agency_id": "D-014",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "6270000",
+      "rebate_amount_krw": "570000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-04",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 68,
+        "id": "RB-00067",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00068",
+      "agency_id": "D-014",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "12400000",
+      "rebate_amount_krw": "1240000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 69,
+        "id": "RB-00068",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00069",
+      "agency_id": "D-014",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "9460000",
+      "rebate_amount_krw": "860000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-11",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 70,
+        "id": "RB-00069",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00070",
+      "agency_id": "D-014",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "12800000",
+      "rebate_amount_krw": "1600000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 71,
+        "id": "RB-00070",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00071",
+      "agency_id": "D-014",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "4000000",
+      "rebate_amount_krw": "400000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-10",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 72,
+        "id": "RB-00071",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00072",
+      "agency_id": "D-014",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "13300000",
+      "rebate_amount_krw": "1330000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 73,
+        "id": "RB-00072",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00073",
+      "agency_id": "D-016",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "3330000",
+      "rebate_amount_krw": "370000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-04",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 74,
+        "id": "RB-00073",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00074",
+      "agency_id": "D-016",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "10080000",
+      "rebate_amount_krw": "1440000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 75,
+        "id": "RB-00074",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00075",
+      "agency_id": "D-016",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "14200000",
+      "rebate_amount_krw": "1420000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 76,
+        "id": "RB-00075",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00076",
+      "agency_id": "D-016",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "6480000",
+      "rebate_amount_krw": "720000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-03",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 77,
+        "id": "RB-00076",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00077",
+      "agency_id": "D-016",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "10350000",
+      "rebate_amount_krw": "1150000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 78,
+        "id": "RB-00077",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00078",
+      "agency_id": "D-016",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "9900000",
+      "rebate_amount_krw": "990000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 79,
+        "id": "RB-00078",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00079",
+      "agency_id": "D-017",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "11070000",
+      "rebate_amount_krw": "1230000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-10",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 80,
+        "id": "RB-00079",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00080",
+      "agency_id": "D-017",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "5680000",
+      "rebate_amount_krw": "710000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 81,
+        "id": "RB-00080",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00081",
+      "agency_id": "D-017",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "10800000",
+      "rebate_amount_krw": "1080000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-04",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 82,
+        "id": "RB-00081",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00082",
+      "agency_id": "D-017",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "3300000",
+      "rebate_amount_krw": "300000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 83,
+        "id": "RB-00082",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00083",
+      "agency_id": "D-017",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "14800000",
+      "rebate_amount_krw": "1480000",
+      "approval_status": "반려",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 84,
+        "id": "RB-00083",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00084",
+      "agency_id": "D-017",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "10920000",
+      "rebate_amount_krw": "1560000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 85,
+        "id": "RB-00084",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00085",
+      "agency_id": "D-018",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "4320000",
+      "rebate_amount_krw": "540000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-04",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 86,
+        "id": "RB-00085",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00086",
+      "agency_id": "D-018",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "10430000",
+      "rebate_amount_krw": "1490000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 87,
+        "id": "RB-00086",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00087",
+      "agency_id": "D-018",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "15400000",
+      "rebate_amount_krw": "1400000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 88,
+        "id": "RB-00087",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00088",
+      "agency_id": "D-018",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "4480000",
+      "rebate_amount_krw": "640000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 89,
+        "id": "RB-00088",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00089",
+      "agency_id": "D-018",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "12980000",
+      "rebate_amount_krw": "1180000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 90,
+        "id": "RB-00089",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00090",
+      "agency_id": "D-018",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "10080000",
+      "rebate_amount_krw": "1260000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 91,
+        "id": "RB-00090",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00091",
+      "agency_id": "D-019",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "14700000",
+      "rebate_amount_krw": "1470000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 92,
+        "id": "RB-00091",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00092",
+      "agency_id": "D-019",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "11520000",
+      "rebate_amount_krw": "1440000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-04",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 93,
+        "id": "RB-00092",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00093",
+      "agency_id": "D-019",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "11880000",
+      "rebate_amount_krw": "1080000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-03",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 94,
+        "id": "RB-00093",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00094",
+      "agency_id": "D-019",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "6930000",
+      "rebate_amount_krw": "990000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-09",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 95,
+        "id": "RB-00094",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00095",
+      "agency_id": "D-019",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "6600000",
+      "rebate_amount_krw": "600000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 96,
+        "id": "RB-00095",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00096",
+      "agency_id": "D-019",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "3850000",
+      "rebate_amount_krw": "350000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 97,
+        "id": "RB-00096",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00097",
+      "agency_id": "D-021",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "11520000",
+      "rebate_amount_krw": "1440000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-02",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 98,
+        "id": "RB-00097",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00098",
+      "agency_id": "D-021",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "2940000",
+      "rebate_amount_krw": "420000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-10",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 99,
+        "id": "RB-00098",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00099",
+      "agency_id": "D-021",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "4550000",
+      "rebate_amount_krw": "650000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-04",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 100,
+        "id": "RB-00099",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00100",
+      "agency_id": "D-021",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "10340000",
+      "rebate_amount_krw": "940000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-02",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 101,
+        "id": "RB-00100",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00101",
+      "agency_id": "D-021",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "9870000",
+      "rebate_amount_krw": "1410000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-04",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 102,
+        "id": "RB-00101",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00102",
+      "agency_id": "D-021",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "4970000",
+      "rebate_amount_krw": "710000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 103,
+        "id": "RB-00102",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00103",
+      "agency_id": "D-022",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "3800000",
+      "rebate_amount_krw": "380000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 104,
+        "id": "RB-00103",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00104",
+      "agency_id": "D-022",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "5830000",
+      "rebate_amount_krw": "530000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-04",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 105,
+        "id": "RB-00104",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00105",
+      "agency_id": "D-022",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "8470000",
+      "rebate_amount_krw": "1210000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-04",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 106,
+        "id": "RB-00105",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00106",
+      "agency_id": "D-022",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "2800000",
+      "rebate_amount_krw": "350000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 107,
+        "id": "RB-00106",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00107",
+      "agency_id": "D-022",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "2100000",
+      "rebate_amount_krw": "300000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-03",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 108,
+        "id": "RB-00107",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00108",
+      "agency_id": "D-022",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "7400000",
+      "rebate_amount_krw": "740000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 109,
+        "id": "RB-00108",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00109",
+      "agency_id": "D-023",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "8300000",
+      "rebate_amount_krw": "830000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 110,
+        "id": "RB-00109",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00110",
+      "agency_id": "D-023",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "14600000",
+      "rebate_amount_krw": "1460000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-11",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 111,
+        "id": "RB-00110",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00111",
+      "agency_id": "D-023",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "5600000",
+      "rebate_amount_krw": "800000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-10",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 112,
+        "id": "RB-00111",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00112",
+      "agency_id": "D-023",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "8470000",
+      "rebate_amount_krw": "770000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-04",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 113,
+        "id": "RB-00112",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00113",
+      "agency_id": "D-023",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "10990000",
+      "rebate_amount_krw": "1570000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 114,
+        "id": "RB-00113",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00114",
+      "agency_id": "D-023",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "10920000",
+      "rebate_amount_krw": "1560000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 115,
+        "id": "RB-00114",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00115",
+      "agency_id": "D-024",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "5600000",
+      "rebate_amount_krw": "800000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-04",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 116,
+        "id": "RB-00115",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00116",
+      "agency_id": "D-024",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "15700000",
+      "rebate_amount_krw": "1570000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 117,
+        "id": "RB-00116",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00117",
+      "agency_id": "D-024",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "10780000",
+      "rebate_amount_krw": "980000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-11",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 118,
+        "id": "RB-00117",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00118",
+      "agency_id": "D-024",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "17270000",
+      "rebate_amount_krw": "1570000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 119,
+        "id": "RB-00118",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00119",
+      "agency_id": "D-024",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "7350000",
+      "rebate_amount_krw": "1050000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-11",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 120,
+        "id": "RB-00119",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00120",
+      "agency_id": "D-024",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "9716656",
+      "rebate_amount_krw": "1214582",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 121,
+        "id": "RB-00120",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00121",
+      "agency_id": "D-026",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "15100000",
+      "rebate_amount_krw": "1510000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-04",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 122,
+        "id": "RB-00121",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00122",
+      "agency_id": "D-026",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "3760000",
+      "rebate_amount_krw": "470000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-09",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 123,
+        "id": "RB-00122",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00123",
+      "agency_id": "D-026",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "16830000",
+      "rebate_amount_krw": "1530000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-03",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 124,
+        "id": "RB-00123",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00124",
+      "agency_id": "D-026",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "2960000",
+      "rebate_amount_krw": "370000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-04",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 125,
+        "id": "RB-00124",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00125",
+      "agency_id": "D-026",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "5400000",
+      "rebate_amount_krw": "600000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-03",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 126,
+        "id": "RB-00125",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00126",
+      "agency_id": "D-026",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "11920000",
+      "rebate_amount_krw": "1490000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 127,
+        "id": "RB-00126",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00127",
+      "agency_id": "D-027",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "7920000",
+      "rebate_amount_krw": "990000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 128,
+        "id": "RB-00127",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00128",
+      "agency_id": "D-027",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "10340000",
+      "rebate_amount_krw": "940000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-02",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 129,
+        "id": "RB-00128",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00129",
+      "agency_id": "D-027",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "2700000",
+      "rebate_amount_krw": "300000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-10",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 130,
+        "id": "RB-00129",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00130",
+      "agency_id": "D-027",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "12650000",
+      "rebate_amount_krw": "1150000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 131,
+        "id": "RB-00130",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00131",
+      "agency_id": "D-027",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "8240000",
+      "rebate_amount_krw": "1030000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 132,
+        "id": "RB-00131",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00132",
+      "agency_id": "D-027",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "4690000",
+      "rebate_amount_krw": "670000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 133,
+        "id": "RB-00132",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00133",
+      "agency_id": "D-028",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "4300000",
+      "rebate_amount_krw": "430000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 134,
+        "id": "RB-00133",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00134",
+      "agency_id": "D-028",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "9130000",
+      "rebate_amount_krw": "830000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-04",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 135,
+        "id": "RB-00134",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00135",
+      "agency_id": "D-028",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "3360000",
+      "rebate_amount_krw": "420000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 136,
+        "id": "RB-00135",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00136",
+      "agency_id": "D-028",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "16940000",
+      "rebate_amount_krw": "1540000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-03",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 137,
+        "id": "RB-00136",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00137",
+      "agency_id": "D-028",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "6000000",
+      "rebate_amount_krw": "750000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-03",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 138,
+        "id": "RB-00137",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00138",
+      "agency_id": "D-028",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "12800000",
+      "rebate_amount_krw": "1280000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 139,
+        "id": "RB-00138",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00139",
+      "agency_id": "D-029",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "12600000",
+      "rebate_amount_krw": "1400000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-02",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 140,
+        "id": "RB-00139",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00140",
+      "agency_id": "D-029",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "13600000",
+      "rebate_amount_krw": "1360000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 141,
+        "id": "RB-00140",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00141",
+      "agency_id": "D-029",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "6800000",
+      "rebate_amount_krw": "850000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 142,
+        "id": "RB-00141",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00142",
+      "agency_id": "D-029",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "8500000",
+      "rebate_amount_krw": "850000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 143,
+        "id": "RB-00142",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00143",
+      "agency_id": "D-029",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "9840000",
+      "rebate_amount_krw": "1230000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 144,
+        "id": "RB-00143",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00144",
+      "agency_id": "D-029",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "9900000",
+      "rebate_amount_krw": "990000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 145,
+        "id": "RB-00144",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00145",
+      "agency_id": "D-031",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "2170000",
+      "rebate_amount_krw": "310000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-10",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 146,
+        "id": "RB-00145",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00146",
+      "agency_id": "D-031",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "7490000",
+      "rebate_amount_krw": "1070000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 147,
+        "id": "RB-00146",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00147",
+      "agency_id": "D-031",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "9730000",
+      "rebate_amount_krw": "1390000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-09",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 148,
+        "id": "RB-00147",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00148",
+      "agency_id": "D-031",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "2310000",
+      "rebate_amount_krw": "330000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-04",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 149,
+        "id": "RB-00148",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00149",
+      "agency_id": "D-031",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "11520000",
+      "rebate_amount_krw": "1280000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 150,
+        "id": "RB-00149",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00150",
+      "agency_id": "D-031",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "10570000",
+      "rebate_amount_krw": "1510000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 151,
+        "id": "RB-00150",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00151",
+      "agency_id": "D-032",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "11840000",
+      "rebate_amount_krw": "1480000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 152,
+        "id": "RB-00151",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00152",
+      "agency_id": "D-032",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "7280000",
+      "rebate_amount_krw": "1040000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-04",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 153,
+        "id": "RB-00152",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00153",
+      "agency_id": "D-032",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "10990000",
+      "rebate_amount_krw": "1570000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-09",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 154,
+        "id": "RB-00153",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00154",
+      "agency_id": "D-032",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "5280000",
+      "rebate_amount_krw": "660000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 155,
+        "id": "RB-00154",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00155",
+      "agency_id": "D-032",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "5310000",
+      "rebate_amount_krw": "590000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-10",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 156,
+        "id": "RB-00155",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00156",
+      "agency_id": "D-032",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "6570000",
+      "rebate_amount_krw": "730000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 157,
+        "id": "RB-00156",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00157",
+      "agency_id": "D-033",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "11000000",
+      "rebate_amount_krw": "1100000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-10",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 158,
+        "id": "RB-00157",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00158",
+      "agency_id": "D-033",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "13860000",
+      "rebate_amount_krw": "1260000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 159,
+        "id": "RB-00158",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00159",
+      "agency_id": "D-033",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "5670000",
+      "rebate_amount_krw": "810000",
+      "approval_status": "반려",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 160,
+        "id": "RB-00159",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00160",
+      "agency_id": "D-033",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "11100000",
+      "rebate_amount_krw": "1110000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 161,
+        "id": "RB-00160",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00161",
+      "agency_id": "D-033",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "11500000",
+      "rebate_amount_krw": "1150000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 162,
+        "id": "RB-00161",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00162",
+      "agency_id": "D-033",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "5320000",
+      "rebate_amount_krw": "760000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 163,
+        "id": "RB-00162",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00163",
+      "agency_id": "D-034",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "6800000",
+      "rebate_amount_krw": "680000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 164,
+        "id": "RB-00163",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00164",
+      "agency_id": "D-034",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "4690000",
+      "rebate_amount_krw": "670000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 165,
+        "id": "RB-00164",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00165",
+      "agency_id": "D-034",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "16610000",
+      "rebate_amount_krw": "1510000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-03",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 166,
+        "id": "RB-00165",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00166",
+      "agency_id": "D-034",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "4770000",
+      "rebate_amount_krw": "530000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 167,
+        "id": "RB-00166",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00167",
+      "agency_id": "D-034",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "16720000",
+      "rebate_amount_krw": "1520000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-09",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 168,
+        "id": "RB-00167",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00168",
+      "agency_id": "D-034",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "7980000",
+      "rebate_amount_krw": "1140000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 169,
+        "id": "RB-00168",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00169",
+      "agency_id": "D-036",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "2400000",
+      "rebate_amount_krw": "300000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-03",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 170,
+        "id": "RB-00169",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00170",
+      "agency_id": "D-036",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "16720000",
+      "rebate_amount_krw": "1520000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 171,
+        "id": "RB-00170",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00171",
+      "agency_id": "D-036",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "9520000",
+      "rebate_amount_krw": "1360000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-02",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 172,
+        "id": "RB-00171",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00172",
+      "agency_id": "D-036",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "10200000",
+      "rebate_amount_krw": "1020000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 173,
+        "id": "RB-00172",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00173",
+      "agency_id": "D-036",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "4760000",
+      "rebate_amount_krw": "680000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 174,
+        "id": "RB-00173",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00174",
+      "agency_id": "D-036",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "2800000",
+      "rebate_amount_krw": "400000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 175,
+        "id": "RB-00174",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00175",
+      "agency_id": "D-037",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "6930000",
+      "rebate_amount_krw": "770000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-02",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 176,
+        "id": "RB-00175",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00176",
+      "agency_id": "D-037",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "5880000",
+      "rebate_amount_krw": "840000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 177,
+        "id": "RB-00176",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00177",
+      "agency_id": "D-037",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "15180000",
+      "rebate_amount_krw": "1380000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 178,
+        "id": "RB-00177",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00178",
+      "agency_id": "D-037",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "11900000",
+      "rebate_amount_krw": "1190000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 179,
+        "id": "RB-00178",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00179",
+      "agency_id": "D-037",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "7500000",
+      "rebate_amount_krw": "750000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 180,
+        "id": "RB-00179",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00180",
+      "agency_id": "D-037",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "14300000",
+      "rebate_amount_krw": "1300000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 181,
+        "id": "RB-00180",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00181",
+      "agency_id": "D-038",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "6500000",
+      "rebate_amount_krw": "650000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 182,
+        "id": "RB-00181",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00182",
+      "agency_id": "D-038",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "7920000",
+      "rebate_amount_krw": "880000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 183,
+        "id": "RB-00182",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00183",
+      "agency_id": "D-038",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "6000000",
+      "rebate_amount_krw": "600000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 184,
+        "id": "RB-00183",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00184",
+      "agency_id": "D-038",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "3400000",
+      "rebate_amount_krw": "340000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-11",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 185,
+        "id": "RB-00184",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00185",
+      "agency_id": "D-038",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "10340000",
+      "rebate_amount_krw": "940000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 186,
+        "id": "RB-00185",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00186",
+      "agency_id": "D-038",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "9040000",
+      "rebate_amount_krw": "1130000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 187,
+        "id": "RB-00186",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00187",
+      "agency_id": "D-039",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "17600000",
+      "rebate_amount_krw": "1600000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 188,
+        "id": "RB-00187",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00188",
+      "agency_id": "D-039",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "10440000",
+      "rebate_amount_krw": "1160000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-02",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 189,
+        "id": "RB-00188",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00189",
+      "agency_id": "D-039",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "13860000",
+      "rebate_amount_krw": "1540000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 190,
+        "id": "RB-00189",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00190",
+      "agency_id": "D-039",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "10010000",
+      "rebate_amount_krw": "1430000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-10",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 191,
+        "id": "RB-00190",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00191",
+      "agency_id": "D-039",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "10710000",
+      "rebate_amount_krw": "1190000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 192,
+        "id": "RB-00191",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00192",
+      "agency_id": "D-039",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "14400000",
+      "rebate_amount_krw": "1440000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 193,
+        "id": "RB-00192",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00193",
+      "agency_id": "D-041",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "15400000",
+      "rebate_amount_krw": "1540000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-10",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 194,
+        "id": "RB-00193",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00194",
+      "agency_id": "D-041",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "5760000",
+      "rebate_amount_krw": "640000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 195,
+        "id": "RB-00194",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00195",
+      "agency_id": "D-041",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "8820000",
+      "rebate_amount_krw": "1260000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 196,
+        "id": "RB-00195",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00196",
+      "agency_id": "D-041",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "13230000",
+      "rebate_amount_krw": "1470000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 197,
+        "id": "RB-00196",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00197",
+      "agency_id": "D-041",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "9100000",
+      "rebate_amount_krw": "910000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 198,
+        "id": "RB-00197",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00198",
+      "agency_id": "D-041",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "10300000",
+      "rebate_amount_krw": "1030000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 199,
+        "id": "RB-00198",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00199",
+      "agency_id": "D-042",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "8820000",
+      "rebate_amount_krw": "1260000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 200,
+        "id": "RB-00199",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00200",
+      "agency_id": "D-042",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "11060000",
+      "rebate_amount_krw": "1580000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 201,
+        "id": "RB-00200",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00201",
+      "agency_id": "D-042",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "12320000",
+      "rebate_amount_krw": "1540000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 202,
+        "id": "RB-00201",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00202",
+      "agency_id": "D-042",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "13310000",
+      "rebate_amount_krw": "1210000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-03",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 203,
+        "id": "RB-00202",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00203",
+      "agency_id": "D-042",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "12980000",
+      "rebate_amount_krw": "1180000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 204,
+        "id": "RB-00203",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00204",
+      "agency_id": "D-042",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "8610000",
+      "rebate_amount_krw": "1230000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 205,
+        "id": "RB-00204",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00205",
+      "agency_id": "D-043",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "2400000",
+      "rebate_amount_krw": "300000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 206,
+        "id": "RB-00205",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00206",
+      "agency_id": "D-043",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "7600000",
+      "rebate_amount_krw": "760000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 207,
+        "id": "RB-00206",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00207",
+      "agency_id": "D-043",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "7140000",
+      "rebate_amount_krw": "1020000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-11",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 208,
+        "id": "RB-00207",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00208",
+      "agency_id": "D-043",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "12320000",
+      "rebate_amount_krw": "1540000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-03",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 209,
+        "id": "RB-00208",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00209",
+      "agency_id": "D-043",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "3920000",
+      "rebate_amount_krw": "560000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-11",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 210,
+        "id": "RB-00209",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00210",
+      "agency_id": "D-043",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "2970000",
+      "rebate_amount_krw": "330000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 211,
+        "id": "RB-00210",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00211",
+      "agency_id": "D-044",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "4560000",
+      "rebate_amount_krw": "570000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-04",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 212,
+        "id": "RB-00211",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00212",
+      "agency_id": "D-044",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "10320000",
+      "rebate_amount_krw": "1290000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 213,
+        "id": "RB-00212",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00213",
+      "agency_id": "D-044",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "9900000",
+      "rebate_amount_krw": "1100000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 214,
+        "id": "RB-00213",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00214",
+      "agency_id": "D-044",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "10560000",
+      "rebate_amount_krw": "960000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 215,
+        "id": "RB-00214",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00215",
+      "agency_id": "D-044",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "5490000",
+      "rebate_amount_krw": "610000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-11",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 216,
+        "id": "RB-00215",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00216",
+      "agency_id": "D-044",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "7110000",
+      "rebate_amount_krw": "790000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 217,
+        "id": "RB-00216",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00217",
+      "agency_id": "D-046",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "14300000",
+      "rebate_amount_krw": "1430000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-02",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 218,
+        "id": "RB-00217",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00218",
+      "agency_id": "D-046",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "5440000",
+      "rebate_amount_krw": "680000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 219,
+        "id": "RB-00218",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00219",
+      "agency_id": "D-046",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "3360000",
+      "rebate_amount_krw": "480000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 220,
+        "id": "RB-00219",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00220",
+      "agency_id": "D-046",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "3400000",
+      "rebate_amount_krw": "340000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 221,
+        "id": "RB-00220",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00221",
+      "agency_id": "D-046",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "2100000",
+      "rebate_amount_krw": "300000",
+      "approval_status": "반려",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 222,
+        "id": "RB-00221",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00222",
+      "agency_id": "D-046",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "8690000",
+      "rebate_amount_krw": "790000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 223,
+        "id": "RB-00222",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00223",
+      "agency_id": "D-047",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "4800000",
+      "rebate_amount_krw": "480000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-02",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 224,
+        "id": "RB-00223",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00224",
+      "agency_id": "D-047",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "6400000",
+      "rebate_amount_krw": "800000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-03",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 225,
+        "id": "RB-00224",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00225",
+      "agency_id": "D-047",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "16060000",
+      "rebate_amount_krw": "1460000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-02",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 226,
+        "id": "RB-00225",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00226",
+      "agency_id": "D-047",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "11220000",
+      "rebate_amount_krw": "1020000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 227,
+        "id": "RB-00226",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00227",
+      "agency_id": "D-047",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "14040000",
+      "rebate_amount_krw": "1560000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 228,
+        "id": "RB-00227",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00228",
+      "agency_id": "D-047",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "2790000",
+      "rebate_amount_krw": "310000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 229,
+        "id": "RB-00228",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00229",
+      "agency_id": "D-048",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "3780000",
+      "rebate_amount_krw": "420000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-02",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 230,
+        "id": "RB-00229",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00230",
+      "agency_id": "D-048",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "6120000",
+      "rebate_amount_krw": "680000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-03-07",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 231,
+        "id": "RB-00230",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00231",
+      "agency_id": "D-048",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "15180000",
+      "rebate_amount_krw": "1380000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 232,
+        "id": "RB-00231",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00232",
+      "agency_id": "D-048",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "8470000",
+      "rebate_amount_krw": "770000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-12",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 233,
+        "id": "RB-00232",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00233",
+      "agency_id": "D-048",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "9240000",
+      "rebate_amount_krw": "840000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-06",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 234,
+        "id": "RB-00233",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00234",
+      "agency_id": "D-048",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "11200000",
+      "rebate_amount_krw": "1120000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 235,
+        "id": "RB-00234",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00235",
+      "agency_id": "D-049",
+      "period_ym": "2026-01",
+      "sales_performance_krw": "3520000",
+      "rebate_amount_krw": "440000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-02-02",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 236,
+        "id": "RB-00235",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00236",
+      "agency_id": "D-049",
+      "period_ym": "2026-02",
+      "sales_performance_krw": "11880000",
+      "rebate_amount_krw": "1320000",
+      "approval_status": "반려",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 237,
+        "id": "RB-00236",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00237",
+      "agency_id": "D-049",
+      "period_ym": "2026-03",
+      "sales_performance_krw": "7260000",
+      "rebate_amount_krw": "660000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-04-10",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 238,
+        "id": "RB-00237",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00238",
+      "agency_id": "D-049",
+      "period_ym": "2026-04",
+      "sales_performance_krw": "8360000",
+      "rebate_amount_krw": "760000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-05-08",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 239,
+        "id": "RB-00238",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00239",
+      "agency_id": "D-049",
+      "period_ym": "2026-05",
+      "sales_performance_krw": "3630000",
+      "rebate_amount_krw": "330000",
+      "approval_status": "승인",
+      "approver": "영업지원팀",
+      "payment_date": "2026-06-05",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 240,
+        "id": "RB-00239",
+        "kind": "synthetic"
+      }
+    },
+    {
+      "rebate_id": "RB-00240",
+      "agency_id": "D-049",
+      "period_ym": "2026-06",
+      "sales_performance_krw": "4730000",
+      "rebate_amount_krw": "430000",
+      "approval_status": "미지급",
+      "approver": "NONE",
+      "payment_date": "NONE",
+      "source": {
+        "file": "synthetic/payments",
+        "row": 241,
+        "id": "RB-00240",
+        "kind": "synthetic"
+      }
+    }
+  ],
+  "collections": [
+    {
+      "deposit_id": "DP-00001",
+      "agency_id": "D-001",
+      "deposit_date": "2026-02-04",
+      "amount_krw": "7850000",
+      "matched_ar_id": "AR-S0001",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 2,
+        "id": "DP-00001",
+        "kind": "synthetic"
+      },
+      "accountKey": "c821433a72e2e0853ab2ea93a24e58134e17c755127d6caec51648fe6f014d5d",
+      "accountLabel": "모의은행 ****7919"
+    },
+    {
+      "deposit_id": "DP-00002",
+      "agency_id": "D-003",
+      "deposit_date": "2026-01-10",
+      "amount_krw": "4700000",
+      "matched_ar_id": "AR-S0002",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 3,
+        "id": "DP-00002",
+        "kind": "synthetic"
+      },
+      "accountKey": "7c4059c79a86a050c9ed6a5172c46e94dcea7b0a1f9900e2f7921b68bfe715e6",
+      "accountLabel": "모의은행 ****3757"
+    },
+    {
+      "deposit_id": "DP-00003",
+      "agency_id": "D-007",
+      "deposit_date": "2026-05-07",
+      "amount_krw": "41660000",
+      "matched_ar_id": "AR-S0003",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 4,
+        "id": "DP-00003",
+        "kind": "synthetic"
+      },
+      "accountKey": "f583f10558f402ce5f48837d2d8ddf1245796297838f3df349188287d8460efe",
+      "accountLabel": "모의은행 ****5433"
+    },
+    {
+      "deposit_id": "DP-00004",
+      "agency_id": "D-009",
+      "deposit_date": "2026-03-23",
+      "amount_krw": "9290000",
+      "matched_ar_id": "AR-S0004",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 5,
+        "id": "DP-00004",
+        "kind": "synthetic"
+      },
+      "accountKey": "2a2a880b4189d4f5f7f1ade976708690e5837aba8ca0f1c3862fc8c72a6f21b5",
+      "accountLabel": "모의은행 ****1271"
+    },
+    {
+      "deposit_id": "DP-00005",
+      "agency_id": "D-010",
+      "deposit_date": "2026-01-23",
+      "amount_krw": "42350000",
+      "matched_ar_id": "AR-S0005",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 6,
+        "id": "DP-00005",
+        "kind": "synthetic"
+      },
+      "accountKey": "2e62563295fa21604e8bfcc746dcf717e93d71f1e4e0495f1261c698bb0d101a",
+      "accountLabel": "모의은행 ****9190"
+    },
+    {
+      "deposit_id": "DP-00006",
+      "agency_id": "D-011",
+      "deposit_date": "2026-03-27",
+      "amount_krw": "32680000",
+      "matched_ar_id": "AR-S0006",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 7,
+        "id": "DP-00006",
+        "kind": "synthetic"
+      },
+      "accountKey": "bed6015f9188dabcd3e7ac100681b037dfe277638824b427b4526be74282e4ee",
+      "accountLabel": "모의은행 ****7109"
+    },
+    {
+      "deposit_id": "DP-00007",
+      "agency_id": "D-013",
+      "deposit_date": "2026-03-05",
+      "amount_krw": "27090000",
+      "matched_ar_id": "AR-S0007",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 8,
+        "id": "DP-00007",
+        "kind": "synthetic"
+      },
+      "accountKey": "89acb9cd333e53893809292bde859bc6e50a1dba63829733873097d269c89415",
+      "accountLabel": "모의은행 ****2947"
+    },
+    {
+      "deposit_id": "DP-00008",
+      "agency_id": "D-014",
+      "deposit_date": "2026-04-20",
+      "amount_krw": "39520000",
+      "matched_ar_id": "AR-S0008",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 9,
+        "id": "DP-00008",
+        "kind": "synthetic"
+      },
+      "accountKey": "ea11194140c6081461a539f53c4861ff91528229d9deb4a178d02c9b792c6c2d",
+      "accountLabel": "모의은행 ****0866"
+    },
+    {
+      "deposit_id": "DP-00009",
+      "agency_id": "D-015",
+      "deposit_date": "2026-05-11",
+      "amount_krw": "27330000",
+      "matched_ar_id": "AR-S0009",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 10,
+        "id": "DP-00009",
+        "kind": "synthetic"
+      },
+      "accountKey": "2d09bb789180f0c59eaaca15cc7fbe0fcd7cb1e7ed9ad1fe973aceb9f62c2ded",
+      "accountLabel": "모의은행 ****8785"
+    },
+    {
+      "deposit_id": "DP-00010",
+      "agency_id": "D-016",
+      "deposit_date": "2026-02-10",
+      "amount_krw": "6430000",
+      "matched_ar_id": "AR-S0010",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 11,
+        "id": "DP-00010",
+        "kind": "synthetic"
+      },
+      "accountKey": "dcd6becce8ece2bba09d36a98f6e1cee7a22078619971439ab155086116ab709",
+      "accountLabel": "모의은행 ****6704"
+    },
+    {
+      "deposit_id": "DP-00011",
+      "agency_id": "D-018",
+      "deposit_date": "2026-05-02",
+      "amount_krw": "37720000",
+      "matched_ar_id": "AR-S0011",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 12,
+        "id": "DP-00011",
+        "kind": "synthetic"
+      },
+      "accountKey": "62ec86fce0e1d267d7ad139f122a5c7071d7814dee1b9136b1485b3bba7eed1b",
+      "accountLabel": "모의은행 ****2542"
+    },
+    {
+      "deposit_id": "DP-00012",
+      "agency_id": "D-020",
+      "deposit_date": "2026-05-21",
+      "amount_krw": "16000000",
+      "matched_ar_id": "AR-S0012",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 13,
+        "id": "DP-00012",
+        "kind": "synthetic"
+      },
+      "accountKey": "9cc12f29626e72ddbce4b281c781f95dd3464964cd7767ae3be1b1505b0ccadc",
+      "accountLabel": "모의은행 ****8380"
+    },
+    {
+      "deposit_id": "DP-00013",
+      "agency_id": "D-024",
+      "deposit_date": "2026-01-03",
+      "amount_krw": "44770000",
+      "matched_ar_id": "AR-S0013",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 14,
+        "id": "DP-00013",
+        "kind": "synthetic"
+      },
+      "accountKey": "bed6015f9188dabcd3e7ac100681b037dfe277638824b427b4526be74282e4ee",
+      "accountLabel": "모의은행 ****7109"
+    },
+    {
+      "deposit_id": "DP-00014",
+      "agency_id": "D-024",
+      "deposit_date": "2026-02-09",
+      "amount_krw": "40330000",
+      "matched_ar_id": "AR-S0014",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 15,
+        "id": "DP-00014",
+        "kind": "synthetic"
+      },
+      "accountKey": "bed6015f9188dabcd3e7ac100681b037dfe277638824b427b4526be74282e4ee",
+      "accountLabel": "모의은행 ****7109"
+    },
+    {
+      "deposit_id": "DP-00015",
+      "agency_id": "D-026",
+      "deposit_date": "2026-03-08",
+      "amount_krw": "38580000",
+      "matched_ar_id": "AR-S0015",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 16,
+        "id": "DP-00015",
+        "kind": "synthetic"
+      },
+      "accountKey": "eff00299e7983df7b1c3b438c7f95ef31e08b8d9be9af119dc194169ec55c6e2",
+      "accountLabel": "모의은행 ****5894"
+    },
+    {
+      "deposit_id": "DP-00016",
+      "agency_id": "D-027",
+      "deposit_date": "2026-02-13",
+      "amount_krw": "15180000",
+      "matched_ar_id": "AR-S0016",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 17,
+        "id": "DP-00016",
+        "kind": "synthetic"
+      },
+      "accountKey": "3fa2ade30996912b11dc1dd8eac426475b933df54cfdb704bd2e9aadb6151e14",
+      "accountLabel": "모의은행 ****3813"
+    },
+    {
+      "deposit_id": "DP-00017",
+      "agency_id": "D-030",
+      "deposit_date": "2026-03-09",
+      "amount_krw": "6450000",
+      "matched_ar_id": "AR-S0017",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 18,
+        "id": "DP-00017",
+        "kind": "synthetic"
+      },
+      "accountKey": "25f4b18239db31608bb71f918603565249c62b4718cfccbfe36bf7da8f2afbf4",
+      "accountLabel": "모의은행 ****7570"
+    },
+    {
+      "deposit_id": "DP-00018",
+      "agency_id": "D-033",
+      "deposit_date": "2026-06-16",
+      "amount_krw": "22050000",
+      "matched_ar_id": "AR-S0018",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 19,
+        "id": "DP-00018",
+        "kind": "synthetic"
+      },
+      "accountKey": "181f66107fbf3c5d517aa8571c705f8b10802eb15e6c22ad83f6bdc3cb3dcab4",
+      "accountLabel": "모의은행 ****1327"
+    },
+    {
+      "deposit_id": "DP-00019",
+      "agency_id": "D-036",
+      "deposit_date": "2026-02-02",
+      "amount_krw": "17400000",
+      "matched_ar_id": "AR-S0019",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 20,
+        "id": "DP-00019",
+        "kind": "synthetic"
+      },
+      "accountKey": "b157460e92ad0c332a37b549ede904fff920067342923cd64d20af128ab10b0c",
+      "accountLabel": "모의은행 ****5084"
+    },
+    {
+      "deposit_id": "DP-00020",
+      "agency_id": "D-037",
+      "deposit_date": "2026-05-15",
+      "amount_krw": "18620000",
+      "matched_ar_id": "AR-S0020",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 21,
+        "id": "DP-00020",
+        "kind": "synthetic"
+      },
+      "accountKey": "bed6015f9188dabcd3e7ac100681b037dfe277638824b427b4526be74282e4ee",
+      "accountLabel": "모의은행 ****7109"
+    },
+    {
+      "deposit_id": "DP-00021",
+      "agency_id": "D-038",
+      "deposit_date": "2026-06-16",
+      "amount_krw": "27510000",
+      "matched_ar_id": "AR-S0021",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 22,
+        "id": "DP-00021",
+        "kind": "synthetic"
+      },
+      "accountKey": "4bdfdd7bc845d2c82cbefe651a332ad7d416e570aedd59dd7be2a5515db57591",
+      "accountLabel": "모의은행 ****0922"
+    },
+    {
+      "deposit_id": "DP-00022",
+      "agency_id": "D-038",
+      "deposit_date": "2026-06-01",
+      "amount_krw": "26560000",
+      "matched_ar_id": "AR-S0022",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 23,
+        "id": "DP-00022",
+        "kind": "synthetic"
+      },
+      "accountKey": "4bdfdd7bc845d2c82cbefe651a332ad7d416e570aedd59dd7be2a5515db57591",
+      "accountLabel": "모의은행 ****0922"
+    },
+    {
+      "deposit_id": "DP-00023",
+      "agency_id": "D-040",
+      "deposit_date": "2026-03-10",
+      "amount_krw": "19120000",
+      "matched_ar_id": "AR-S0023",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 24,
+        "id": "DP-00023",
+        "kind": "synthetic"
+      },
+      "accountKey": "70e1924fc3faccc399766efe2c955929490abdf59f63a3457c5d0b3fd37503d4",
+      "accountLabel": "모의은행 ****6760"
+    },
+    {
+      "deposit_id": "DP-00024",
+      "agency_id": "D-040",
+      "deposit_date": "2026-02-18",
+      "amount_krw": "23490000",
+      "matched_ar_id": "AR-S0024",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 25,
+        "id": "DP-00024",
+        "kind": "synthetic"
+      },
+      "accountKey": "70e1924fc3faccc399766efe2c955929490abdf59f63a3457c5d0b3fd37503d4",
+      "accountLabel": "모의은행 ****6760"
+    },
+    {
+      "deposit_id": "DP-00025",
+      "agency_id": "D-041",
+      "deposit_date": "2026-05-19",
+      "amount_krw": "6570000",
+      "matched_ar_id": "AR-S0025",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 26,
+        "id": "DP-00025",
+        "kind": "synthetic"
+      },
+      "accountKey": "fe67de3c4d8d5b1fe1a0f4dc36fe2c536b866af92fe5a5bf1d6043a383428831",
+      "accountLabel": "모의은행 ****4679"
+    },
+    {
+      "deposit_id": "DP-00026",
+      "agency_id": "D-041",
+      "deposit_date": "2026-03-01",
+      "amount_krw": "35010000",
+      "matched_ar_id": "AR-S0026",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 27,
+        "id": "DP-00026",
+        "kind": "synthetic"
+      },
+      "accountKey": "fe67de3c4d8d5b1fe1a0f4dc36fe2c536b866af92fe5a5bf1d6043a383428831",
+      "accountLabel": "모의은행 ****4679"
+    },
+    {
+      "deposit_id": "DP-00027",
+      "agency_id": "D-042",
+      "deposit_date": "2026-06-17",
+      "amount_krw": "31350000",
+      "matched_ar_id": "AR-S0027",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 28,
+        "id": "DP-00027",
+        "kind": "synthetic"
+      },
+      "accountKey": "37bd152b7b4f3d48b000e514d6765bc8002048083c792df94bb156cd39b1b970",
+      "accountLabel": "모의은행 ****2598"
+    },
+    {
+      "deposit_id": "DP-00028",
+      "agency_id": "D-043",
+      "deposit_date": "2026-06-09",
+      "amount_krw": "5900000",
+      "matched_ar_id": "AR-S0028",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 29,
+        "id": "DP-00028",
+        "kind": "synthetic"
+      },
+      "accountKey": "f656256c0932f020e5e929f166ae4ed412c038bbd7a6aa08e7109293e2fadacf",
+      "accountLabel": "모의은행 ****0517"
+    },
+    {
+      "deposit_id": "DP-00029",
+      "agency_id": "D-044",
+      "deposit_date": "2026-06-22",
+      "amount_krw": "41620000",
+      "matched_ar_id": "AR-S0029",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 30,
+        "id": "DP-00029",
+        "kind": "synthetic"
+      },
+      "accountKey": "641ce81799b3b0ba76bc1c33858ee0fd80e0fd442d01245fd3ef85e102df633f",
+      "accountLabel": "모의은행 ****8436"
+    },
+    {
+      "deposit_id": "DP-00030",
+      "agency_id": "D-045",
+      "deposit_date": "2026-05-10",
+      "amount_krw": "22100000",
+      "matched_ar_id": "AR-S0030",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 31,
+        "id": "DP-00030",
+        "kind": "synthetic"
+      },
+      "accountKey": "2dc43cfce540ae46a9331be0cba4e1fd4db4bbd9b64368cfe027facf38fa5281",
+      "accountLabel": "모의은행 ****6355"
+    },
+    {
+      "deposit_id": "DP-00031",
+      "agency_id": "D-046",
+      "deposit_date": "2026-05-13",
+      "amount_krw": "41120000",
+      "matched_ar_id": "AR-S0031",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 32,
+        "id": "DP-00031",
+        "kind": "synthetic"
+      },
+      "accountKey": "8be91df630e8e5e72bd205f115c44bfa33ced6bdff65827aba77df13b975c55f",
+      "accountLabel": "모의은행 ****4274"
+    },
+    {
+      "deposit_id": "DP-00032",
+      "agency_id": "D-049",
+      "deposit_date": "2026-01-27",
+      "amount_krw": "19300000",
+      "matched_ar_id": "AR-S0032",
+      "source": {
+        "file": "synthetic/collections",
+        "row": 33,
+        "id": "DP-00032",
+        "kind": "synthetic"
+      },
+      "accountKey": "13a5a1a62cb7479a31a2eecf2c1fed2f61dad381b976692415d47dfba02bb9a9",
+      "accountLabel": "모의은행 ****8031"
+    }
+  ]
+}

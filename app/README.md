@@ -72,6 +72,8 @@ node --env-file=.env.local scripts/guidance-check.mjs
 
 `npm run seed`는 프로젝트 제공 CSV 세 개를 읽는다. 필수 헤더·유일 ID·거래처 참조·날짜·원 단위 정수를 검증한다. `data/source.json`은 50/240/32행을 출처·행·원본 해시와 함께 보존한 최소 파생 시드다. 전체 계좌는 비교용 해시와 마스킹 표시로 변환하고 사업자번호는 제외한다.
 
+**공개 저장소 안내(2026-11-20 추가).** 공개본에는 대회 제공 CSV와 `data/source.json`이 없다. 대신 `npm run seed:synthetic`(`scripts/make-synthetic-seed.mjs`)로 만든 합성 시드 `data/synthetic-source.json`을 커밋했고, `store.mjs`는 `data/source.json`이 없으면 이 파일을 읽는다. 합성 시드는 행 수(50/240/32)·ID 체계·관련 거래처 묶음(D-011·D-024·D-037)만 원본 구조와 같고, 거래처명·대표자·주소·계좌·금액·날짜는 새로 만든 값이다. 테스트 코드에 적힌 두 금액(RB-00054 1,373,515원, 세 건 합계 3,888,097원)만 맞췄다. 이 시드로 `npm test` 62개가 통과한다. 서버 실행에는 역할별 비밀번호 해시(`W07_ACCOUNT_HASHES`)가 필요하며, 아래 원격 검증·`privacy-check.mjs`는 공개본에 없는 로컬 비밀 파일과 원본 CSV를 전제로 한다.
+
 ```powershell
 $env:W07_BASE_URL='http://127.0.0.1:8081'
 npm run acceptance
